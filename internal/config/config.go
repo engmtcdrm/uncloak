@@ -30,6 +30,8 @@ type Config struct {
 	CoverageThreshold float64         `yaml:"coverage-threshold"` // Minimum coverage threshold.
 	GitDiffOptions    gitdiff.Options `yaml:"git"`                // Git-related configuration.
 	GoTestOptions     gocover.Options `yaml:"test"`               // Go Test-related configuration.
+
+	Debug bool // Not configurable via YAML, used for enabling debug output.
 }
 
 type ConfigError struct {

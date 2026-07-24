@@ -15,17 +15,22 @@ import (
 )
 
 const (
-	defaultCoverageThreshold = 80.0
+	floatFormat            = "%.2f%%"
+	coverageThresholdUsage = "(optional) coverage threshold"
+	debugUsage             = "(optional) enable debug output"
+	gitTargetRefUsage      = "(optional) git target ref to compare against (default: current branch's upstream)"
+	verboseUsage           = "(optional) enable verbose output"
 )
 
 var (
-	rootCmd     *cobra.Command
-	floatFormat = "%.2f%%"
+	rootCmd *cobra.Command
 )
 
 type cmd struct {
-	verbose           bool
 	coverageThreshold float64
+	debug             bool
+	gitTargetRef      string
+	verbose           bool
 }
 
 func init() {
@@ -42,8 +47,11 @@ func init() {
 
 	rootCmd.SilenceUsage = true
 
-	rootCmd.Flags().Float64VarP(&c.coverageThreshold, "coverage-threshold", "t", defaultCoverageThreshold, "(optional) coverage threshold")
-	rootCmd.Flags().BoolVarP(&c.verbose, "verbose", "v", false, "(optional) enable verbose output")
+	rootCmd.Flags().Float64VarP(&c.coverageThreshold, "coverage-threshold", "t", config.DefaultConfig.CoverageThreshold, coverageThresholdUsage)
+	rootCmd.Flags().BoolVarP(&c.debug, "debug", "d", false, debugUsage)
+	rootCmd.Flags().StringVarP(&c.gitTargetRef, "git-target-ref", "T", "", gitTargetRefUsage)
+	rootCmd.Flags().BoolVarP(&c.verbose, "verbose", "v", false, verboseUsage)
+
 }
 
 // Execute executes the root command.
@@ -105,5 +113,13 @@ func (c *cmd) run(cmd *cobra.Command, args []string) error {
 func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
 	if cmd.Flags().Changed("coverage-threshold") {
 		cfg.CoverageThreshold = c.coverageThreshold
+	}
+
+	if cmd.Flags().Changed("debug") {
+		cfg.Debug = c.debug
+	}
+
+	if cmd.Flags().Changed("git-target-ref") {
+		cfg.GitDiffOptions.TargetRef = c.gitTargetRef
 	}
 }

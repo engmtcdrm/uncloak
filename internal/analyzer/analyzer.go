@@ -105,7 +105,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	}, 1)
 
 	wg.Go(func() {
-		p, err := gocover.Run()
+		p, err := gocover.Run(cfg.Debug)
 		covCh <- struct {
 			profile *gocover.Profile
 			err     error
@@ -113,7 +113,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	})
 
 	wg.Go(func() {
-		d, err := gitdiff.Run(&cfg.GitDiffOptions)
+		d, err := gitdiff.Run(cfg.Debug, &cfg.GitDiffOptions)
 		diffCh <- struct {
 			diff *gitdiff.Results
 			err  error

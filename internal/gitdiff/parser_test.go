@@ -18,13 +18,13 @@ func Test_Get(t *testing.T) {
 			TargetRef: "origin/main",
 		}
 
-		results, err := Run(opts)
+		results, err := Run(false, opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
 
 	t.Run("should return results when filePath is not provided and opts is nil", func(t *testing.T) {
-		results, err := Run(nil)
+		results, err := Run(false, nil)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
@@ -35,7 +35,7 @@ func Test_Get(t *testing.T) {
 			TargetRef: "origin/main",
 		}
 
-		results, err := Run(opts)
+		results, err := Run(false, opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -270,7 +270,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 		}
 
 		t.Chdir(t.TempDir())
-		results, err := runAndParseGitDiff(opts)
+		results, err := runAndParseGitDiff(false, opts)
 		require.Error(t, err)
 		assert.Nil(t, results)
 	})
@@ -281,7 +281,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 			TargetRef: "origin/main",
 		}
 
-		results, err := runAndParseGitDiff(opts)
+		results, err := runAndParseGitDiff(false, opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
@@ -294,7 +294,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 
 		_, _ = testrepo.Init(t)
 
-		results, err := runAndParseGitDiff(opts)
+		results, err := runAndParseGitDiff(false, opts)
 		require.Error(t, err)
 		assert.Nil(t, results)
 	})
