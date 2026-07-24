@@ -1,48 +1,43 @@
 package testconfig
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/engmtcdrm/uncloak/internal/testing/testfiles"
 )
 
+type TestYamlFile string
+
 const (
-	ValidYaml = `
+	ValidYaml TestYamlFile = `
 version: 0
 exclusions:
   - "main.go"
   - "**/internal/**"
 `
 
-	InvalidUnknownFieldYaml = `
-version: 0
-unknown-field: true
-`
+	InvalidEmptyYaml TestYamlFile = ""
 
-	InvalidEmptyYaml = ""
-
-	InvalidCoverageThresholdYaml = `
+	InvalidCoverageThresholdYaml TestYamlFile = `
 version: 0
 coverage-threshold: -10.0
 `
+
+	InvalidUnknownFieldYaml TestYamlFile = `
+version: 0
+unknown-field: true
+`
 )
 
-func CreateTempConfigFile(t *testing.T, tempDir, content string) string {
+// CreateConfigFile creates a .uncloak.yml configuration file with the specified
+// content in the given directory.
+func CreateConfigFile(t *testing.T, dir string, content TestYamlFile) string {
 	t.Helper()
 
-	if tempDir == "" {
-		tempDir = t.TempDir()
-	}
-	configFilePath := filepath.Join(tempDir, ".uncloak.yml")
+	configFilePath := filepath.Join(dir, ".uncloak.yml")
 
-	tmpFile, err := os.Create(configFilePath)
-	require.NoError(t, err, "Failed to create temp file")
+	testfiles.CreateFile(t, configFilePath, string(content))
 
-	_, err = tmpFile.Write([]byte(content))
-	require.NoError(t, err, "Failed to write to temp file")
-	require.NoError(t, tmpFile.Close())
-
-	return tempDir
+	return configFilePath
 }

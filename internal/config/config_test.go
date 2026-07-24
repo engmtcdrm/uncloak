@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -43,7 +42,8 @@ func Test_Config_IsExclusionFile(t *testing.T) {
 // Tests for [Load] function.
 func Test_Load(t *testing.T) {
 	t.Run("should load valid config file", func(t *testing.T) {
-		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.ValidYaml)
+		tempDir := t.TempDir()
+		_ = testconfig.CreateConfigFile(t, tempDir, testconfig.ValidYaml)
 
 		expectedConfig := &Config{
 			Version:           0,
@@ -74,8 +74,8 @@ func Test_Load(t *testing.T) {
 			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
 		}
 
-		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.ValidYaml)
-		configFilePath := filepath.Join(tempDir, ".uncloak.yml")
+		tempDir := t.TempDir()
+		configFilePath := testconfig.CreateConfigFile(t, tempDir, testconfig.ValidYaml)
 
 		err := os.Chmod(configFilePath, 0000)
 		require.NoError(t, err, "Failed to change file permissions")
@@ -87,7 +87,8 @@ func Test_Load(t *testing.T) {
 	})
 
 	t.Run("should return error on invalid YAML", func(t *testing.T) {
-		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.InvalidUnknownFieldYaml)
+		tempDir := t.TempDir()
+		_ = testconfig.CreateConfigFile(t, tempDir, testconfig.InvalidUnknownFieldYaml)
 
 		t.Chdir(tempDir)
 		cfg, err := Load()
@@ -96,7 +97,8 @@ func Test_Load(t *testing.T) {
 	})
 
 	t.Run("should return error if config validation fails", func(t *testing.T) {
-		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.InvalidCoverageThresholdYaml)
+		tempDir := t.TempDir()
+		_ = testconfig.CreateConfigFile(t, tempDir, testconfig.InvalidCoverageThresholdYaml)
 
 		t.Chdir(tempDir)
 		cfg, err := Load()
@@ -106,7 +108,8 @@ func Test_Load(t *testing.T) {
 	})
 
 	t.Run("should return error if config file is empty", func(t *testing.T) {
-		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.InvalidEmptyYaml)
+		tempDir := t.TempDir()
+		_ = testconfig.CreateConfigFile(t, tempDir, testconfig.InvalidEmptyYaml)
 
 		t.Chdir(tempDir)
 		cfg, err := Load()

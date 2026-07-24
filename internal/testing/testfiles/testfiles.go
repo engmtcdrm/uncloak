@@ -8,6 +8,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// CreateFile creates a file with the specified content at the given filePath.
+func CreateFile(t *testing.T, filePath, content string) {
+	t.Helper()
+
+	tmpFile, err := os.Create(filePath)
+	require.NoError(t, err, "Failed to create file")
+
+	_, err = tmpFile.Write([]byte(content))
+	require.NoError(t, err, "Failed to write to file")
+	require.NoError(t, tmpFile.Close())
+}
+
 // CopyDir is a test helper function to copy all files from the
 // source directory to destination directory. subdirectories are ignored.
 func CopyDir(t *testing.T, srcDir string, destDir string) {

@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
@@ -44,15 +45,22 @@ func Test_run(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := rootCmd
 
+		flags := map[string]string{
+			"coverage-threshold": "1.0",
+			"debug":              "true",
+			"git-target-ref":     "origin/main",
+			"verbose":            "true",
+		}
+
+		var err error
+		c.verbose, err = strconv.ParseBool(flags["verbose"])
+		require.NoError(t, err)
+
 		// Set flags for the command
-		err := localRootCmd.Flags().Set("coverage-threshold", "1.0")
-		require.NoError(t, err)
-		err = localRootCmd.Flags().Set("debug", "true")
-		require.NoError(t, err)
-		err = localRootCmd.Flags().Set("git-target-ref", "origin/main")
-		c.verbose = true
-		err = localRootCmd.Flags().Set("verbose", "true")
-		require.NoError(t, err)
+		for flag, value := range flags {
+			err := localRootCmd.Flags().Set(flag, value)
+			require.NoError(t, err)
+		}
 
 		err = c.run(localRootCmd, []string{})
 		require.NoError(t, err)
@@ -63,7 +71,7 @@ func Test_run(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := rootCmd
 
-		testconfig.CreateTempConfigFile(t, tempDir, testconfig.InvalidUnknownFieldYaml)
+		testconfig.CreateConfigFile(t, tempDir, testconfig.InvalidUnknownFieldYaml)
 
 		err := c.run(localRootCmd, []string{})
 		require.Error(t, err)
