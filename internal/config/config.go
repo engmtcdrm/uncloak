@@ -21,7 +21,7 @@ var (
 		GoTestOptions:     gocover.Options{},
 	}
 
-	ErrConfigFileEmpty = errors.New("config file is empty. Delete it or add valid configuration content.")
+	ErrConfigFileEmpty = errors.New("config file is empty. Delete it or add valid configuration content")
 
 	configFilenames = []string{".uncloak.yml", ".uncloak.yaml"}
 )
