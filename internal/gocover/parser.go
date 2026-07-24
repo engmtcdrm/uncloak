@@ -138,7 +138,7 @@ func (p *parser) runTestCoverage() (string, error) {
 	)
 
 	if p.debug {
-		fmt.Printf("Running command: %s\n", strings.Join(cmd.Args, " "))
+		fmt.Printf("Running command: %s\n\n", strings.Join(cmd.Args, " "))
 	}
 
 	p.RawGoTestOutput, err = cmd.CombinedOutput()

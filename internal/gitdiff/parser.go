@@ -126,7 +126,7 @@ func runAndParseGitDiff(debug bool, opts *Options) (*Results, error) {
 	cmd.Args = append(cmd.Args, args...)
 
 	if debug {
-		fmt.Printf("Running command: %s\n", strings.Join(cmd.Args, " "))
+		fmt.Printf("Running command: %s\n\n", strings.Join(cmd.Args, " "))
 	}
 
 	output, err := cmd.Output()
