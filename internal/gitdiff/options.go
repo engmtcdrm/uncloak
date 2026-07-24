@@ -2,7 +2,7 @@ package gitdiff
 
 var DefaultOptions = Options{
 	Unstaged:  true,
-	TargetRef: "origin/main",
+	TargetRef: OriginMain,
 }
 
 type Options struct {

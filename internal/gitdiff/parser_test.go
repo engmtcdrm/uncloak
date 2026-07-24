@@ -15,7 +15,7 @@ import (
 func Test_Get(t *testing.T) {
 	t.Run("should return results when filePath is not provided", func(t *testing.T) {
 		opts := &Options{
-			TargetRef: "origin/main",
+			TargetRef: OriginMain,
 		}
 
 		results, err := Run(false, opts)
@@ -32,7 +32,7 @@ func Test_Get(t *testing.T) {
 	t.Run("should return error when filePath is not provided but current directory is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := &Options{
-			TargetRef: "origin/main",
+			TargetRef: OriginMain,
 		}
 
 		results, err := Run(false, opts)
@@ -266,7 +266,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 	t.Run("should return error if current directory is not a git repository", func(t *testing.T) {
 		opts := &Options{
 			Unstaged:  true,
-			TargetRef: "origin/main",
+			TargetRef: OriginMain,
 		}
 
 		t.Chdir(t.TempDir())
@@ -278,7 +278,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 	t.Run("should return results for valid git diff command", func(t *testing.T) {
 		opts := &Options{
 			Unstaged:  true,
-			TargetRef: "origin/main",
+			TargetRef: OriginMain,
 		}
 
 		results, err := runAndParseGitDiff(false, opts)

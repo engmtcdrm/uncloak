@@ -23,7 +23,7 @@ func Test_optionsToArgs(t *testing.T) {
 	t.Run("should return args for unstaged changes", func(t *testing.T) {
 		opts := &Options{
 			Unstaged:  true,
-			TargetRef: "origin/main",
+			TargetRef: OriginMain,
 		}
 		args := optionsToArgs(opts)
 		require.Len(t, args, 4)
@@ -32,7 +32,7 @@ func Test_optionsToArgs(t *testing.T) {
 
 	t.Run("should return args for staged changes", func(t *testing.T) {
 		opts := &Options{
-			TargetRef: "origin/main",
+			TargetRef: OriginMain,
 		}
 		args := optionsToArgs(opts)
 		require.Len(t, args, 2)
