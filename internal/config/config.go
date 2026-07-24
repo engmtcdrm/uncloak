@@ -15,11 +15,8 @@ var (
 	DefaultConfig = Config{
 		Version:           0,
 		CoverageThreshold: 80.0,
-		GitDiffOptions: gitdiff.Options{
-			Unstaged:  true,
-			TargetRef: "origin/main",
-		},
-		GoTestOptions: gocover.Options{},
+		GitDiffOptions:    gitdiff.DefaultOptions,
+		GoTestOptions:     gocover.Options{},
 	}
 	configFilenames = []string{".uncloak.yml", ".uncloak.yaml"}
 )
