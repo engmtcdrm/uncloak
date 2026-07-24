@@ -17,9 +17,9 @@ import (
 const (
 	floatFormat            = "%.2f%%"
 	coverageThresholdUsage = "(optional) coverage threshold"
-	debugUsage             = "(optional) enable debug output"
-	gitTargetRefUsage      = "(optional) git target ref to compare against (default: current branch's upstream)"
-	verboseUsage           = "(optional) enable verbose output"
+	debugUsage             = "(optional) enable debug output, e.g. what commands are run"
+	gitTargetRefUsage      = "(optional) git target ref to compare against (default: current branch's nearest parent branch)"
+	verboseUsage           = "(optional) enable verbose output, e.g. output from go test command"
 )
 
 var (

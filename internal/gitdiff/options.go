@@ -1,13 +1,9 @@
 package gitdiff
 
-var DefaultOptions = Options{
-	Unstaged:  true,
-	TargetRef: OriginMain,
-}
+var DefaultOptions = Options{}
 
 type Options struct {
-	Unstaged  bool   `yaml:"unstaged"`   // Whether to include unstaged changes in the git diff
-	TargetRef string `yaml:"target-ref"` // Target ref for git diff, e.g., "origin/main" or commit hash.
+	TargetRef string // Target ref for git diff, e.g., "origin/main" or commit hash.
 }
 
 // optionsToArgs converts the Options struct into a slice of command-line
@@ -19,14 +15,11 @@ func optionsToArgs(opts *Options) []string {
 		return args
 	}
 
-	switch {
-	case opts.Unstaged:
-		args = append(args, opts.TargetRef, "--", ".")
-	default:
-		args = append(args, opts.TargetRef+"...")
+	if opts.TargetRef == "" {
+		opts.TargetRef = findNearestParent()
 	}
 
-	args = append(args, "--unified=0")
+	args = append(args, opts.TargetRef, "--", ".", "--unified=0")
 
 	return args
 }

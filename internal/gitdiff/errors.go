@@ -13,6 +13,7 @@ import (
 var (
 	ErrGitDoesNotExist = fmt.Errorf("git command not found: ensure git is installed and available in $PATH")
 	ErrNotAGitRepo     = fmt.Errorf("not a git repository: ensure you are in a git repository or provide a valid file path")
+	ErrNoParentBranch  = fmt.Errorf("no parent branch found: are you on the main branch for this repository?")
 )
 
 func errNoOutput(cmd *exec.Cmd, targetRef string) error {

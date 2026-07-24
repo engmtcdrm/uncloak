@@ -2,6 +2,8 @@ package config
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"os"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -18,6 +20,9 @@ var (
 		GitDiffOptions:    gitdiff.DefaultOptions,
 		GoTestOptions:     gocover.Options{},
 	}
+
+	ErrConfigFileEmpty = errors.New("config file is empty. Delete it or add valid configuration content.")
+
 	configFilenames = []string{".uncloak.yml", ".uncloak.yaml"}
 )
 
@@ -25,10 +30,10 @@ type Config struct {
 	Version           int             `yaml:"version"`            // Version of the config file format.
 	Exclusions        []string        `yaml:"exclusions"`         // List of file patterns to exclude from analysis.
 	CoverageThreshold float64         `yaml:"coverage-threshold"` // Minimum coverage threshold.
-	GitDiffOptions    gitdiff.Options `yaml:"git"`                // Git-related configuration.
 	GoTestOptions     gocover.Options `yaml:"test"`               // Go Test-related configuration.
 
-	Debug bool // Not configurable via YAML, used for enabling debug output.
+	Debug          bool            // Not configurable via YAML, used for enabling debug output.
+	GitDiffOptions gitdiff.Options // Git-related configuration.
 }
 
 type ConfigError struct {
@@ -79,6 +84,9 @@ func load(r *bytes.Reader) (*Config, error) {
 	dec := yaml.NewDecoder(r, yaml.DisallowUnknownField())
 	err := dec.Decode(&cfg)
 	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil, ErrConfigFileEmpty
+		}
 		return nil, err
 	}
 

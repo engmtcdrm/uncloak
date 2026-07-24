@@ -3,8 +3,30 @@ package gitdiff
 import (
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/stretchr/testify/require"
 )
+
+// Tests for [findNearestParent] function.
+func Test_findNearestParent(t *testing.T) {
+	t.Run("should return empty parent if on main branch", func(t *testing.T) {
+		_, _ = testrepo.Init(t)
+		parent := findNearestParent()
+		require.Equal(t, "", parent)
+	})
+
+	t.Run("should return empty if directory is not a git repo", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		parent := findNearestParent()
+		require.Equal(t, "", parent)
+	})
+
+	t.Run("should return parent branch if on a child branch", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+		parent := findNearestParent()
+		require.Equal(t, LocalMain, parent)
+	})
+}
 
 // Tests for [gitRootDir] function.
 func Test_gitRootDir(t *testing.T) {
@@ -34,6 +56,19 @@ func Test_isGitDir(t *testing.T) {
 	})
 }
 
+// Tests for [hasParent] function.
+func Test_hasParent(t *testing.T) {
+	t.Run("should return false with no parent", func(t *testing.T) {
+		_, _ = testrepo.Init(t)
+		require.False(t, hasParent())
+	})
+
+	t.Run("should return true with a parent", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+		require.True(t, hasParent())
+	})
+}
+
 // Tests for [isGoFile] function.
 func Test_isGoFile(t *testing.T) {
 	t.Run("returns true for .go files", func(t *testing.T) {
@@ -46,15 +81,5 @@ func Test_isGoFile(t *testing.T) {
 
 	t.Run("returns false for non-.go files", func(t *testing.T) {
 		require.False(t, isGoFile("file.txt"))
-	})
-}
-
-// Tests for [findNearestParent] function.
-func Test_findNearestParent(t *testing.T) {
-	t.Run("should return the nearest parent branch", func(t *testing.T) {
-		t.Chdir("/home/engmtcdrm/repos/golangci-lint")
-		parent, err := findNearestParent()
-		require.NoError(t, err)
-		require.NotEmpty(t, parent)
 	})
 }

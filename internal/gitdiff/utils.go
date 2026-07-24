@@ -7,14 +7,56 @@ import (
 )
 
 const (
-	bracketBranchPattern = `.*\[(.*)\].*`
-	branchWeird          = `[\^~].*`
+	branchBracketPattern      = `.*\[(.*)\].*`
+	branchSpecialCharsPattern = `[\^~].*`
 )
 
 var (
-	regexBranch = regexp.MustCompile(bracketBranchPattern)
-	regexWeird  = regexp.MustCompile(branchWeird)
+	regexBranchBracket      = regexp.MustCompile(branchBracketPattern)
+	regexBranchSpecialChars = regexp.MustCompile(branchSpecialCharsPattern)
 )
+
+// findNearestParent retrieves the name of the nearest parent branch of the
+// current branch by executing the "git show-branch" command and parsing its
+// output. It returns the name of the nearest parent branch if found or an empty
+// string otherwise.
+func findNearestParent() string {
+	cmd := exec.Command("git", "show-branch")
+
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	currentBranch := getCurrentBranch()
+	if currentBranch == "" {
+		return ""
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var filteredLines []string
+	for _, line := range lines {
+		switch {
+		case strings.Contains(line, currentBranch):
+			continue
+		case !strings.Contains(line, "*"):
+			continue
+		}
+
+		filteredLines = append(filteredLines, line)
+	}
+
+	if len(filteredLines) == 0 {
+		return ""
+	}
+
+	groupMatches := regexBranchBracket.FindStringSubmatch(filteredLines[0])
+	if len(groupMatches) < 2 {
+		return ""
+	}
+
+	return regexBranchSpecialChars.ReplaceAllString(groupMatches[1], "")
+}
 
 // getCurrentBranch retrieves the name of the current Git branch by executing
 // the "git branch --show-current" command. It returns the branch name if the
@@ -29,6 +71,10 @@ func getCurrentBranch() string {
 	return strings.TrimSpace(string(output))
 }
 
+// gitRootDir retrieves the root directory of the current Git repository by
+// executing the "git rev-parse --show-toplevel" command. It returns the root
+// directory path if the command is successful, or an error if there is an
+// issue executing the command.
 func gitRootDir() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
 
@@ -38,6 +84,13 @@ func gitRootDir() (string, error) {
 	}
 
 	return strings.TrimSpace(string(output)), nil
+}
+
+// hasParent checks if the current Git branch has a parent branch by calling
+// the findNearestParent function. It returns true if a parent branch is found,
+// and false otherwise.
+func hasParent() bool {
+	return findNearestParent() != ""
 }
 
 // isGitDir checks if the current working directory is a git repository by
@@ -59,43 +112,4 @@ func isGitDir() bool {
 // it ends with ".go" but not with "_test.go").
 func isGoFile(filePath string) bool {
 	return strings.HasSuffix(filePath, ".go") && !strings.HasSuffix(filePath, "_test.go")
-}
-
-func findNearestParent() (string, error) {
-	cmd := exec.Command("git", "show-branch", "-a")
-
-	output, err := cmd.Output()
-	if err != nil {
-		return "", handleExecError(cmd, output, err)
-	}
-
-	currentBranch := getCurrentBranch()
-	if currentBranch == "" {
-		return "", nil
-	}
-
-	lines := strings.Split(string(output), "\n")
-	var filteredLines []string
-	for _, line := range lines {
-		switch {
-		case strings.Contains(line, currentBranch):
-			continue
-		case !strings.Contains(line, "*"):
-			continue
-		}
-
-		filteredLines = append(filteredLines, line)
-	}
-
-	if len(filteredLines) > 0 {
-		if regexBranch.MatchString(filteredLines[0]) {
-			branch := regexBranch.FindStringSubmatch(filteredLines[0])[1]
-
-			branch = regexWeird.ReplaceAllString(branch, "")
-
-			return branch, nil
-		}
-	}
-
-	return "", nil
 }

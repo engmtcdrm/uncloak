@@ -6,20 +6,9 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
 	"github.com/stretchr/testify/require"
 )
-
-const validYaml = `
-version: 0
-exclusions:
-  - "main.go"
-  - "**/internal/**"
-`
-
-const invalidYaml = `
-version: 0
-unknown-field: true
-`
 
 // Tests for [Config.IsExclusionFile] method.
 func Test_Config_IsExclusionFile(t *testing.T) {
@@ -54,7 +43,7 @@ func Test_Config_IsExclusionFile(t *testing.T) {
 // Tests for [Load] function.
 func Test_Load(t *testing.T) {
 	t.Run("should load valid config file", func(t *testing.T) {
-		tempDir := createTempConfigFile(t, validYaml)
+		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.ValidYaml)
 
 		expectedConfig := &Config{
 			Version:           0,
@@ -85,7 +74,7 @@ func Test_Load(t *testing.T) {
 			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
 		}
 
-		tempDir := createTempConfigFile(t, validYaml)
+		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.ValidYaml)
 		configFilePath := filepath.Join(tempDir, ".uncloak.yml")
 
 		err := os.Chmod(configFilePath, 0000)
@@ -98,7 +87,7 @@ func Test_Load(t *testing.T) {
 	})
 
 	t.Run("should return error on invalid YAML", func(t *testing.T) {
-		tempDir := createTempConfigFile(t, invalidYaml)
+		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.InvalidUnknownFieldYaml)
 
 		t.Chdir(tempDir)
 		cfg, err := Load()
@@ -107,17 +96,23 @@ func Test_Load(t *testing.T) {
 	})
 
 	t.Run("should return error if config validation fails", func(t *testing.T) {
-		invalidConfigYaml := `
-version: 0
-coverage-threshold: -10.0
-`
-		tempDir := createTempConfigFile(t, invalidConfigYaml)
+		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.InvalidCoverageThresholdYaml)
 
 		t.Chdir(tempDir)
 		cfg, err := Load()
 		require.Error(t, err)
 		require.Nil(t, cfg)
 		require.Contains(t, err.Error(), "coverage-threshold must be between 0 and 100")
+	})
+
+	t.Run("should return error if config file is empty", func(t *testing.T) {
+		tempDir := testconfig.CreateTempConfigFile(t, "", testconfig.InvalidEmptyYaml)
+
+		t.Chdir(tempDir)
+		cfg, err := Load()
+		require.Error(t, err)
+		require.Nil(t, cfg)
+		require.ErrorIs(t, err, ErrConfigFileEmpty)
 	})
 }
 
@@ -147,20 +142,4 @@ func Test_validate(t *testing.T) {
 		require.Contains(t, err.Error(), "coverage-threshold must be between 0 and 100")
 	})
 
-}
-
-func createTempConfigFile(t *testing.T, content string) string {
-	t.Helper()
-
-	tempDir := t.TempDir()
-	configFilePath := filepath.Join(tempDir, ".uncloak.yml")
-
-	tmpFile, err := os.Create(configFilePath)
-	require.NoError(t, err, "Failed to create temp file")
-
-	_, err = tmpFile.Write([]byte(content))
-	require.NoError(t, err, "Failed to write to temp file")
-	require.NoError(t, tmpFile.Close())
-
-	return tempDir
 }

@@ -13,32 +13,39 @@ import (
 
 // Tests for [Run] function.
 func Test_Get(t *testing.T) {
-	t.Run("should return results when filePath is not provided", func(t *testing.T) {
-		opts := &Options{
-			TargetRef: OriginMain,
-		}
+	t.Run("should return results with valid options", func(t *testing.T) {
+		opts := &DefaultOptions
 
 		results, err := Run(false, opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
 
-	t.Run("should return results when filePath is not provided and opts is nil", func(t *testing.T) {
+	t.Run("should return results when opts is nil", func(t *testing.T) {
 		results, err := Run(false, nil)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
 
-	t.Run("should return error when filePath is not provided but current directory is not a git repository", func(t *testing.T) {
+	t.Run("should return error when current directory is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		opts := &Options{
-			TargetRef: OriginMain,
-		}
+		opts := &DefaultOptions
 
 		results, err := Run(false, opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
+
+	t.Run("should return error when there is no parent branch", func(t *testing.T) {
+		tempDir, _ := testrepo.Init(t)
+		t.Chdir(tempDir)
+		opts := &DefaultOptions
+
+		results, err := Run(false, opts)
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
+
 }
 
 // Tests for [parseHunkHeader] function.
@@ -264,31 +271,16 @@ func Test_parseLines(t *testing.T) {
 // Tests for [runAndParseGitDiff] function.
 func Test_runAndParseGitDiff(t *testing.T) {
 	t.Run("should return error if current directory is not a git repository", func(t *testing.T) {
-		opts := &Options{
-			Unstaged:  true,
-			TargetRef: OriginMain,
-		}
-
 		t.Chdir(t.TempDir())
+		opts := &DefaultOptions
+
 		results, err := runAndParseGitDiff(false, opts)
 		require.Error(t, err)
 		assert.Nil(t, results)
 	})
 
-	t.Run("should return results for valid git diff command", func(t *testing.T) {
-		opts := &Options{
-			Unstaged:  true,
-			TargetRef: OriginMain,
-		}
-
-		results, err := runAndParseGitDiff(false, opts)
-		require.NoError(t, err)
-		assert.NotNil(t, results)
-	})
-
 	t.Run("should return no output error for valid git diff command with no changes", func(t *testing.T) {
 		opts := &Options{
-			Unstaged:  true,
 			TargetRef: testgit.MainBranchName,
 		}
 
@@ -297,5 +289,21 @@ func Test_runAndParseGitDiff(t *testing.T) {
 		results, err := runAndParseGitDiff(false, opts)
 		require.Error(t, err)
 		assert.Nil(t, results)
+	})
+
+	t.Run("should return results for valid git diff command", func(t *testing.T) {
+		opts := &DefaultOptions
+
+		results, err := runAndParseGitDiff(false, opts)
+		require.NoError(t, err)
+		assert.NotNil(t, results)
+	})
+
+	t.Run("should return results for valid git diff command with debug true", func(t *testing.T) {
+		opts := &DefaultOptions
+
+		results, err := runAndParseGitDiff(true, opts)
+		require.NoError(t, err)
+		assert.NotNil(t, results)
 	})
 }

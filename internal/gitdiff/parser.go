@@ -26,6 +26,10 @@ func Run(debug bool, opts *Options) (*Results, error) {
 		return nil, ErrNotAGitRepo
 	}
 
+	if !hasParent() {
+		return nil, ErrNoParentBranch
+	}
+
 	return runAndParseGitDiff(debug, opts)
 }
 

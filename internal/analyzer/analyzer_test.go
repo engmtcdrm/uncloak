@@ -36,7 +36,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 
 		cfg := config.DefaultConfig
-		cfg.GitDiffOptions.TargetRef = ""
+		cfg.GitDiffOptions.TargetRef = testrepo.NewBranchName
 
 		report, err := NewCodeCoverage(&cfg)
 		require.Error(t, err)
