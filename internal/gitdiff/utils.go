@@ -2,7 +2,18 @@ package gitdiff
 
 import (
 	"os/exec"
+	"regexp"
 	"strings"
+)
+
+const (
+	bracketBranchPattern = `.*\[(.*)\].*`
+	branchWeird          = `[\^~].*`
+)
+
+var (
+	regexBranch = regexp.MustCompile(bracketBranchPattern)
+	regexWeird  = regexp.MustCompile(branchWeird)
 )
 
 // getCurrentBranch retrieves the name of the current Git branch by executing
@@ -48,4 +59,43 @@ func isGitDir() bool {
 // it ends with ".go" but not with "_test.go").
 func isGoFile(filePath string) bool {
 	return strings.HasSuffix(filePath, ".go") && !strings.HasSuffix(filePath, "_test.go")
+}
+
+func findNearestParent() (string, error) {
+	cmd := exec.Command("git", "show-branch", "-a")
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", handleExecError(cmd, output, err)
+	}
+
+	currentBranch := getCurrentBranch()
+	if currentBranch == "" {
+		return "", nil
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var filteredLines []string
+	for _, line := range lines {
+		switch {
+		case strings.Contains(line, currentBranch):
+			continue
+		case !strings.Contains(line, "*"):
+			continue
+		}
+
+		filteredLines = append(filteredLines, line)
+	}
+
+	if len(filteredLines) > 0 {
+		if regexBranch.MatchString(filteredLines[0]) {
+			branch := regexBranch.FindStringSubmatch(filteredLines[0])[1]
+
+			branch = regexWeird.ReplaceAllString(branch, "")
+
+			return branch, nil
+		}
+	}
+
+	return "", nil
 }

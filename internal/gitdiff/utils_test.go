@@ -48,3 +48,13 @@ func Test_isGoFile(t *testing.T) {
 		require.False(t, isGoFile("file.txt"))
 	})
 }
+
+// Tests for [findNearestParent] function.
+func Test_findNearestParent(t *testing.T) {
+	t.Run("should return the nearest parent branch", func(t *testing.T) {
+		t.Chdir("/home/engmtcdrm/repos/golangci-lint")
+		parent, err := findNearestParent()
+		require.NoError(t, err)
+		require.NotEmpty(t, parent)
+	})
+}
