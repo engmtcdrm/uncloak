@@ -11,9 +11,9 @@ import (
 	"strings"
 )
 
-const regexHunkHeader = `@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@`
+const hunkHeaderPattern = `@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@`
 
-var hunkHeaderRegex = regexp.MustCompile(regexHunkHeader)
+var hunkHeaderRegex = regexp.MustCompile(hunkHeaderPattern)
 
 // Run executes the 'git diff' command with the provided options and parses its
 // output into a [Results] struct. If opts is nil, it uses [DefaultOptions].
