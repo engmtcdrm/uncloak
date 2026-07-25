@@ -33,24 +33,30 @@ func findNearestParent() string {
 		return ""
 	}
 
+	var firstParentLine string
 	lines := strings.Split(string(output), "\n")
-	var filteredLines []string
+
 	for _, line := range lines {
 		switch {
+		// Skip lines containing the current branch name. We only care about
+		// other branches than the current one.
 		case strings.Contains(line, currentBranch):
 			continue
+		// Skip any lines without a "*". The "*" indicates the line is part of
+		// the current branch's ancestry.
 		case !strings.Contains(line, "*"):
 			continue
 		}
 
-		filteredLines = append(filteredLines, line)
+		firstParentLine = line
+		break
 	}
 
-	if len(filteredLines) == 0 {
+	if firstParentLine == "" {
 		return ""
 	}
 
-	groupMatches := regexBranchBracket.FindStringSubmatch(filteredLines[0])
+	groupMatches := regexBranchBracket.FindStringSubmatch(firstParentLine)
 	if len(groupMatches) < 2 {
 		return ""
 	}
