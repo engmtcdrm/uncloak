@@ -69,6 +69,10 @@ func (c *cmd) run(cmd *cobra.Command, args []string) error {
 
 	c.handleFlags(cfg, cmd)
 
+	if err := config.Validate(cfg); err != nil {
+		return err
+	}
+
 	report, err := analyzer.NewCodeCoverage(cfg)
 	if err != nil && !errors.Is(err, analyzer.ErrBelowThreshold) {
 		return err

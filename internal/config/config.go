@@ -79,6 +79,8 @@ func Load() (*Config, error) {
 	return &DefaultConfig, nil
 }
 
+// load reads the configuration from the provided reader and returns a [Config]
+// struct. If the configuration is invalid, it returns an error.
 func load(r *bytes.Reader) (*Config, error) {
 	cfg := DefaultConfig
 	dec := yaml.NewDecoder(r, yaml.DisallowUnknownField())
@@ -87,17 +89,20 @@ func load(r *bytes.Reader) (*Config, error) {
 		if errors.Is(err, io.EOF) {
 			return nil, ErrConfigFileEmpty
 		}
+
 		return nil, err
 	}
 
-	if err := validate(&cfg); err != nil {
+	if err := Validate(&cfg); err != nil {
 		return nil, err
 	}
 
 	return &cfg, nil
 }
 
-func validate(cfg *Config) error {
+// Validate checks the configuration for any invalid values and returns an error
+// if any are found.
+func Validate(cfg *Config) error {
 	if cfg.CoverageThreshold < 0.0 || cfg.CoverageThreshold > 100.0 {
 		return &ConfigError{Message: "coverage-threshold must be between 0 and 100"}
 	}

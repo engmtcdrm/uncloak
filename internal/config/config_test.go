@@ -123,7 +123,7 @@ func Test_Load(t *testing.T) {
 func Test_validate(t *testing.T) {
 	t.Run("should return no error for valid config", func(t *testing.T) {
 		cfg := &DefaultConfig
-		err := validate(cfg)
+		err := Validate(cfg)
 		require.NoError(t, err)
 	})
 
@@ -131,7 +131,7 @@ func Test_validate(t *testing.T) {
 		cfg := &Config{
 			CoverageThreshold: -1.0,
 		}
-		err := validate(cfg)
+		err := Validate(cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "coverage-threshold must be between 0 and 100")
 	})
@@ -140,7 +140,7 @@ func Test_validate(t *testing.T) {
 		cfg := &Config{
 			CoverageThreshold: 101.0,
 		}
-		err := validate(cfg)
+		err := Validate(cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "coverage-threshold must be between 0 and 100")
 	})

@@ -3,9 +3,9 @@ package cmd
 import (
 	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/stretchr/testify/require"
@@ -45,22 +45,21 @@ func Test_run(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := rootCmd
 
-		flags := map[string]string{
-			"coverage-threshold": "1.0",
-			"debug":              "true",
-			"git-target-ref":     "origin/main",
-			"verbose":            "true",
-		}
-
-		var err error
-		c.verbose, err = strconv.ParseBool(flags["verbose"])
+		c.coverageThreshold = 1.0
+		err := localRootCmd.Flags().Set("coverage-threshold", "1.0")
 		require.NoError(t, err)
 
-		// Set flags for the command
-		for flag, value := range flags {
-			err := localRootCmd.Flags().Set(flag, value)
-			require.NoError(t, err)
-		}
+		c.debug = true
+		err = localRootCmd.Flags().Set("debug", "true")
+		require.NoError(t, err)
+
+		c.gitTargetRef = gitdiff.LocalMain
+		err = localRootCmd.Flags().Set("git-target-ref", gitdiff.LocalMain)
+		require.NoError(t, err)
+
+		c.verbose = true
+		err = localRootCmd.Flags().Set("verbose", "true")
+		require.NoError(t, err)
 
 		err = c.run(localRootCmd, []string{})
 		require.NoError(t, err)
@@ -77,12 +76,25 @@ func Test_run(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("should error when NewCodeCoverage error is not below threshold", func(t *testing.T) {
+	t.Run("should error when NewCodeCoverage error is not a git repository", func(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := rootCmd
 
 		t.Chdir(t.TempDir())
 		err := c.run(localRootCmd, []string{})
+		require.Error(t, err)
+	})
+
+	t.Run("should error when coverage-threshold is negative", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+		c := &cmd{}
+		localRootCmd := rootCmd
+
+		c.coverageThreshold = -1.0
+		err := localRootCmd.Flags().Set("coverage-threshold", "-1.0")
+		require.NoError(t, err)
+
+		err = c.run(localRootCmd, []string{})
 		require.Error(t, err)
 	})
 }
