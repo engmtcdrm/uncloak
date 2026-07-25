@@ -16,7 +16,7 @@ import (
 
 const (
 	floatFormat            = "%.2f%%"
-	coverageThresholdUsage = "(optional) coverage threshold"
+	coverageThresholdUsage = "(optional) coverage threshold override. This will also overwrite what is specified in the configuration file"
 	debugUsage             = "(optional) enable debug output, e.g. what commands are run"
 	gitTargetRefUsage      = "(optional) git target ref to compare against (default: current branch's nearest parent branch)"
 	verboseUsage           = "(optional) enable verbose output, e.g. output from go test command"
@@ -47,9 +47,9 @@ func init() {
 
 	rootCmd.SilenceUsage = true
 
-	rootCmd.Flags().Float64VarP(&c.coverageThreshold, "coverage-threshold", "t", config.DefaultConfig.CoverageThreshold, coverageThresholdUsage)
+	rootCmd.Flags().Float64VarP(&c.coverageThreshold, "coverage-threshold", "c", config.DefaultConfig.CoverageThreshold, coverageThresholdUsage)
 	rootCmd.Flags().BoolVarP(&c.debug, "debug", "d", false, debugUsage)
-	rootCmd.Flags().StringVarP(&c.gitTargetRef, "git-target-ref", "T", "", gitTargetRefUsage)
+	rootCmd.Flags().StringVarP(&c.gitTargetRef, "target-ref", "t", "", gitTargetRefUsage)
 	rootCmd.Flags().BoolVarP(&c.verbose, "verbose", "v", false, verboseUsage)
 
 }
@@ -123,7 +123,7 @@ func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
 		cfg.Debug = c.debug
 	}
 
-	if cmd.Flags().Changed("git-target-ref") {
+	if cmd.Flags().Changed("target-ref") {
 		cfg.GitDiffOptions.TargetRef = c.gitTargetRef
 	}
 }

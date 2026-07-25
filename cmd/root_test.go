@@ -54,7 +54,7 @@ func Test_run(t *testing.T) {
 		require.NoError(t, err)
 
 		c.gitTargetRef = gitdiff.LocalMain
-		err = localRootCmd.Flags().Set("git-target-ref", gitdiff.LocalMain)
+		err = localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
 		require.NoError(t, err)
 
 		c.verbose = true
