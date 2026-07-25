@@ -7,7 +7,7 @@ import (
 )
 
 // Tests for [getSemVer] function.
-func TestGetSemVer(t *testing.T) {
+func Test_getSemVer(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
