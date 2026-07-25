@@ -1,6 +1,7 @@
 package gitdiff
 
 import (
+	"os/exec"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
@@ -25,6 +26,21 @@ func Test_findNearestParent(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 		parent := findNearestParent()
 		require.Equal(t, LocalMain, parent)
+	})
+
+	t.Run("should return empty if git is in a detached HEAD state", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+		cmd := exec.Command("git", "checkout", "--detach", "HEAD")
+		require.NoError(t, cmd.Run())
+
+		parent := findNearestParent()
+		require.Equal(t, "", parent)
+	})
+
+	t.Run("should return empty if git repo has little to no commits", func(t *testing.T) {
+		_, _ = testrepo.Init(t)
+		parent := findNearestParent()
+		require.Equal(t, "", parent)
 	})
 }
 

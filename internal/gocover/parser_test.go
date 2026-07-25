@@ -108,9 +108,7 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 test.com/testmodule/file1.go:10.1,20.2 1 1
 test.com/testmodule/file2.go:30.3,40.4 2 0
 `
-
-		err := os.WriteFile(tempFile, []byte(coverageData), 0644)
-		require.NoError(t, err)
+		testfiles.CreateFile(t, tempFile, coverageData)
 
 		results, err := p.parseCoverageProfile(tempFile)
 		require.NoError(t, err)

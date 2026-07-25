@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/testing/testfiles"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,12 +45,7 @@ func Test_getGoList(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
 
-		badMod := `module
-
-go 1.26
-`
-		err := os.WriteFile("go.mod", []byte(badMod), 0644)
-		require.NoError(t, err, "Failed to write go.mod")
+		testfiles.CreateFile(t, "go.mod", "module\n\ngo 1.26")
 
 		moduleName, err := getGoList()
 		require.Error(t, err)

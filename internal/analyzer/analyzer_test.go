@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/config"
+	"github.com/engmtcdrm/uncloak/internal/testing/testfiles"
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/stretchr/testify/require"
@@ -51,6 +52,23 @@ func Test_NewCodeCoverage(t *testing.T) {
 
 		report, err := NewCodeCoverage(cfg)
 		require.Error(t, err)
+		require.NotNil(t, report)
+	})
+
+	t.Run("should return no error when none of the new lines are part of the coverage profile", func(t *testing.T) {
+		repoPath := testgit.GetTestRepoPath(t)
+		tempDir, _ := testrepo.Init(t)
+
+		testfiles.CopyDir(t, repoPath, tempDir)
+		testgit.AddCommit(t, "Add more files")
+
+		readmePath := filepath.Join(tempDir, "README.md")
+		testfiles.CreateFile(t, readmePath, "# Test README\nThis is a test README file.")
+		testgit.CreateBranch(t, testrepo.NewBranchName)
+		testgit.AddCommit(t, "Updated README.md")
+
+		report, err := NewCodeCoverage(cfg)
+		require.NoError(t, err)
 		require.NotNil(t, report)
 	})
 }
