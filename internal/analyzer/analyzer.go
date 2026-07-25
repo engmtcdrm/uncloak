@@ -23,12 +23,6 @@ func NewCodeCoverage(cfg *config.Config) (*Report, error) {
 	}
 
 	report := NewReport(cfg.CoverageThreshold, profile, diff)
-
-	// If there are no new lines in any Go files, exit early
-	if len(report.GitDiffResults.NewLines) == 0 {
-		return report, nil
-	}
-
 	report = analyzeCoverage(report, cfg)
 
 	// If there are no new lines, changes must have been outside of test
@@ -48,17 +42,7 @@ func NewCodeCoverage(cfg *config.Config) (*Report, error) {
 }
 
 func analyzeCoverage(report *Report, cfg *config.Config) *Report {
-	var filteredFiles []string
-
-	if len(cfg.Exclusions) > 0 {
-		for _, file := range report.GitDiffResults.Files() {
-			if !cfg.IsExclusionFile(file) {
-				filteredFiles = append(filteredFiles, file)
-			}
-		}
-	} else {
-		filteredFiles = report.GitDiffResults.Files()
-	}
+	filteredFiles := filterFiles(cfg, report.GitDiffResults.Files())
 
 	for _, file := range filteredFiles {
 		newLines := report.GitDiffResults.NewLines[file]
@@ -86,6 +70,23 @@ func analyzeCoverage(report *Report, cfg *config.Config) *Report {
 	}
 
 	return report
+}
+
+func filterFiles(cfg *config.Config, files []string) []string {
+
+	if len(cfg.Exclusions) == 0 {
+		return files
+	}
+
+	var filteredFiles []string
+
+	for _, file := range files {
+		if !cfg.IsExclusionFile(file) {
+			filteredFiles = append(filteredFiles, file)
+		}
+	}
+
+	return filteredFiles
 }
 
 // processFiles reads and parses the Go coverage profile and the git diff file

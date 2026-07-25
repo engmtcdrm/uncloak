@@ -215,4 +215,16 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, filePath)
 	})
+
+	t.Run("should return valid file path for successful test coverage run with debug enabled", func(t *testing.T) {
+		tempDir := t.TempDir()
+		repoPath := testgit.GetTestRepoPath(t)
+		testfiles.CopyDir(t, repoPath, tempDir)
+
+		t.Chdir(tempDir)
+		p.debug = true
+		filePath, err := p.runTestCoverage()
+		require.NoError(t, err)
+		require.NotEmpty(t, filePath)
+	})
 }

@@ -92,6 +92,27 @@ func Test_analyzeCoverage(t *testing.T) {
 	})
 }
 
+// Tests for [filterFiles] function.
+func Test_filterFiles(t *testing.T) {
+	files := []string{"file1.go", "file2.go", "file3.go"}
+
+	t.Run("should return all files if no exclusions are provided", func(t *testing.T) {
+		cfg := &config.DefaultConfig
+
+		filteredFiles := filterFiles(cfg, files)
+		require.Equal(t, files, filteredFiles)
+	})
+
+	t.Run("should return filtered files if exclusions are provided", func(t *testing.T) {
+		cfg := &config.DefaultConfig
+		cfg.Exclusions = []string{"file2.go"}
+		expectedFiles := []string{"file1.go", "file3.go"}
+
+		filteredFiles := filterFiles(cfg, files)
+		require.Equal(t, expectedFiles, filteredFiles)
+	})
+}
+
 // Tests for [processFiles] function.
 func Test_processFiles(t *testing.T) {
 	cfg := &config.DefaultConfig
