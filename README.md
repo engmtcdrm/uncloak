@@ -1,13 +1,13 @@
 # uncloak
 
-`uncloak` is a CLI tool for analyzing new Go code coverage on the current branch with a target ref (by default `origin/main`).
+`uncloak` is a CLI tool for analyzing new Go code coverage on the current branch with the current branch's nearest parent branch.
 
 At a high level, it:
 
-- runs `git diff` against the configured target ref
+- runs `git diff` against the parent branch
 - runs Go tests to collect coverage data
-- compares added Go lines against the coverage profile
-- reports uncovered new lines and fails when coverage drops below the configured threshold
+- compares new Go lines from the diff against the coverage profile
+- reports uncovered new lines and fails when coverage drops below the configurable threshold
 
 ## Installation
 
@@ -27,7 +27,8 @@ Run `uncloak` from the root of a Git repository:
 uncloak
 ```
 
-By default, `uncloak` will analyze against `origin/main`.
+By default, `uncloak` will analyze against the nearest parent branch of the current branch.
+That default behavior requires a branch with a parent branch, so feature branches are the intended use.
 
 If coverage is below the threshold, the command exits with an error and prints the uncovered new line ranges.
 
@@ -40,7 +41,7 @@ Supported file names:
 - `.uncloak.yml`
 - `.uncloak.yaml`
 
-If no config file is present, `uncloak` uses built-in defaults.
+If no config file is present, `uncloak` uses built-in defaults. Empty config files are rejected.
 
 ### Default configuration
 
@@ -48,9 +49,6 @@ If no config file is present, `uncloak` uses built-in defaults.
 version: 0
 coverage-threshold: 80
 exclusions: []
-git:
-  unstaged: true
-  target-ref: origin/main
 ```
 
 ### Configuration fields
@@ -58,8 +56,6 @@ git:
 - `version`: config file version
 - `coverage-threshold`: minimum acceptable coverage percentage for new code
 - `exclusions`: list of file paths or glob patterns to exclude from analysis
-- `git.unstaged`: include unstaged changes in the diff
-- `git.target-ref`: target ref to compare against, such as `main` or `origin/main`
 
 ### Example configuration
 
@@ -69,9 +65,6 @@ coverage-threshold: 90
 exclusions:
   - "docs/**"
   - "**/*_generated.go"
-git:
-  unstaged: true
-  target-ref: main
 ```
 
 ### Exclusions
@@ -86,8 +79,10 @@ Exclusions support exact file matches and glob patterns. For example:
 
 `uncloak` supports these command-line flags:
 
-- `-t, --coverage-threshold <float>`: override the minimum coverage threshold. This will also overwrite what is specified in the configuration file.
-- `-v, --verbose`: print the raw Go test output
+- `-c, --coverage-threshold <float>`: (optional) coverage threshold override. This will also overwrite what is specified in the configuration file
+- `-d, --debug`: enable debug output, e.g. what commands are run
+- `-t, --target-ref <string>`: git target ref to compare against
+- `-v, --verbose`: enable verbose output, e.g. output from go test command
 
 Example:
 
@@ -110,7 +105,7 @@ uncloak --coverage-threshold 70.31 --verbose
 
 ## Notes
 
-- The tool expects to run inside a Git repository.
-- The default target ref is `origin/main`.
+- Brand new Go files must be staged or committed for `uncloak` to analyze them.
+- The tool expects to run inside a Git repository on a branch with a parent branch.
 - The default coverage threshold is `80%`.
 - Unknown YAML fields are rejected, so config files should only contain supported keys.
