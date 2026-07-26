@@ -8,6 +8,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
+	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -79,6 +80,7 @@ func Test_run(t *testing.T) {
 	t.Run("should error when NewCodeCoverage error is not a git repository", func(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := rootCmd
+		_ = testutils.SetStdout(t)
 
 		t.Chdir(t.TempDir())
 		err := c.run(localRootCmd, []string{})
