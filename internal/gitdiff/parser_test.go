@@ -14,6 +14,7 @@ import (
 // Tests for [Run] function.
 func Test_Get(t *testing.T) {
 	t.Run("should return results with valid options", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
 		opts := &DefaultOptions
 
 		results, err := Run(false, opts)
@@ -22,6 +23,7 @@ func Test_Get(t *testing.T) {
 	})
 
 	t.Run("should return results when opts is nil", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
 		results, err := Run(false, nil)
 		require.NoError(t, err)
 		require.NotNil(t, results)
@@ -292,6 +294,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 	})
 
 	t.Run("should return results for valid git diff command", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
 		opts := &DefaultOptions
 
 		results, err := runAndParseGitDiff(false, opts)
@@ -300,6 +303,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 	})
 
 	t.Run("should return results for valid git diff command with debug true", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
 		opts := &DefaultOptions
 
 		results, err := runAndParseGitDiff(true, opts)

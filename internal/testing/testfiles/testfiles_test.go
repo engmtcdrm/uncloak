@@ -35,5 +35,9 @@ func Test_CopyDir(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, entries)
 		require.Len(t, entries, 8)
+
+		for _, entry := range entries {
+			require.NotEqual(t, ".git", entry.Name())
+		}
 	})
 }
