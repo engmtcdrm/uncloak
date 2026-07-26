@@ -19,6 +19,8 @@ var (
 	gitInitCmds = []gitCmd{
 		{name: "init", args: []string{"git", "init"}},
 		{name: "branch", args: []string{"git", "branch", "-m", MainBranchName}},
+		{name: "config-user", args: []string{"git", "config", "user.name", "test-user"}},
+		{name: "config-email", args: []string{"git", "config", "user.email", "test-user@example.com"}},
 	}
 
 	gitAddCommitCmds = []gitCmd{
