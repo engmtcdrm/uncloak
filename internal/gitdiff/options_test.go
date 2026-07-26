@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,6 +16,7 @@ func Test_optionsToArgs(t *testing.T) {
 	})
 
 	t.Run("should return empty args for empty options", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
 		args := optionsToArgs(&Options{})
 		require.Len(t, args, 4)
 		require.Equal(t, "main -- . --unified=0", strings.Join(args, " "))
