@@ -120,5 +120,9 @@ func rootDir(t *testing.T) string {
 	output, err := cmd.Output()
 	require.NoError(t, err, "Failed to get git root directory")
 
-	return strings.TrimSpace(string(output))
+	rootPath := strings.TrimSpace(string(output))
+	rootPath, err = filepath.EvalSymlinks(rootPath)
+	require.NoError(t, err, "Failed to resolve git root directory")
+
+	return rootPath
 }

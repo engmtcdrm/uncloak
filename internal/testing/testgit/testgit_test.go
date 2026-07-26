@@ -49,7 +49,10 @@ func Test_GetTestRepoPath(t *testing.T) {
 
 		Init(t)
 
-		expectedPath := filepath.Join(tempDir, TestRepoDir)
+		expectedRootPath, err := filepath.EvalSymlinks(tempDir)
+		require.NoError(t, err)
+
+		expectedPath := filepath.Join(expectedRootPath, TestRepoDir)
 		result := GetTestRepoPath(t)
 		require.Equal(t, expectedPath, result)
 	})
@@ -97,6 +100,9 @@ func Test_rootDir(t *testing.T) {
 
 		t.Chdir(subDir)
 		result := rootDir(t)
-		require.Equal(t, tempDir, result)
+		expectedRootPath, err := filepath.EvalSymlinks(tempDir)
+		require.NoError(t, err)
+
+		require.Equal(t, expectedRootPath, result)
 	})
 }
