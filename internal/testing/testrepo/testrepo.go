@@ -47,8 +47,8 @@ func InitWithFileCopy(t *testing.T) (string, *os.File) {
 	t.Helper()
 
 	stdoutFile := testutils.SetStdout(t)
-	tempDir := t.TempDir()
 	repoPath := testgit.GetTestRepoPath(t)
+	tempDir := t.TempDir()
 
 	// Create a README.md file to ensure the git repository is not empty
 	readmeMd := filepath.Join(tempDir, "README.md")
