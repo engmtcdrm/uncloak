@@ -21,7 +21,6 @@ var (
 		{name: "branch", args: []string{"git", "branch", "-m", MainBranchName}},
 		{name: "config-user", args: []string{"git", "config", "user.name", "test-user"}},
 		{name: "config-email", args: []string{"git", "config", "user.email", "test-user@example.com"}},
-		{name: "config-sharedRepository", args: []string{"git", "config", "core.sharedRepository", "0666"}},
 	}
 
 	gitAddCommitCmds = []gitCmd{
@@ -89,15 +88,6 @@ func Init(t *testing.T) {
 	for _, cmd := range gitInitCmds {
 		execCmd(t, cmd.args, repoPath)
 	}
-
-	t.Cleanup(func() {
-		filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
-			if err == nil {
-				os.Chmod(path, 0777)
-			}
-			return nil
-		})
-	})
 }
 
 // execCmd executes a command in the given repository path and checks for
