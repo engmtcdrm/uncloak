@@ -25,8 +25,11 @@ func Init(t *testing.T) (string, *os.File) {
 
 	// Create a README.md file to ensure the git repository is not empty
 	readmeMd := filepath.Join(tempDir, "README.md")
-	_, err := os.Create(readmeMd)
+	readmeFile, err := os.Create(readmeMd)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, readmeFile.Close())
+	})
 
 	t.Chdir(tempDir)
 	testgit.Init(t)
@@ -49,8 +52,11 @@ func InitWithFileCopy(t *testing.T) (string, *os.File) {
 
 	// Create a README.md file to ensure the git repository is not empty
 	readmeMd := filepath.Join(tempDir, "README.md")
-	_, err := os.Create(readmeMd)
+	readmeFile, err := os.Create(readmeMd)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, readmeFile.Close())
+	})
 
 	t.Chdir(tempDir)
 	testgit.Init(t)
