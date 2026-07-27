@@ -88,11 +88,6 @@ func Init(t *testing.T) {
 	for _, cmd := range gitInitCmds {
 		execCmd(t, cmd.args, repoPath)
 	}
-
-	t.Cleanup(func() {
-		gitPath := filepath.Join(repoPath, ".git")
-		require.NoError(t, os.RemoveAll(gitPath), "Failed to remove .git directory")
-	})
 }
 
 // execCmd executes a command in the given repository path and checks for
