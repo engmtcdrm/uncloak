@@ -90,14 +90,8 @@ func Init(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		err := filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
-			if err == nil {
-				os.Chmod(path, 0777)
-			}
-			return nil
-		})
-		require.NoError(t, err)
-		require.NoError(t, os.RemoveAll(repoPath))
+		gitPath := filepath.Join(repoPath, ".git")
+		require.NoError(t, os.RemoveAll(gitPath), "Failed to remove .git directory")
 	})
 }
 
