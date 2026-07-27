@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	ErrGitDoesNotExist = fmt.Errorf("git command not found: ensure git is installed and available in $PATH")
-	ErrNotAGitRepo     = fmt.Errorf("not a git repository: ensure you are in a git repository or provide a valid file path")
-	ErrNoParentBranch  = fmt.Errorf("no parent branch found: are you on the main branch for this repository?")
+	ErrNotAGitRepo    = fmt.Errorf("not a git repository: ensure you are in a git repository or provide a valid file path")
+	ErrNoParentBranch = fmt.Errorf("no parent branch found: are you on the main branch for this repository?")
 )
 
 func errNoOutput(cmd *exec.Cmd, targetRef string) error {
@@ -40,8 +39,8 @@ func errNoOutput(cmd *exec.Cmd, targetRef string) error {
 }
 
 func handleExecError(cmd *exec.Cmd, output []byte, err error) error {
-	if execErr, ok := err.(*exec.Error); ok && execErr.Err.Error() == "executable file not found in $PATH" {
-		return ErrGitDoesNotExist
+	if errors.Is(err, exec.ErrNotFound) {
+		return err
 	}
 
 	if exitErr, ok := err.(*exec.ExitError); ok {

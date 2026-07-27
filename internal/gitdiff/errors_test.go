@@ -71,7 +71,7 @@ func Test_handleExecError(t *testing.T) {
 		t.Setenv("PATH", tempDir)
 		cmd := exec.Command("git", "diff")
 		err := handleExecError(cmd, nil, &exec.Error{Name: "git", Err: exec.ErrNotFound})
-		require.ErrorIs(t, err, ErrGitDoesNotExist)
+		require.ErrorIs(t, err, exec.ErrNotFound)
 	})
 
 	t.Run("should return an error with command and output when exec fails", func(t *testing.T) {
