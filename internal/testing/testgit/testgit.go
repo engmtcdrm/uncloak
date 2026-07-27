@@ -88,6 +88,17 @@ func Init(t *testing.T) {
 	for _, cmd := range gitInitCmds {
 		execCmd(t, cmd.args, repoPath)
 	}
+
+	t.Cleanup(func() {
+		err := filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
+			if err == nil {
+				os.Chmod(path, 0777)
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		require.NoError(t, os.RemoveAll(repoPath))
+	})
 }
 
 // execCmd executes a command in the given repository path and checks for
