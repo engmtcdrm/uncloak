@@ -16,8 +16,11 @@ func Test_AddCommit(t *testing.T) {
 
 		// Create a README.md file to ensure the git repository is not empty
 		readmeMd := filepath.Join(tempDir, "README.md")
-		_, err := os.Create(readmeMd)
+		readmeFile, err := os.Create(readmeMd)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, readmeFile.Close())
+		})
 
 		Init(t)
 		AddCommit(t, "Initial commit")
@@ -32,8 +35,11 @@ func Test_CreateBranch(t *testing.T) {
 
 		// Create a README.md file to ensure the git repository is not empty
 		readmeMd := filepath.Join(tempDir, "README.md")
-		_, err := os.Create(readmeMd)
+		readmeFile, err := os.Create(readmeMd)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, readmeFile.Close())
+		})
 
 		Init(t)
 		AddCommit(t, "Initial commit")
@@ -73,7 +79,7 @@ func Test_execCmd(t *testing.T) {
 	t.Run("should execute a command and return its output", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
-		execCmd(t, []string{"echo", "Hello, World!"}, tempDir)
+		execCmd(t, []string{"git", "version"}, tempDir)
 	})
 }
 

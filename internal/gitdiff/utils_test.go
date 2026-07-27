@@ -1,6 +1,7 @@
 package gitdiff
 
 import (
+	"os"
 	"os/exec"
 	"testing"
 
@@ -67,7 +68,7 @@ func Test_isGitDir(t *testing.T) {
 	})
 
 	t.Run("should return false with a non-git directory", func(t *testing.T) {
-		t.Chdir("/tmp")
+		t.Chdir(os.TempDir())
 		require.False(t, isGitDir())
 	})
 }
