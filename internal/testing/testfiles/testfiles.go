@@ -33,10 +33,6 @@ func CopyDir(t *testing.T, srcDir string, destDir string) {
 	require.NoError(t, err)
 
 	for _, entry := range entries {
-		if entry.IsDir() && entry.Name() == ".git" {
-			continue
-		}
-
 		if entry.IsDir() {
 			CopyDir(t, filepath.Join(srcDir, entry.Name()), filepath.Join(destDir, entry.Name()))
 			continue
