@@ -13,7 +13,10 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
 )
 
-const NewBranchName = "new-dev"
+const (
+	NewBranchName = "new-dev"
+	cleanupDelay  = 200 * time.Millisecond
+)
 
 // Init redirects stdout to a temporary file, creates a temporary directory,
 // and initializes a git repository in that directory. It returns the path to
@@ -24,7 +27,8 @@ func Init(t *testing.T) (string, *os.File) {
 	stdoutFile := testutils.SetStdout(t)
 	tempDir := t.TempDir()
 	t.Cleanup(func() {
-		time.Sleep(500 * time.Millisecond)
+		// Sleep for a short duration to ensure that any pending operations are completed
+		time.Sleep(cleanupDelay)
 	})
 
 	// Create a README.md file to ensure the git repository is not empty
@@ -54,7 +58,8 @@ func InitWithFileCopy(t *testing.T) (string, *os.File) {
 	repoPath := testgit.GetTestRepoPath(t)
 	tempDir := t.TempDir()
 	t.Cleanup(func() {
-		time.Sleep(500 * time.Millisecond)
+		// Sleep for a short duration to ensure that any pending operations are completed
+		time.Sleep(cleanupDelay)
 	})
 
 	// Create a README.md file to ensure the git repository is not empty
