@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -23,12 +24,7 @@ func Init(t *testing.T) (string, *os.File) {
 	stdoutFile := testutils.SetStdout(t)
 	tempDir := t.TempDir()
 	t.Cleanup(func() {
-		_ = filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
-			if err == nil {
-				_ = os.Chmod(path, 0777)
-			}
-			return nil
-		})
+		time.Sleep(500 * time.Millisecond)
 	})
 
 	// Create a README.md file to ensure the git repository is not empty
@@ -58,12 +54,7 @@ func InitWithFileCopy(t *testing.T) (string, *os.File) {
 	repoPath := testgit.GetTestRepoPath(t)
 	tempDir := t.TempDir()
 	t.Cleanup(func() {
-		_ = filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
-			if err == nil {
-				_ = os.Chmod(path, 0777)
-			}
-			return nil
-		})
+		time.Sleep(500 * time.Millisecond)
 	})
 
 	// Create a README.md file to ensure the git repository is not empty
