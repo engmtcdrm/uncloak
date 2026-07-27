@@ -27,13 +27,13 @@ var (
 )
 
 type Config struct {
-	Version           int             `yaml:"version"`            // Version of the config file format.
-	Exclusions        []string        `yaml:"exclusions"`         // List of file patterns to exclude from analysis.
-	CoverageThreshold float64         `yaml:"coverage-threshold"` // Minimum coverage threshold.
-	GoTestOptions     gocover.Options `yaml:"test"`               // Go Test-related configuration.
+	Version           int      `yaml:"version"`            // Version of the config file format.
+	Exclusions        []string `yaml:"exclusions"`         // List of file patterns to exclude from analysis.
+	CoverageThreshold float64  `yaml:"coverage-threshold"` // Minimum coverage threshold.
 
 	Debug          bool            // Not configurable via YAML, used for enabling debug output.
 	GitDiffOptions gitdiff.Options // Git-related configuration.
+	GoTestOptions  gocover.Options
 }
 
 type ConfigError struct {
