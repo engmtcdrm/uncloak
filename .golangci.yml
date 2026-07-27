@@ -1,0 +1,7 @@
+version: "2"
+linters:
+  enable:
+    - gocognit
+  settings:
+    gocognit:
+      min-complexity: 15
