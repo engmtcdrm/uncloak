@@ -22,6 +22,14 @@ func Init(t *testing.T) (string, *os.File) {
 
 	stdoutFile := testutils.SetStdout(t)
 	tempDir := t.TempDir()
+	t.Cleanup(func() {
+		_ = filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
+			if err == nil {
+				_ = os.Chmod(path, 0777)
+			}
+			return nil
+		})
+	})
 
 	// Create a README.md file to ensure the git repository is not empty
 	readmeMd := filepath.Join(tempDir, "README.md")
@@ -49,6 +57,14 @@ func InitWithFileCopy(t *testing.T) (string, *os.File) {
 	stdoutFile := testutils.SetStdout(t)
 	repoPath := testgit.GetTestRepoPath(t)
 	tempDir := t.TempDir()
+	t.Cleanup(func() {
+		_ = filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
+			if err == nil {
+				_ = os.Chmod(path, 0777)
+			}
+			return nil
+		})
+	})
 
 	// Create a README.md file to ensure the git repository is not empty
 	readmeMd := filepath.Join(tempDir, "README.md")
