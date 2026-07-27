@@ -16,8 +16,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.26]
-        # os: [ubuntu-latest, windows-latest, macos-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -35,10 +34,3 @@ jobs:
 
       - name: Run Tests
         run: go test -v ./...
-
-      # Save for future use
-      # - name: Upload Go executable
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: ${{ env.REPO_NAME }}-${{ matrix.os }}
-      #     path: ${{ github.workspace }}/${{ env.REPO_NAME }}
