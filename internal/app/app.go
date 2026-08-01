@@ -21,17 +21,25 @@ const (
 
 var (
 	// Version of the application.
-	Version = "dev"
+	Version = ""
+
+	readBuildInfo = debug.ReadBuildInfo
 )
 
 func init() {
-	// Only override the Version variable if it is still set to "dev"
-	if Version == "dev" {
-		info, ok := debug.ReadBuildInfo()
-		if !ok {
-			return
-		}
+	setVersion(&Version)
+}
 
-		Version = info.Main.Version
+// setVersion sets the Version
+func setVersion(version *string) {
+	if *version != "" {
+		return
 	}
+
+	info, ok := readBuildInfo()
+	if !ok {
+		return
+	}
+
+	*version = info.Main.Version
 }
