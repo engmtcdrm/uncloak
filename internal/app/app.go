@@ -1,6 +1,10 @@
 // Application information such as name, version, description, etc.
 package app
 
+import (
+	"runtime/debug"
+)
+
 const (
 	// Name of the application.
 	Name = "uncloak"
@@ -17,5 +21,25 @@ const (
 
 var (
 	// Version of the application.
-	Version = "dev"
+	Version = ""
+
+	readBuildInfo = debug.ReadBuildInfo
 )
+
+func init() {
+	setVersion(&Version)
+}
+
+// setVersion sets the Version
+func setVersion(version *string) {
+	if *version != "" {
+		return
+	}
+
+	info, ok := readBuildInfo()
+	if !ok {
+		return
+	}
+
+	*version = info.Main.Version
+}

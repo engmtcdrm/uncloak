@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- chore: Adjusted how versioning is set for builds to support both `.goreleaser.yml` and `go install`.
+- chore: Added `-trimpath` to `.goreleaser.yml`.
+
 ## [0.1.0] - 2026-07-26
 
 Initial development
