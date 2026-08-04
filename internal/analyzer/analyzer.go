@@ -96,6 +96,9 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	var wg sync.WaitGroup
 	var errs error
 
+	tm := NewTaskManager()
+	tm.Start()
+
 	covCh := make(chan struct {
 		profile *gocover.Profile
 		err     error
@@ -106,6 +109,12 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	}, 1)
 
 	wg.Go(func() {
+		gotask := NewTask("go", "Running Go coverage analysis")
+		tm.AddTask(gotask)
+
+		gotask.Start()
+		defer gotask.Finish()
+
 		p, err := gocover.Run(cfg.Debug)
 		covCh <- struct {
 			profile *gocover.Profile
@@ -114,6 +123,15 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	})
 
 	wg.Go(func() {
+		gittask := NewTask("git", "Running Git diff analysis")
+		tm.AddTask(gittask)
+
+		gittask.Start()
+		defer func() {
+			gittask.Message = "Finished Git diff analysis"
+			gittask.Finish()
+		}()
+
 		d, err := gitdiff.Run(cfg.Debug, &cfg.GitDiffOptions)
 		diffCh <- struct {
 			diff *gitdiff.Results
@@ -122,6 +140,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	})
 
 	wg.Wait()
+	tm.Stop()
 
 	covRes := <-covCh
 	diffRes := <-diffCh
