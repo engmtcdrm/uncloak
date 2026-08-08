@@ -7,6 +7,7 @@ type Profile struct {
 	Lines         []Line
 	CoveredLines  map[string]map[int]bool
 	RawTestOutput []byte
+	Command       string
 }
 
 type Line struct {
@@ -21,7 +22,7 @@ type Line struct {
 }
 
 // NewProfile creates a new Profile instance with the provided raw test output.
-func NewProfile(rawTestOutput []byte) *Profile {
+func NewProfile(command string, rawTestOutput []byte) *Profile {
 	if rawTestOutput == nil {
 		rawTestOutput = []byte{}
 	}
@@ -29,6 +30,7 @@ func NewProfile(rawTestOutput []byte) *Profile {
 	return &Profile{
 		Lines:         []Line{},
 		CoveredLines:  make(map[string]map[int]bool),
+		Command:       command,
 		RawTestOutput: rawTestOutput,
 	}
 }

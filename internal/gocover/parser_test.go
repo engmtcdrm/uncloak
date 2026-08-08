@@ -17,7 +17,7 @@ import (
 func Test_Get(t *testing.T) {
 	t.Run("should return error if go list fails", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		_, err := Run(false)
+		_, err := Run()
 		require.Error(t, err)
 	})
 
@@ -27,7 +27,7 @@ func Test_Get(t *testing.T) {
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
-		profile, err := Run(false)
+		profile, err := Run()
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 	})
@@ -44,7 +44,7 @@ func Test_Get(t *testing.T) {
 		err := os.Chmod(tempDir, 0000)
 		require.NoError(t, err)
 
-		profile, err := Run(false)
+		profile, err := Run()
 		require.Error(t, err)
 		require.Nil(t, profile)
 	})
@@ -209,18 +209,6 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		testfiles.CopyDir(t, repoPath, tempDir)
 
 		t.Chdir(tempDir)
-		filePath, err := p.runTestCoverage()
-		require.NoError(t, err)
-		require.NotEmpty(t, filePath)
-	})
-
-	t.Run("should return valid file path for successful test coverage run with debug enabled", func(t *testing.T) {
-		tempDir := t.TempDir()
-		repoPath := testgit.GetTestRepoPath(t)
-		testfiles.CopyDir(t, repoPath, tempDir)
-
-		t.Chdir(tempDir)
-		p.debug = true
 		filePath, err := p.runTestCoverage()
 		require.NoError(t, err)
 		require.NotEmpty(t, filePath)

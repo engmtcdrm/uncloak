@@ -15,13 +15,12 @@ type parser struct {
 	GoList          *GoList
 	RawCoverData    []byte
 	RawGoTestOutput []byte
-
-	debug bool
+	Command         string
 }
 
 // Run executes the 'go test' command to generate a coverage profile. Finally it
 // parses the coverage profile and returns it as a [Profile] struct.
-func Run(debug bool) (*Profile, error) {
+func Run() (*Profile, error) {
 	goList, err := getGoList()
 	if err != nil {
 		return nil, err
@@ -29,7 +28,6 @@ func Run(debug bool) (*Profile, error) {
 
 	p := &parser{
 		GoList: goList,
-		debug:  debug,
 	}
 
 	filePath, err := p.runTestCoverage()
@@ -82,7 +80,7 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 		return nil, ErroInvalidCoverageFile
 	}
 
-	profile := NewProfile(p.RawGoTestOutput)
+	profile := NewProfile(p.Command, p.RawGoTestOutput)
 
 	if strings.HasPrefix(lines[0], "mode: ") {
 		profile.Mode = Mode(strings.TrimPrefix(lines[0], "mode: "))
@@ -137,9 +135,7 @@ func (p *parser) runTestCoverage() (string, error) {
 		"./...",
 	)
 
-	if p.debug {
-		fmt.Printf("Running command: %s\n\n", strings.Join(cmd.Args, " "))
-	}
+	p.Command = strings.Join(cmd.Args, " ")
 
 	p.RawGoTestOutput, err = cmd.CombinedOutput()
 	if err != nil {
