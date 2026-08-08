@@ -49,11 +49,11 @@ func (tm *taskManager) AddTask(task *task) {
 }
 
 func (tm *taskManager) Start() {
-	fmt.Fprint(tm.out, ansi.SaveCursorPos)
+	_, _ = fmt.Fprint(tm.out, ansi.SaveCursorPos+ansi.HideCursor)
 
 	var buf bytes.Buffer
 
-	taskTimeFormat := "%s [%s]\n"
+	taskTimeFormat := "%s (%s)\n"
 
 	go func() {
 		for {
@@ -64,12 +64,12 @@ func (tm *taskManager) Start() {
 				fmt.Fprint(&buf, clearTasks)
 
 				for _, t := range tm.tasks {
-					switch {
-					case t.Status == taskFinished:
+					switch t.Status {
+					case taskFinished:
 						fmt.Fprintf(&buf, taskTimeFormat, t.Message, pp.Green(t.Duration()))
 						continue
 					default:
-						fmt.Fprintf(&buf, taskTimeFormat, t.Message, t.Duration())
+						fmt.Fprintf(&buf, taskTimeFormat, t.Message, pp.Dim(t.Duration()))
 					}
 				}
 
@@ -86,20 +86,21 @@ func (tm *taskManager) Finish() {
 
 	close(tm.stopChan)
 	var buf bytes.Buffer
-	// fmt.Fprint(tm.out, clearTasks)
-	taskTimeFormat := "%s %s [%s]\n"
+	taskTimeFormat := "%s %s (%s)\n"
 
 	fmt.Fprint(&buf, clearTasks)
 
 	for _, t := range tm.tasks {
-		switch {
-		case t.Status == taskFinished:
+		switch t.Status {
+		case taskFinished:
 			fmt.Fprintf(&buf, taskTimeFormat, colors.Green("✓"), t.Message, pp.Green(t.Duration()))
 			continue
 		default:
 			fmt.Fprintf(&buf, taskTimeFormat, " ", t.Message, t.Duration())
 		}
 	}
+
+	fmt.Fprint(&buf, ansi.ShowCursor)
 
 	fmt.Fprint(tm.out, buf.String())
 }
