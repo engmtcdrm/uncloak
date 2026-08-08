@@ -2,7 +2,10 @@ package analyzer
 
 import (
 	"errors"
+	"fmt"
 	"sync"
+
+	pp "github.com/engmtcdrm/go-prettyprint"
 
 	"github.com/engmtcdrm/uncloak/internal/config"
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
@@ -113,9 +116,12 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 		tm.AddTask(gotask)
 
 		gotask.Start()
-		defer gotask.Finish()
+		defer func() {
+			gotask.Message = "Finished Go coverage analysis"
+			gotask.Finish()
+		}()
 
-		p, err := gocover.Run(cfg.Debug)
+		p, err := gocover.Run()
 		covCh <- struct {
 			profile *gocover.Profile
 			err     error
@@ -132,7 +138,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 			gittask.Finish()
 		}()
 
-		d, err := gitdiff.Run(cfg.Debug, &cfg.GitDiffOptions)
+		d, err := gitdiff.Run(&cfg.GitDiffOptions)
 		diffCh <- struct {
 			diff *gitdiff.Results
 			err  error
@@ -144,6 +150,11 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 
 	covRes := <-covCh
 	diffRes := <-diffCh
+
+	if cfg.Debug {
+		fmt.Printf("\nGo coverage analysis command ran: %s\n", pp.Cyan(covRes.profile.Command))
+		fmt.Printf("Git diff analysis command ran: %s\n\n", pp.Cyan(diffRes.diff.Command))
+	}
 
 	errs = errors.Join(covRes.err, diffRes.err)
 
