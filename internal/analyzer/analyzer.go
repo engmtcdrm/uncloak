@@ -148,11 +148,13 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	wg.Wait()
 	tm.Stop()
 
+	fmt.Println()
+
 	covRes := <-covCh
 	diffRes := <-diffCh
 
 	if cfg.Debug {
-		fmt.Printf("\nGo coverage analysis command ran: %s\n", pp.Cyan(covRes.profile.Command))
+		fmt.Printf("Go coverage analysis command ran: %s\n", pp.Cyan(covRes.profile.Command))
 		fmt.Printf("Git diff analysis command ran: %s\n\n", pp.Cyan(diffRes.diff.Command))
 	}
 
