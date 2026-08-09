@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	clearTasks = ansi.RestoreCursorPos + ansi.ClearFromCursorToEndScreen
+	taskTimeFormat = "%s %s %s\n"
+	clearTasks     = ansi.RestoreCursorPos + ansi.ClearFromCursorToEndScreen
 )
 
 type taskManager struct {
@@ -51,11 +52,9 @@ func (tm *taskManager) AddTask(task *task) {
 func (tm *taskManager) Start() {
 	_, _ = fmt.Fprint(tm.out, ansi.SaveCursorPos+ansi.HideCursor)
 
-	var buf bytes.Buffer
-
-	taskTimeFormat := "%s (%s)\n"
-
 	go func() {
+		var buf bytes.Buffer
+
 		for {
 			select {
 			case <-tm.stopChan:
@@ -66,10 +65,13 @@ func (tm *taskManager) Start() {
 				for _, t := range tm.tasks {
 					switch t.Status {
 					case taskFinished:
-						fmt.Fprintf(&buf, taskTimeFormat, t.Message, pp.Green(t.Duration()))
+						fmt.Fprintf(&buf, taskTimeFormat, colors.Green("✓"), t.Message, colors.BoldGreen(t.Duration()))
+						continue
+					case taskError:
+						fmt.Fprintf(&buf, taskTimeFormat, pp.Red("✗"), t.Message, pp.Red(t.Duration()))
 						continue
 					default:
-						fmt.Fprintf(&buf, taskTimeFormat, t.Message, pp.Dim(t.Duration()))
+						fmt.Fprintf(&buf, taskTimeFormat, " ", t.Message, pp.Bold(pp.Dim(t.Duration())))
 					}
 				}
 
@@ -83,28 +85,24 @@ func (tm *taskManager) Start() {
 }
 
 func (tm *taskManager) Finish() {
-
 	close(tm.stopChan)
 	var buf bytes.Buffer
-	taskTimeFormat := "%s %s (%s)\n"
 
 	fmt.Fprint(&buf, clearTasks)
 
 	for _, t := range tm.tasks {
 		switch t.Status {
 		case taskFinished:
-			fmt.Fprintf(&buf, taskTimeFormat, colors.Green("✓"), t.Message, pp.Green(t.Duration()))
+			fmt.Fprintf(&buf, taskTimeFormat, pp.Bold(colors.Green("✓")), t.Message, colors.BoldGreen(t.Duration()))
+			continue
+		case taskError:
+			fmt.Fprintf(&buf, taskTimeFormat, pp.Bold(pp.Red("✗")), t.Message, pp.Red(t.Duration()))
 			continue
 		default:
-			fmt.Fprintf(&buf, taskTimeFormat, " ", t.Message, t.Duration())
+			fmt.Fprintf(&buf, taskTimeFormat, " ", t.Message, pp.Bold(pp.Dim(t.Duration())))
 		}
 	}
 
 	fmt.Fprint(&buf, ansi.ShowCursor)
-
 	fmt.Fprint(tm.out, buf.String())
-}
-
-func (tm *taskManager) Stop() {
-	tm.Finish()
 }

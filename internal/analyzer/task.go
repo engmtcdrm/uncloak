@@ -33,9 +33,18 @@ func NewTask(name, message string) *task {
 	}
 }
 
-func (t *task) Start() {
-	t.Status = taskStarted
-	t.Started = time.Now()
+func (t *task) Duration() time.Duration {
+	switch t.Status {
+	case taskFinished, taskWarning, taskError:
+		return t.Finished.Sub(t.Started).Round(time.Millisecond)
+	default:
+		return time.Since(t.Started).Round(time.Millisecond)
+	}
+}
+
+func (t *task) Error() {
+	t.Status = taskError
+	t.Finished = time.Now()
 }
 
 func (t *task) Finish() {
@@ -43,10 +52,12 @@ func (t *task) Finish() {
 	t.Finished = time.Now()
 }
 
-func (t *task) Duration() time.Duration {
-	if t.Status == taskFinished {
-		return t.Finished.Sub(t.Started).Round(time.Millisecond)
-	}
+func (t *task) Start() {
+	t.Status = taskStarted
+	t.Started = time.Now()
+}
 
-	return time.Since(t.Started).Round(time.Millisecond)
+func (t *task) Warning() {
+	t.Status = taskWarning
+	t.Finished = time.Now()
 }

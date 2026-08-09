@@ -146,7 +146,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	})
 
 	wg.Wait()
-	tm.Stop()
+	tm.Finish()
 
 	fmt.Println()
 
@@ -159,7 +159,6 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	}
 
 	errs = errors.Join(covRes.err, diffRes.err)
-
 	if errs != nil {
 		return nil, nil, errs
 	}
