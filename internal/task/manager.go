@@ -1,4 +1,4 @@
-package analyzer
+package task
 
 import (
 	"bytes"
@@ -17,26 +17,26 @@ const (
 	clearTasks     = ansi.RestoreCursorPos + ansi.ClearFromCursorToEndScreen
 )
 
-type taskManager struct {
+type Manager struct {
 	mu          sync.RWMutex
 	out         *os.File
-	tasks       []*task
+	tasks       []*Task
 	refreshRate time.Duration
 	stopChan    chan struct{}
 }
 
-func NewTaskManager() *taskManager {
+func NewManager() *Manager {
 	out := os.Stdout
 
-	return &taskManager{
+	return &Manager{
 		out:         out,
-		tasks:       []*task{},
+		tasks:       []*Task{},
 		refreshRate: 100 * time.Millisecond,
 		stopChan:    make(chan struct{}),
 	}
 }
 
-func (tm *taskManager) AddTask(task *task) {
+func (tm *Manager) AddTask(task *Task) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -49,7 +49,7 @@ func (tm *taskManager) AddTask(task *task) {
 	tm.tasks = append(tm.tasks, task)
 }
 
-func (tm *taskManager) Start() {
+func (tm *Manager) Start() {
 	_, _ = fmt.Fprint(tm.out, ansi.SaveCursorPos+ansi.HideCursor)
 
 	go func() {
@@ -63,16 +63,7 @@ func (tm *taskManager) Start() {
 				fmt.Fprint(&buf, clearTasks)
 
 				for _, t := range tm.tasks {
-					switch t.Status {
-					case taskFinished:
-						fmt.Fprintf(&buf, taskTimeFormat, colors.Green("✓"), t.Message, colors.BoldGreen(t.Duration()))
-						continue
-					case taskError:
-						fmt.Fprintf(&buf, taskTimeFormat, pp.Red("✗"), t.Message, pp.Red(t.Duration()))
-						continue
-					default:
-						fmt.Fprintf(&buf, taskTimeFormat, " ", t.Message, pp.Bold(pp.Dim(t.Duration())))
-					}
+					fmt.Fprint(&buf, printTaskStatus(t))
 				}
 
 				fmt.Fprint(tm.out, buf.String())
@@ -84,25 +75,31 @@ func (tm *taskManager) Start() {
 
 }
 
-func (tm *taskManager) Finish() {
+func (tm *Manager) Finish() {
 	close(tm.stopChan)
 	var buf bytes.Buffer
 
 	fmt.Fprint(&buf, clearTasks)
 
 	for _, t := range tm.tasks {
-		switch t.Status {
-		case taskFinished:
-			fmt.Fprintf(&buf, taskTimeFormat, pp.Bold(colors.Green("✓")), t.Message, colors.BoldGreen(t.Duration()))
-			continue
-		case taskError:
-			fmt.Fprintf(&buf, taskTimeFormat, pp.Bold(pp.Red("✗")), t.Message, pp.Red(t.Duration()))
-			continue
-		default:
-			fmt.Fprintf(&buf, taskTimeFormat, " ", t.Message, pp.Bold(pp.Dim(t.Duration())))
-		}
+		fmt.Fprint(&buf, printTaskStatus(t))
 	}
 
 	fmt.Fprint(&buf, ansi.ShowCursor)
 	fmt.Fprint(tm.out, buf.String())
+}
+
+func printTaskStatus(task *Task) string {
+	duration := pp.Bold(task.Duration())
+
+	switch task.Status {
+	case Finished:
+		return fmt.Sprintf(taskTimeFormat, colors.Green("✓"), task.Message, colors.Green(duration))
+	case Error:
+		return fmt.Sprintf(taskTimeFormat, pp.Red("✗"), task.Message, pp.Red(duration))
+	case Warning:
+		return fmt.Sprintf(taskTimeFormat, pp.Yellow("!"), task.Message, pp.Yellow(duration))
+	default:
+		return fmt.Sprintf(taskTimeFormat, " ", task.Message, pp.Bold(pp.Dim(duration)))
+	}
 }

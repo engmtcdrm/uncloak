@@ -12,10 +12,6 @@ func Green(a ...any) string {
 	return pp.Fg24Bit(97, 179, 79, a...)
 }
 
-func BoldGreen(a ...any) string {
-	return pp.Bold(Green(a...))
-}
-
 // MediumGreen returns the input text formatted with a medium green color.
 func MediumGreen(a ...any) string {
 	return pp.Fg24Bit(62, 139, 69, a...)

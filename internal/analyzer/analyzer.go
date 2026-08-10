@@ -10,6 +10,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/config"
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/gocover"
+	"github.com/engmtcdrm/uncloak/internal/task"
 )
 
 var ErrBelowThreshold = errors.New("new code coverage below threshold")
@@ -99,7 +100,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	var wg sync.WaitGroup
 	var errs error
 
-	tm := NewTaskManager()
+	tm := task.NewManager()
 	tm.Start()
 
 	covCh := make(chan struct {
@@ -112,13 +113,21 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	}, 1)
 
 	wg.Go(func() {
-		gotask := NewTask("go", "Running Go coverage analysis")
+		gotask := task.NewTask("go", "Running Go coverage analysis")
 		tm.AddTask(gotask)
+
+		var err error
 
 		gotask.Start()
 		defer func() {
 			gotask.Message = "Finished Go coverage analysis"
-			gotask.Finish()
+
+			switch {
+			case err != nil:
+				gotask.Error()
+			default:
+				gotask.Finish()
+			}
 		}()
 
 		p, err := gocover.Run()
@@ -129,13 +138,21 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	})
 
 	wg.Go(func() {
-		gittask := NewTask("git", "Running Git diff analysis")
+		gittask := task.NewTask("git", "Running Git diff analysis")
 		tm.AddTask(gittask)
+
+		var err error
 
 		gittask.Start()
 		defer func() {
 			gittask.Message = "Finished Git diff analysis"
-			gittask.Finish()
+
+			switch {
+			case err != nil:
+				gittask.Error()
+			default:
+				gittask.Finish()
+			}
 		}()
 
 		d, err := gitdiff.Run(&cfg.GitDiffOptions)
