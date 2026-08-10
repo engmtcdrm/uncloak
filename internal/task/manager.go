@@ -18,21 +18,21 @@ const (
 )
 
 type Manager struct {
-	mu          sync.RWMutex
+	mu          *sync.RWMutex
 	out         *os.File
 	tasks       []*Task
 	refreshRate time.Duration
+	active      bool
 	stopChan    chan struct{}
 }
 
 func NewManager() *Manager {
-	out := os.Stdout
-
 	return &Manager{
-		out:         out,
+		out:         os.Stdout,
 		tasks:       []*Task{},
 		refreshRate: 100 * time.Millisecond,
-		stopChan:    make(chan struct{}),
+		stopChan:    make(chan struct{}, 1),
+		mu:          &sync.RWMutex{},
 	}
 }
 
@@ -50,16 +50,27 @@ func (tm *Manager) AddTask(task *Task) {
 }
 
 func (tm *Manager) Start() {
+	tm.mu.Lock()
+	tm.active = true
 	_, _ = fmt.Fprint(tm.out, ansi.SaveCursorPos+ansi.HideCursor)
 
-	go func() {
-		var buf bytes.Buffer
+	tm.mu.Unlock()
 
+	go func() {
 		for {
 			select {
 			case <-tm.stopChan:
 				return
 			default:
+				tm.mu.Lock()
+
+				if !tm.active {
+					tm.mu.Unlock()
+					return
+				}
+
+				var buf bytes.Buffer
+
 				fmt.Fprint(&buf, clearTasks)
 
 				for _, t := range tm.tasks {
@@ -67,16 +78,18 @@ func (tm *Manager) Start() {
 				}
 
 				fmt.Fprint(tm.out, buf.String())
-				buf.Reset()
+				tm.mu.Unlock()
 				time.Sleep(tm.refreshRate)
 			}
 		}
 	}()
-
 }
 
 func (tm *Manager) Finish() {
-	close(tm.stopChan)
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+	tm.active = false
+
 	var buf bytes.Buffer
 
 	fmt.Fprint(&buf, clearTasks)
@@ -87,6 +100,8 @@ func (tm *Manager) Finish() {
 
 	fmt.Fprint(&buf, ansi.ShowCursor)
 	fmt.Fprint(tm.out, buf.String())
+
+	close(tm.stopChan)
 }
 
 func printTaskStatus(task *Task) string {
@@ -94,11 +109,11 @@ func printTaskStatus(task *Task) string {
 
 	switch task.Status {
 	case Finished:
-		return fmt.Sprintf(taskTimeFormat, colors.Green("✓"), task.Message, colors.Green(duration))
+		return fmt.Sprintf(taskTimeFormat, pp.Bold(colors.Green("✓")), task.Message, colors.Green(duration))
 	case Error:
-		return fmt.Sprintf(taskTimeFormat, pp.Red("✗"), task.Message, pp.Red(duration))
+		return fmt.Sprintf(taskTimeFormat, pp.Bold(pp.Red("✗")), task.Message, pp.Red(duration))
 	case Warning:
-		return fmt.Sprintf(taskTimeFormat, pp.Yellow("!"), task.Message, pp.Yellow(duration))
+		return fmt.Sprintf(taskTimeFormat, pp.Bold(pp.Yellow("!")), task.Message, pp.Yellow(duration))
 	default:
 		return fmt.Sprintf(taskTimeFormat, " ", task.Message, pp.Bold(pp.Dim(duration)))
 	}
