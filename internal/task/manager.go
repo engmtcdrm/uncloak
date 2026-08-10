@@ -10,6 +10,7 @@ import (
 	"github.com/engmtcdrm/go-ansi"
 	pp "github.com/engmtcdrm/go-prettyprint"
 	"github.com/engmtcdrm/uncloak/internal/colors"
+	"golang.org/x/term"
 )
 
 const (
@@ -22,7 +23,6 @@ type Manager struct {
 	out         *os.File
 	tasks       []*Task
 	refreshRate time.Duration
-	active      bool
 	stopChan    chan struct{}
 }
 
@@ -36,72 +36,78 @@ func NewManager() *Manager {
 	}
 }
 
-func (tm *Manager) AddTask(task *Task) {
-	tm.mu.Lock()
-	defer tm.mu.Unlock()
+func (m *Manager) AddTask(task *Task) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	for _, t := range tm.tasks {
+	for _, t := range m.tasks {
 		if t.id == task.id {
 			return
 		}
 	}
 
-	tm.tasks = append(tm.tasks, task)
+	m.tasks = append(m.tasks, task)
 }
 
-func (tm *Manager) Start() {
-	tm.mu.Lock()
-	tm.active = true
-	_, _ = fmt.Fprint(tm.out, ansi.SaveCursorPos+ansi.HideCursor)
+func (m *Manager) Start() {
+	m.mu.Lock()
 
-	tm.mu.Unlock()
+	// Do not bother outputting tasks statuses if we are not in a terminal.
+	// Finish function will write the final task statuses out.
+	if !m.isTerminal() {
+		m.mu.Unlock()
+		return
+	}
+
+	_, _ = fmt.Fprint(m.out, ansi.SaveCursorPos+ansi.HideCursor)
+
+	m.mu.Unlock()
 
 	go func() {
 		for {
 			select {
-			case <-tm.stopChan:
+			case <-m.stopChan:
 				return
 			default:
-				tm.mu.Lock()
-
-				if !tm.active {
-					tm.mu.Unlock()
-					return
-				}
+				m.mu.Lock()
 
 				var buf bytes.Buffer
 
 				fmt.Fprint(&buf, clearTasks)
 
-				for _, t := range tm.tasks {
+				for _, t := range m.tasks {
 					fmt.Fprint(&buf, printTaskStatus(t))
 				}
 
-				fmt.Fprint(tm.out, buf.String())
-				tm.mu.Unlock()
-				time.Sleep(tm.refreshRate)
+				fmt.Fprint(m.out, buf.String())
+				m.mu.Unlock()
+				time.Sleep(m.refreshRate)
 			}
 		}
 	}()
 }
 
-func (tm *Manager) Finish() {
-	tm.mu.Lock()
-	defer tm.mu.Unlock()
-	tm.active = false
+func (m *Manager) Finish() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	var buf bytes.Buffer
 
 	fmt.Fprint(&buf, clearTasks)
 
-	for _, t := range tm.tasks {
+	for _, t := range m.tasks {
 		fmt.Fprint(&buf, printTaskStatus(t))
 	}
 
 	fmt.Fprint(&buf, ansi.ShowCursor)
-	fmt.Fprint(tm.out, buf.String())
+	fmt.Fprint(m.out, buf.String())
 
-	close(tm.stopChan)
+	close(m.stopChan)
+}
+
+func (m *Manager) isTerminal() bool {
+	fd := m.out.Fd()
+	return term.IsTerminal(int(fd))
 }
 
 func printTaskStatus(task *Task) string {
