@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- refactor: changed header output to utilize bytes.Buffer for better performance
+- refactor: missing coverage output to bold path and split each file by a newline for readability
+
 ## [0.1.1] - 2026-08-03
 
 ### Changed
