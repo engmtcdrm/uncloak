@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/engmtcdrm/go-ansi"
 	pp "github.com/engmtcdrm/go-prettyprint"
@@ -15,15 +17,15 @@ import (
 
 const (
 	taskTimeFormat = "%s %s %s\n"
-	clearTasks     = ansi.RestoreCursorPos + ansi.ClearFromCursorToEndScreen
 )
 
 type Manager struct {
-	mu          *sync.RWMutex
-	out         *os.File
-	tasks       []*Task
-	refreshRate time.Duration
-	stopChan    chan struct{}
+	mu            *sync.RWMutex
+	out           *os.File
+	tasks         []*Task
+	renderedLines int
+	refreshRate   time.Duration
+	stopChan      chan struct{}
 }
 
 func NewManager() *Manager {
@@ -59,7 +61,7 @@ func (m *Manager) Start() {
 		return
 	}
 
-	_, _ = fmt.Fprint(m.out, ansi.SaveCursorPos+ansi.HideCursor)
+	_, _ = fmt.Fprint(m.out, ansi.HideCursor)
 
 	m.mu.Unlock()
 
@@ -71,15 +73,8 @@ func (m *Manager) Start() {
 			default:
 				m.mu.Lock()
 
-				var buf bytes.Buffer
-
-				fmt.Fprint(&buf, clearTasks)
-
-				for _, t := range m.tasks {
-					fmt.Fprint(&buf, printTaskStatus(t))
-				}
-
-				fmt.Fprint(m.out, buf.String())
+				fmt.Fprint(m.out, renderTasks(m.tasks, m.renderedLines, m.terminalWidth()))
+				m.renderedLines = len(m.tasks)
 				m.mu.Unlock()
 				time.Sleep(m.refreshRate)
 			}
@@ -91,16 +86,8 @@ func (m *Manager) Finish() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	var buf bytes.Buffer
-
-	fmt.Fprint(&buf, clearTasks)
-
-	for _, t := range m.tasks {
-		fmt.Fprint(&buf, printTaskStatus(t))
-	}
-
-	fmt.Fprint(&buf, ansi.ShowCursor)
-	fmt.Fprint(m.out, buf.String())
+	fmt.Fprint(m.out, renderTasks(m.tasks, m.renderedLines, m.terminalWidth()))
+	fmt.Fprint(m.out, ansi.ShowCursor)
 
 	close(m.stopChan)
 }
@@ -110,17 +97,70 @@ func (m *Manager) isTerminal() bool {
 	return term.IsTerminal(int(fd))
 }
 
-func printTaskStatus(task *Task) string {
-	duration := pp.Bold(task.Duration())
-
-	switch task.Status {
-	case Finished:
-		return fmt.Sprintf(taskTimeFormat, pp.Bold(colors.Green("✓")), task.Message, colors.Green(duration))
-	case Error:
-		return fmt.Sprintf(taskTimeFormat, pp.Bold(pp.Red("✗")), task.Message, pp.Red(duration))
-	case Warning:
-		return fmt.Sprintf(taskTimeFormat, pp.Bold(pp.Yellow("!")), task.Message, pp.Yellow(duration))
-	default:
-		return fmt.Sprintf(taskTimeFormat, " ", task.Message, pp.Bold(pp.Dim(duration)))
+func (m *Manager) terminalWidth() int {
+	width, _, err := term.GetSize(int(m.out.Fd()))
+	if err != nil {
+		return 0
 	}
+
+	return width
+}
+
+func formatTaskStatus(task *Task, terminalWidth int) string {
+	durationText := fmt.Sprint(pp.Bold(task.Duration()))
+	statusText, styledStatus, styledDuration := styleTaskStatus(task.Status, durationText)
+	message := truncateTaskMessage(task.Message, terminalWidth, statusText, durationText)
+
+	return fmt.Sprintf(taskTimeFormat, styledStatus, message, styledDuration)
+}
+
+func renderTasks(tasks []*Task, previousLines, terminalWidth int) string {
+	var buf bytes.Buffer
+
+	if previousLines > 0 {
+		fmt.Fprint(&buf, ansi.CursorUp(previousLines))
+		fmt.Fprint(&buf, ansi.ClearFromCursorToEndScreen)
+	}
+
+	for _, t := range tasks {
+		fmt.Fprint(&buf, formatTaskStatus(t, terminalWidth))
+	}
+
+	return buf.String()
+}
+
+func styleTaskStatus(status Status, durationText string) (statusText string, styledStatus string, styledDuration string) {
+	switch status {
+	case Finished:
+		return "✓", pp.Bold(colors.Green("✓")), colors.Green(durationText)
+	case Error:
+		return "✗", pp.Bold(pp.Red("✗")), pp.Red(durationText)
+	case Warning:
+		return "!", pp.Bold(pp.Yellow("!")), pp.Yellow(durationText)
+	default:
+		return " ", " ", pp.Dim(durationText)
+	}
+}
+
+func truncateTaskMessage(message string, terminalWidth int, statusText string, durationText string) string {
+	if terminalWidth <= 0 {
+		return message
+	}
+
+	visibleFixedWidth := utf8.RuneCountInString(statusText) + 2 + utf8.RuneCountInString(durationText)
+	availableWidth := terminalWidth - visibleFixedWidth
+	if availableWidth <= 0 {
+		return ""
+	}
+
+	if utf8.RuneCountInString(message) <= availableWidth {
+		return message
+	}
+
+	if availableWidth <= 3 {
+		return strings.Repeat(".", availableWidth)
+	}
+
+	runes := []rune(message)
+	return string(runes[:availableWidth-3]) + "..."
 }
