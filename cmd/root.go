@@ -89,14 +89,16 @@ func (c *cmd) run(cmd *cobra.Command, args []string) error {
 		for _, file := range report.Files {
 			for _, lineRange := range file.UncoveredNewLineGroups {
 				fmt.Printf("%s:%s:%s\n",
-					file.Path,
+					pp.Bold(file.Path),
 					pp.Redf("%d", lineRange.Start),
 					pp.Redf("%d", lineRange.End),
 				)
 			}
-		}
 
-		fmt.Println()
+			if len(file.UncoveredNewLineGroups) > 0 {
+				fmt.Println()
+			}
+		}
 	}
 
 	if err != nil {
