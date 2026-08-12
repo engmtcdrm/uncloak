@@ -108,9 +108,8 @@ func (m *Manager) terminalWidth() int {
 }
 
 func formatTaskStatus(task *Task, terminalWidth int) string {
-	durationText := fmt.Sprint(pp.Bold(task.Duration()))
-	statusText, styledStatus, styledDuration := styleTaskStatus(task.Status, durationText)
-	message := truncateTaskMessage(task.Message, terminalWidth, statusText, durationText)
+	styledStatus, styledDuration := styleTaskStatus(task)
+	message := truncateTaskMessage([]rune(task.Message), terminalWidth, styledStatus, styledDuration)
 
 	return fmt.Sprintf(taskTimeFormat, styledStatus, message, styledDuration)
 }
@@ -130,39 +129,45 @@ func renderTasks(tasks []*Task, previousLines, terminalWidth int) string {
 	return buf.String()
 }
 
-func styleTaskStatus(status Status, durationText string) (statusText string, styledStatus string, styledDuration string) {
-	switch status {
+func styleTaskStatus(task *Task) (styledStatus string, styledDuration string) {
+	styledDuration = fmt.Sprint(pp.Bold(task.Duration()))
+
+	switch task.Status {
 	case Finished:
-		return "✓", pp.Bold(colors.Green("✓")), colors.Green(durationText)
+		return pp.Bold(colors.Green("✓")), colors.Green(styledDuration)
 	case Error:
-		return "✗", pp.Bold(pp.Red("✗")), pp.Red(durationText)
+		return pp.Bold(pp.Red("✗")), pp.Red(styledDuration)
 	case Warning:
-		return "!", pp.Bold(pp.Yellow("!")), pp.Yellow(durationText)
+		return pp.Bold(pp.Yellow("!")), pp.Yellow(styledDuration)
 	default:
-		return " ", " ", pp.Dim(durationText)
+		return " ", pp.Dim(styledDuration)
 	}
 }
 
-func truncateTaskMessage(message string, terminalWidth int, statusText string, durationText string) string {
+func truncateTaskMessage(message []rune, terminalWidth int, status string, duration string) string {
 	if terminalWidth <= 0 {
-		return message
+		return string(message)
 	}
 
-	visibleFixedWidth := utf8.RuneCountInString(statusText) + 2 + utf8.RuneCountInString(durationText)
+	// Need to strip ANSI escape sequences to get proper width count.
+	noANSIStatus := ansi.Strip(status)
+	noANSIDuration := ansi.Strip(duration)
+
+	const messagePadding = 2 // 1 space before and after the message.
+
+	visibleFixedWidth := utf8.RuneCountInString(noANSIStatus) + messagePadding + utf8.RuneCountInString(noANSIDuration)
 	availableWidth := terminalWidth - visibleFixedWidth
 	if availableWidth <= 0 {
 		return ""
 	}
 
-	if utf8.RuneCountInString(message) <= availableWidth {
-		return message
+	if len(message) <= availableWidth {
+		return string(message)
 	}
 
 	if availableWidth <= 3 {
 		return strings.Repeat(".", availableWidth)
 	}
 
-	runes := []rune(message)
-
-	return string(runes[:availableWidth-3]) + "..."
+	return string(message[:availableWidth-3]) + "..."
 }
