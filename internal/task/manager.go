@@ -94,6 +94,7 @@ func (m *Manager) Finish() {
 
 func (m *Manager) isTerminal() bool {
 	fd := m.out.Fd()
+
 	return term.IsTerminal(int(fd))
 }
 
@@ -162,5 +163,6 @@ func truncateTaskMessage(message string, terminalWidth int, statusText string, d
 	}
 
 	runes := []rune(message)
+
 	return string(runes[:availableWidth-3]) + "..."
 }
