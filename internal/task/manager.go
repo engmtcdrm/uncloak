@@ -20,19 +20,20 @@ const (
 )
 
 type Manager struct {
+	Out         *os.File
+	Tasks       []*Task
+	RefreshRate time.Duration
+
 	mu            *sync.RWMutex
-	out           *os.File
-	tasks         []*Task
 	renderedLines int
-	refreshRate   time.Duration
 	stopChan      chan struct{}
 }
 
 func NewManager() *Manager {
 	return &Manager{
-		out:         os.Stdout,
-		tasks:       []*Task{},
-		refreshRate: 100 * time.Millisecond,
+		Out:         os.Stdout,
+		Tasks:       []*Task{},
+		RefreshRate: 100 * time.Millisecond,
 		stopChan:    make(chan struct{}, 1),
 		mu:          &sync.RWMutex{},
 	}
@@ -42,13 +43,13 @@ func (m *Manager) AddTask(task *Task) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	for _, t := range m.tasks {
+	for _, t := range m.Tasks {
 		if t.id == task.id {
 			return
 		}
 	}
 
-	m.tasks = append(m.tasks, task)
+	m.Tasks = append(m.Tasks, task)
 }
 
 func (m *Manager) Start() {
@@ -61,7 +62,7 @@ func (m *Manager) Start() {
 		return
 	}
 
-	_, _ = fmt.Fprint(m.out, ansi.HideCursor)
+	fmt.Fprint(m.Out, ansi.HideCursor) //nolint:errcheck
 
 	m.mu.Unlock()
 
@@ -73,10 +74,10 @@ func (m *Manager) Start() {
 			default:
 				m.mu.Lock()
 
-				fmt.Fprint(m.out, renderTasks(m.tasks, m.renderedLines, m.terminalWidth()))
-				m.renderedLines = len(m.tasks)
+				fmt.Fprint(m.Out, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth())) //nolint:errcheck
+				m.renderedLines = len(m.Tasks)
 				m.mu.Unlock()
-				time.Sleep(m.refreshRate)
+				time.Sleep(m.RefreshRate)
 			}
 		}
 	}()
@@ -86,20 +87,20 @@ func (m *Manager) Finish() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	fmt.Fprint(m.out, renderTasks(m.tasks, m.renderedLines, m.terminalWidth()))
-	fmt.Fprint(m.out, ansi.ShowCursor)
+	fmt.Fprint(m.Out, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth())) //nolint:errcheck
+	fmt.Fprint(m.Out, ansi.ShowCursor)                                          //nolint:errcheck
 
 	close(m.stopChan)
 }
 
 func (m *Manager) isTerminal() bool {
-	fd := m.out.Fd()
+	fd := m.Out.Fd()
 
 	return term.IsTerminal(int(fd))
 }
 
 func (m *Manager) terminalWidth() int {
-	width, _, err := term.GetSize(int(m.out.Fd()))
+	width, _, err := term.GetSize(int(m.Out.Fd()))
 	if err != nil {
 		return 0
 	}
