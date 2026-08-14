@@ -18,7 +18,7 @@ func Test_NewReportFile(t *testing.T) {
 	})
 }
 
-// Tests for [FileReport.GroupCoveredLines] method.
+// Tests for [FileReport.GroupCoveredLines] function.
 func Test_FileReport_GroupCoveredLines(t *testing.T) {
 	t.Run("should group covered new lines into ranges", func(t *testing.T) {
 		reportFile := NewFileReport("path/to/file.go")
@@ -35,7 +35,7 @@ func Test_FileReport_GroupCoveredLines(t *testing.T) {
 	})
 }
 
-// Tests for [FileReport.GroupUncoveredLines] method.
+// Tests for [FileReport.GroupUncoveredLines] function.
 func Test_FileReport_GroupUncoveredLines(t *testing.T) {
 	t.Run("should group uncovered new lines into ranges", func(t *testing.T) {
 		reportFile := NewFileReport("path/to/file.go")
@@ -52,7 +52,7 @@ func Test_FileReport_GroupUncoveredLines(t *testing.T) {
 	})
 }
 
-// Tests for [FileReport.TotalNewLines] method.
+// Tests for [FileReport.TotalNewLines] function.
 func Test_FileReport_TotalNewLines(t *testing.T) {
 	t.Run("should return 0 when there are no new lines", func(t *testing.T) {
 		reportFile := NewFileReport("path/to/file.go")

@@ -37,7 +37,7 @@ func Test_NewReport(t *testing.T) {
 	})
 }
 
-// Tests for [Report.CoveragePercent] method.
+// Tests for [Report.CoveragePercent] function.
 func Test_Report_CoveragePercent(t *testing.T) {
 	t.Run("should return 100.0 if there are no new lines", func(t *testing.T) {
 		report := &Report{}
@@ -56,7 +56,7 @@ func Test_Report_CoveragePercent(t *testing.T) {
 	})
 }
 
-// Tests for [Report.GroupCoveredLines] method.
+// Tests for [Report.GroupCoveredLines] function.
 func Test_Report_GroupCoveredLines(t *testing.T) {
 	t.Run("empty report should produce empty CoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
@@ -85,7 +85,7 @@ func Test_Report_GroupCoveredLines(t *testing.T) {
 	})
 }
 
-// Tests for [Report.GroupUncoveredLines] method.
+// Tests for [Report.GroupUncoveredLines] function.
 func Test_Report_GroupUncoveredLines(t *testing.T) {
 	t.Run("empty report should produce empty UncoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
@@ -114,7 +114,7 @@ func Test_Report_GroupUncoveredLines(t *testing.T) {
 	})
 }
 
-// Tests for [Report.HasUncoveredLines] method.
+// Tests for [Report.HasUncoveredLines] function.
 func Test_Report_HasUncoveredLines(t *testing.T) {
 	t.Run("should return false if there are no files in the report", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
@@ -136,7 +136,7 @@ func Test_Report_HasUncoveredLines(t *testing.T) {
 	})
 }
 
-// Tests for [Report.TotalCoveredNewLines] method.
+// Tests for [Report.TotalCoveredNewLines] function.
 func Test_Report_TotalCoveredNewLines(t *testing.T) {
 	t.Run("should return 0 if there are no files in the report", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
@@ -151,7 +151,7 @@ func Test_Report_TotalCoveredNewLines(t *testing.T) {
 	})
 }
 
-// Tests for [Report.TotalNewLines] method.
+// Tests for [Report.TotalNewLines] function.
 func Test_Report_TotalNewLines(t *testing.T) {
 	t.Run("should return 0 if there are no files in the report", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
