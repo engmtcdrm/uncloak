@@ -9,6 +9,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/config"
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
+	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
 	"github.com/stretchr/testify/assert"
@@ -109,12 +110,11 @@ func Test_cmd_handleFlags(t *testing.T) {
 	t.Run("should set config values from flags", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 		c := &cmd{}
-		cfg, err := config.Load()
-		require.NoError(t, err)
+		cfg := config.DefaultConfig
 		localRootCmd := rootCmd
 
 		c.coverageThreshold = 1.0
-		err = localRootCmd.Flags().Set("coverage-threshold", "1.0")
+		err := localRootCmd.Flags().Set("coverage-threshold", "1.0")
 		require.NoError(t, err)
 
 		c.debug = true
@@ -125,7 +125,7 @@ func Test_cmd_handleFlags(t *testing.T) {
 		err = localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
 		require.NoError(t, err)
 
-		c.handleFlags(cfg, localRootCmd)
+		c.handleFlags(&cfg, localRootCmd)
 		assert.Equal(t, 1.0, cfg.CoverageThreshold)
 		assert.Equal(t, true, cfg.Debug)
 		assert.Equal(t, gitdiff.LocalMain, cfg.GitDiffOptions.TargetRef)
@@ -134,6 +134,26 @@ func Test_cmd_handleFlags(t *testing.T) {
 
 // Tests for [outputUncoveredLines] function.
 func Test_outputUncoveredLines(t *testing.T) {
+	initReport := func(t *testing.T) (tempDir string, stdoutFile *os.File, report *analyzer.Report) {
+		t.Helper()
+
+		cfg := config.DefaultConfig
+		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+
+		tempDir, stdoutFile = testrepo.InitWithFileCopy(t)
+		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
+		err := os.Remove(rmTestFile)
+		require.NoError(t, err)
+
+		report, err = analyzer.NewCodeCoverage(&cfg)
+		require.Error(t, err)
+		require.NotNil(t, report)
+
+		require.True(t, report.HasUncoveredLines())
+
+		return tempDir, stdoutFile, report
+	}
+
 	t.Run("should return early if no uncovered lines exist", func(t *testing.T) {
 		report := analyzer.NewReport(80.0, nil, nil)
 
@@ -141,5 +161,34 @@ func Test_outputUncoveredLines(t *testing.T) {
 
 		err := outputUncoveredLines(report, "")
 		require.NoError(t, err)
+	})
+
+	t.Run("should output uncovered lines if they exist", func(t *testing.T) {
+		_, _, report := initReport(t)
+
+		err := outputUncoveredLines(report, "")
+		require.NoError(t, err)
+	})
+
+	t.Run("should output to file if output path is specified", func(t *testing.T) {
+		tempDir, _, report := initReport(t)
+
+		outputFile := filepath.Join(tempDir, "uncovered_lines.txt")
+		err := outputUncoveredLines(report, outputFile)
+		require.NoError(t, err)
+
+		contents, err := os.ReadFile(outputFile)
+		require.NoError(t, err)
+		require.NotEmpty(t, contents)
+
+		t.Logf("Uncovered lines written to %s:\n%s", outputFile, string(contents))
+	})
+
+	t.Run("should return error if output path is not writable", func(t *testing.T) {
+		tempDir, _, report := initReport(t)
+
+		outputFile := filepath.Join(tempDir, "non_existent_dir", "uncovered_lines.txt")
+		err := outputUncoveredLines(report, outputFile)
+		require.Error(t, err)
 	})
 }
