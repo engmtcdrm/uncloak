@@ -103,6 +103,21 @@ func Test_run(t *testing.T) {
 		err = c.run(localRootCmd, []string{})
 		require.Error(t, err)
 	})
+
+	t.Run("should error when output file cannot be written", func(t *testing.T) {
+		tempDir, _ := testrepo.InitWithFileCopy(t)
+		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
+		err := os.Remove(rmTestFile)
+		require.NoError(t, err)
+
+		c := &cmd{}
+		localRootCmd := rootCmd
+
+		c.output = "/invalid/path/to/output/file"
+
+		err = c.run(localRootCmd, []string{})
+		require.Error(t, err)
+	})
 }
 
 // Tests for [cmd.handleFlags] function.
