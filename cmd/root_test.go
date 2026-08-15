@@ -30,7 +30,7 @@ func Test_Execute(t *testing.T) {
 	})
 }
 
-// Tests for [cmd.run] method.
+// Tests for [cmd.run] function.
 func Test_run(t *testing.T) {
 	t.Run("should run the command without error when in git repository", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
