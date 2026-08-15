@@ -5,10 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/analyzer"
+	"github.com/engmtcdrm/uncloak/internal/config"
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -98,5 +101,45 @@ func Test_run(t *testing.T) {
 
 		err = c.run(localRootCmd, []string{})
 		require.Error(t, err)
+	})
+}
+
+// Tests for [cmd.handleFlags] function.
+func Test_cmd_handleFlags(t *testing.T) {
+	t.Run("should set config values from flags", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+		c := &cmd{}
+		cfg, err := config.Load()
+		require.NoError(t, err)
+		localRootCmd := rootCmd
+
+		c.coverageThreshold = 1.0
+		err = localRootCmd.Flags().Set("coverage-threshold", "1.0")
+		require.NoError(t, err)
+
+		c.debug = true
+		err = localRootCmd.Flags().Set("debug", "true")
+		require.NoError(t, err)
+
+		c.gitTargetRef = gitdiff.LocalMain
+		err = localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
+		require.NoError(t, err)
+
+		c.handleFlags(cfg, localRootCmd)
+		assert.Equal(t, 1.0, cfg.CoverageThreshold)
+		assert.Equal(t, true, cfg.Debug)
+		assert.Equal(t, gitdiff.LocalMain, cfg.GitDiffOptions.TargetRef)
+	})
+}
+
+// Tests for [outputUncoveredLines] function.
+func Test_outputUncoveredLines(t *testing.T) {
+	t.Run("should return early if no uncovered lines exist", func(t *testing.T) {
+		report := analyzer.NewReport(80.0, nil, nil)
+
+		require.False(t, report.HasUncoveredLines())
+
+		err := outputUncoveredLines(report, "")
+		require.NoError(t, err)
 	})
 }
