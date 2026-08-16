@@ -89,8 +89,12 @@ func (m *Manager) Finish() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	fmt.Fprint(m.Out, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth())) //nolint:errcheck
-	fmt.Fprint(m.Out, ansi.ShowCursor)                                          //nolint:errcheck
+	var buf bytes.Buffer
+
+	fmt.Fprint(&buf, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth()))
+	fmt.Fprint(&buf, ansi.ShowCursor)
+
+	fmt.Fprint(m.Out, buf.String()) //nolint:errcheck
 
 	close(m.stopChan)
 }
@@ -141,7 +145,7 @@ func renderTasks(tasks []*Task, previousLines, terminalWidth int) string {
 // styleTaskStatus returns the styled status and duration of a task based on its
 // current status.
 func styleTaskStatus(task *Task) (styledStatus string, styledDuration string) {
-	styledDuration = fmt.Sprint(pp.Bold(task.Duration()))
+	styledDuration = pp.Bold(task.Duration())
 
 	switch task.Status {
 	case Finished:
@@ -167,6 +171,7 @@ func truncateTaskMessage(message []rune, terminalWidth int, status string, durat
 	noANSIDuration := ansi.Strip(duration)
 
 	const messagePadding = 2 // 1 space before and after the message.
+	const ellipsis = "..."
 
 	visibleFixedWidth := utf8.RuneCountInString(noANSIStatus) + messagePadding + utf8.RuneCountInString(noANSIDuration)
 	availableWidth := terminalWidth - visibleFixedWidth
@@ -178,9 +183,11 @@ func truncateTaskMessage(message []rune, terminalWidth int, status string, durat
 		return string(message)
 	}
 
-	if availableWidth <= 3 {
+	ellipseLength := len(ellipsis)
+
+	if availableWidth <= ellipseLength {
 		return strings.Repeat(".", availableWidth)
 	}
 
-	return string(message[:availableWidth-3]) + "..."
+	return string(message[:availableWidth-messagePadding-ellipseLength]) + ellipsis
 }
