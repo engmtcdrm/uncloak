@@ -66,21 +66,7 @@ func (m *Manager) Start() {
 
 	m.mu.Unlock()
 
-	go func() {
-		for {
-			select {
-			case <-m.stopChan:
-				return
-			default:
-				m.mu.Lock()
-
-				fmt.Fprint(m.Out, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth())) //nolint:errcheck
-				m.renderedLines = len(m.Tasks)
-				m.mu.Unlock()
-				time.Sleep(m.RefreshRate)
-			}
-		}
-	}()
+	go m.monitorTasks()
 }
 
 // Finish stops the task manager's output loop and renders the final status of
@@ -104,6 +90,24 @@ func (m *Manager) isTerminal() bool {
 	fd := m.Out.Fd()
 
 	return term.IsTerminal(int(fd))
+}
+
+// monitorTasks continuously monitors the tasks and updates the terminal output
+// with their current status until [Manager.stopChan] is closed.
+func (m *Manager) monitorTasks() {
+	for {
+		select {
+		case <-m.stopChan:
+			return
+		default:
+			m.mu.Lock()
+
+			fmt.Fprint(m.Out, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth())) //nolint:errcheck
+			m.renderedLines = len(m.Tasks)
+			m.mu.Unlock()
+			time.Sleep(m.RefreshRate)
+		}
+	}
 }
 
 // terminalWidth returns the width of the terminal in characters. If the output
