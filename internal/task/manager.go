@@ -15,10 +15,6 @@ import (
 	"golang.org/x/term"
 )
 
-const (
-	taskTimeFormat = "%s %s %s\n"
-)
-
 type Manager struct {
 	Out         *os.File
 	Tasks       []*Task
@@ -29,6 +25,7 @@ type Manager struct {
 	stopChan      chan struct{}
 }
 
+// NewManager creates a new instance of [Manager] with default values.
 func NewManager() *Manager {
 	return &Manager{
 		Out:         os.Stdout,
@@ -39,6 +36,7 @@ func NewManager() *Manager {
 	}
 }
 
+// AddTask adds a new task to the manager if it does not already exist.
 func (m *Manager) AddTask(task *Task) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -52,6 +50,8 @@ func (m *Manager) AddTask(task *Task) {
 	m.Tasks = append(m.Tasks, task)
 }
 
+// Start begins the task manager's output loop, which periodically renders the
+// status of all tasks to the output. It only runs if the output is a terminal.
 func (m *Manager) Start() {
 	m.mu.Lock()
 
@@ -83,6 +83,8 @@ func (m *Manager) Start() {
 	}()
 }
 
+// Finish stops the task manager's output loop and renders the final status of
+// all tasks.
 func (m *Manager) Finish() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -93,12 +95,15 @@ func (m *Manager) Finish() {
 	close(m.stopChan)
 }
 
+// isTerminal checks if [Manager.Out] is a terminal.
 func (m *Manager) isTerminal() bool {
 	fd := m.Out.Fd()
 
 	return term.IsTerminal(int(fd))
 }
 
+// terminalWidth returns the width of the terminal in characters. If the output
+// is not a terminal, it returns 0.
 func (m *Manager) terminalWidth() int {
 	width, _, err := term.GetSize(int(m.Out.Fd()))
 	if err != nil {
@@ -108,13 +113,16 @@ func (m *Manager) terminalWidth() int {
 	return width
 }
 
+// formatTaskStatus formats the status of a task for display in the terminal.
 func formatTaskStatus(task *Task, terminalWidth int) string {
 	styledStatus, styledDuration := styleTaskStatus(task)
 	message := truncateTaskMessage([]rune(task.Message), terminalWidth, styledStatus, styledDuration)
 
-	return fmt.Sprintf(taskTimeFormat, styledStatus, message, styledDuration)
+	return fmt.Sprintf("%s %s %s\n", styledStatus, message, styledDuration)
 }
 
+// renderTasks generates the string representation of all tasks, including
+// cursor movement and clearing commands to update the terminal display.
 func renderTasks(tasks []*Task, previousLines, terminalWidth int) string {
 	var buf bytes.Buffer
 
@@ -130,6 +138,8 @@ func renderTasks(tasks []*Task, previousLines, terminalWidth int) string {
 	return buf.String()
 }
 
+// styleTaskStatus returns the styled status and duration of a task based on its
+// current status.
 func styleTaskStatus(task *Task) (styledStatus string, styledDuration string) {
 	styledDuration = fmt.Sprint(pp.Bold(task.Duration()))
 
@@ -145,6 +155,8 @@ func styleTaskStatus(task *Task) (styledStatus string, styledDuration string) {
 	}
 }
 
+// truncateTaskMessage truncates the task message to fit within the available
+// terminal width.
 func truncateTaskMessage(message []rune, terminalWidth int, status string, duration string) string {
 	if terminalWidth <= 0 {
 		return string(message)
