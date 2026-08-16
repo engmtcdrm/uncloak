@@ -41,10 +41,9 @@ func CreatePTY(t *testing.T) (master *os.File, slave *os.File) {
 	m, s, err := pty.Open()
 	require.NoError(t, err, "failed to open pty")
 
-	//nolint:errcheck
 	t.Cleanup(func() {
-		m.Close()
-		s.Close()
+		_ = m.Close()
+		_ = s.Close()
 	})
 
 	return m, s
