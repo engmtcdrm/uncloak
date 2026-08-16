@@ -138,7 +138,9 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 		if err != nil {
 			return fmt.Errorf("failed to create output file: %w", err)
 		}
-		defer outputFile.Close()
+		defer func() {
+			_ = outputFile.Close()
+		}()
 	}
 
 	fmt.Printf("%s\n\n", colors.LightGreen("Missing coverage:"))
@@ -170,10 +172,10 @@ func outputUncoveredLineToStdout(filePath string, lineRange analyzer.LineRange) 
 // outputUncoveredLinetoFile writes the uncovered line range for a given file to
 // the specified output file.
 func outputUncoveredLinetoFile(file *os.File, filePath string, lineRange analyzer.LineRange) {
-	switch {
-	case file == nil:
+	switch file {
+	case nil:
 		return
 	default:
-		fmt.Fprintf(file, "%s:%d:%d\n", filePath, lineRange.Start, lineRange.End)
+		_, _ = fmt.Fprintf(file, "%s:%d:%d\n", filePath, lineRange.Start, lineRange.End)
 	}
 }
