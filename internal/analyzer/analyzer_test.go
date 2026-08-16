@@ -15,14 +15,14 @@ import (
 
 // Tests for [NewCodeCoverage] function.
 func Test_NewCodeCoverage(t *testing.T) {
-	cfg := &config.DefaultConfig
+	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 	testutils.SetStdout(t)
 
 	t.Run("should return a report without error", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 
-		report, err := NewCodeCoverage(cfg)
+		report, err := NewCodeCoverage(&cfg)
 		require.NoError(t, err)
 		require.NotNil(t, report)
 	})
@@ -30,7 +30,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 	t.Run("should return an error if repository is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 
-		report, err := NewCodeCoverage(cfg)
+		report, err := NewCodeCoverage(&cfg)
 		require.Error(t, err)
 		require.Empty(t, report)
 	})
@@ -52,7 +52,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 		err := os.Remove(rmTestFile)
 		require.NoError(t, err)
 
-		report, err := NewCodeCoverage(cfg)
+		report, err := NewCodeCoverage(&cfg)
 		require.Error(t, err)
 		require.NotNil(t, report)
 	})
@@ -69,7 +69,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 		testgit.CreateBranch(t, testrepo.NewBranchName)
 		testgit.AddCommit(t, "Updated README.md")
 
-		report, err := NewCodeCoverage(cfg)
+		report, err := NewCodeCoverage(&cfg)
 		require.NoError(t, err)
 		require.NotNil(t, report)
 	})
@@ -77,20 +77,20 @@ func Test_NewCodeCoverage(t *testing.T) {
 
 // Tests for [analyzeCoverage] function.
 func Test_analyzeCoverage(t *testing.T) {
-	cfg := &config.DefaultConfig
+	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 	testutils.SetStdout(t)
 
 	t.Run("should return a report with files", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 
-		profile, diff, err := processFiles(cfg)
+		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
 
 		report := NewReport(cfg.CoverageThreshold, profile, diff)
 		require.NotNil(t, report)
 
-		report = analyzeCoverage(report, cfg)
+		report = analyzeCoverage(report, &cfg)
 		require.NotNil(t, report)
 		require.NotEmpty(t, report.GitDiffResults.Files())
 	})
@@ -118,32 +118,32 @@ func Test_filterFiles(t *testing.T) {
 	files := []string{"file1.go", "file2.go", "file3.go"}
 
 	t.Run("should return all files if no exclusions are provided", func(t *testing.T) {
-		cfg := &config.DefaultConfig
+		cfg := config.DefaultConfig
 
-		filteredFiles := filterFiles(cfg, files)
+		filteredFiles := filterFiles(&cfg, files)
 		require.Equal(t, files, filteredFiles)
 	})
 
 	t.Run("should return filtered files if exclusions are provided", func(t *testing.T) {
-		cfg := &config.DefaultConfig
+		cfg := config.DefaultConfig
 		cfg.Exclusions = []string{"file2.go"}
 		expectedFiles := []string{"file1.go", "file3.go"}
 
-		filteredFiles := filterFiles(cfg, files)
+		filteredFiles := filterFiles(&cfg, files)
 		require.Equal(t, expectedFiles, filteredFiles)
 	})
 }
 
 // Tests for [processFiles] function.
 func Test_processFiles(t *testing.T) {
-	cfg := &config.DefaultConfig
+	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 	testutils.SetStdout(t)
 
 	t.Run("should return a profile and diff without error", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 
-		profile, diff, err := processFiles(cfg)
+		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 		require.NotNil(t, diff)
@@ -153,7 +153,7 @@ func Test_processFiles(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
 
-		profile, diff, err := processFiles(cfg)
+		profile, diff, err := processFiles(&cfg)
 		require.Error(t, err)
 		require.Nil(t, profile)
 		require.Nil(t, diff)

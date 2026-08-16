@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Tests for [Config.IsExclusionFile] method.
+// Tests for [Config.IsExclusionFile] function.
 func Test_Config_IsExclusionFile(t *testing.T) {
 	t.Run("should return true for exact match", func(t *testing.T) {
 		cfg := &Config{
