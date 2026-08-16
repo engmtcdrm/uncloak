@@ -123,34 +123,30 @@ func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
 }
 
 // outputUncoveredLines writes the uncovered lines from the report to
-// [os.Stdout]. If an outputFile is specified, the uncovered lines will also be
-// written to that file.
-func outputUncoveredLines(report *analyzer.Report, outputFile string) error {
+// [os.Stdout]. If an output file path is specified, the uncovered lines will
+// also be written to that file.
+func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error {
 	if !report.HasUncoveredLines() {
 		return nil
 	}
 
-	var ofile *os.File
-	if outputFile != "" {
+	var outputFile *os.File
+
+	if outputFilePath != "" {
 		var err error
-		ofile, err = os.Create(outputFile)
+		outputFile, err = os.Create(outputFilePath)
 		if err != nil {
 			return fmt.Errorf("failed to create output file: %w", err)
 		}
-		defer ofile.Close()
+		defer outputFile.Close()
 	}
 
 	fmt.Printf("%s\n\n", colors.LightGreen("Missing coverage:"))
 
-	const fileFormat = "%s:%d:%d\n"
-
 	for _, file := range report.Files {
 		for _, lineRange := range file.UncoveredNewLineGroups {
-			outputUncoveredLineToTerminal(file.Path, lineRange)
-
-			if ofile != nil {
-				outputUncoveredLinetoFile(ofile, file.Path, lineRange)
-			}
+			outputUncoveredLineToStdout(file.Path, lineRange)
+			outputUncoveredLinetoFile(outputFile, file.Path, lineRange)
 		}
 
 		if len(file.UncoveredNewLineGroups) > 0 {
@@ -161,7 +157,9 @@ func outputUncoveredLines(report *analyzer.Report, outputFile string) error {
 	return nil
 }
 
-func outputUncoveredLineToTerminal(filePath string, lineRange analyzer.LineRange) {
+// outputUncoveredLineToStdout writes the uncovered line range for a given file
+// to the [os.Stdout].
+func outputUncoveredLineToStdout(filePath string, lineRange analyzer.LineRange) {
 	fmt.Printf("%s:%s:%s\n",
 		pp.Bold(filePath),
 		pp.Redf("%d", lineRange.Start),
@@ -169,6 +167,13 @@ func outputUncoveredLineToTerminal(filePath string, lineRange analyzer.LineRange
 	)
 }
 
+// outputUncoveredLinetoFile writes the uncovered line range for a given file to
+// the specified output file.
 func outputUncoveredLinetoFile(file *os.File, filePath string, lineRange analyzer.LineRange) {
-	fmt.Fprintf(file, "%s:%d:%d\n", filePath, lineRange.Start, lineRange.End)
+	switch {
+	case file == nil:
+		return
+	default:
+		fmt.Fprintf(file, "%s:%d:%d\n", filePath, lineRange.Start, lineRange.End)
+	}
 }

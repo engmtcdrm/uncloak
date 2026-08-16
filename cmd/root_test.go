@@ -207,3 +207,41 @@ func Test_outputUncoveredLines(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+// Tests for [outputUncoveredLineToStdout] function.
+func Test_outputUncoveredLineToStdout(t *testing.T) {
+	t.Run("should output uncovered line to stdout", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		outputUncoveredLineToStdout("file.go", analyzer.LineRange{Start: 1, End: 2})
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		require.NotEmpty(t, contents)
+		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
+	})
+}
+
+// Tests for [outputUncoveredLinetoFile] function.
+func Test_outputUncoveredLinetoFile(t *testing.T) {
+	t.Run("should return early if file is nil", func(t *testing.T) {
+		outputUncoveredLinetoFile(nil, "file.go", analyzer.LineRange{Start: 1, End: 2})
+	})
+
+	t.Run("should write uncovered lines to file if valid", func(t *testing.T) {
+		tempDir := t.TempDir()
+		tempFile := filepath.Join(tempDir, "uncovered_lines.txt")
+		file, err := os.Create(tempFile)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err = file.Close()
+			require.NoError(t, err)
+		})
+
+		outputUncoveredLinetoFile(file, "file.go", analyzer.LineRange{Start: 1, End: 2})
+		contents, err := os.ReadFile(tempFile)
+		require.NoError(t, err)
+		require.NotEmpty(t, contents)
+		t.Logf("Uncovered lines written to file:\n%s", string(contents))
+	})
+}
