@@ -50,7 +50,7 @@ func Test_Get(t *testing.T) {
 	})
 }
 
-// Tests for [parser.parseCoverageData] method.
+// Tests for [parser.parseCoverageData] function.
 func Test_parser_parseCoverageData(t *testing.T) {
 	p := &parser{
 		GoList: &GoList{
@@ -86,7 +86,7 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 	})
 }
 
-// Tests for [parser.parseCoverageProfile] method.
+// Tests for [parser.parseCoverageProfile] function.
 func Test_parser_parseCoverageProfile(t *testing.T) {
 	p := &parser{
 		GoList: &GoList{
@@ -118,7 +118,7 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 	})
 }
 
-// Tests for [parser.parseLines] method.
+// Tests for [parser.parseLines] function.
 func Test_parser_parseLines(t *testing.T) {
 	p := &parser{
 		GoList: &GoList{
@@ -169,7 +169,7 @@ func Test_parser_parseLines(t *testing.T) {
 	})
 }
 
-// Tests for [parser.runTestCoverage] method.
+// Tests for [parser.runTestCoverage] function.
 func Test_parser_runTestCoverage(t *testing.T) {
 	p := &parser{
 		GoList: &GoList{

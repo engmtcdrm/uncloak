@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Tests for [EmptyReader.Read] method.
+// Tests for [EmptyReader.Read] function.
 func Test_EmptyReader_Read(t *testing.T) {
 	t.Run("should return EOF for empty input", func(t *testing.T) {
 		r := &EmptyReader{}
@@ -19,7 +19,7 @@ func Test_EmptyReader_Read(t *testing.T) {
 	})
 }
 
-// Tests for [ErrorReader.Read] method.
+// Tests for [ErrorReader.Read] function.
 func Test_ErrorReader_Read(t *testing.T) {
 	t.Run("should return unexpected EOF error", func(t *testing.T) {
 		r := &ErrorReader{}

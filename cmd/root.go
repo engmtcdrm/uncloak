@@ -44,7 +44,7 @@ func init() {
 		Short:   app.ShortDesc,
 		Long:    app.LongDesc,
 		Example: app.Name,
-		Version: getSemVer(app.Version),
+		Version: app.Version,
 		RunE:    c.run,
 	}
 

@@ -25,7 +25,7 @@ func Test_NewResults(t *testing.T) {
 	})
 }
 
-// Tests for [Results.Files] method.
+// Tests for [Results.Files] function.
 func Test_Results_Files(t *testing.T) {
 	t.Run("return empty slice when no new lines", func(t *testing.T) {
 		results, err := NewResults()
