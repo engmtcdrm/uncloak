@@ -146,14 +146,10 @@ func outputUncoveredLines(report *analyzer.Report, outputFile string) error {
 
 	for _, file := range report.Files {
 		for _, lineRange := range file.UncoveredNewLineGroups {
-			fmt.Printf("%s:%s:%s\n",
-				pp.Bold(file.Path),
-				pp.Redf("%d", lineRange.Start),
-				pp.Redf("%d", lineRange.End),
-			)
+			outputUncoveredLineToTerminal(file.Path, lineRange)
 
 			if ofile != nil {
-				fmt.Fprintf(ofile, fileFormat, file.Path, lineRange.Start, lineRange.End)
+				outputUncoveredLinetoFile(ofile, file.Path, lineRange)
 			}
 		}
 
@@ -163,4 +159,16 @@ func outputUncoveredLines(report *analyzer.Report, outputFile string) error {
 	}
 
 	return nil
+}
+
+func outputUncoveredLineToTerminal(filePath string, lineRange analyzer.LineRange) {
+	fmt.Printf("%s:%s:%s\n",
+		pp.Bold(filePath),
+		pp.Redf("%d", lineRange.Start),
+		pp.Redf("%d", lineRange.End),
+	)
+}
+
+func outputUncoveredLinetoFile(file *os.File, filePath string, lineRange analyzer.LineRange) {
+	fmt.Fprintf(file, "%s:%d:%d\n", filePath, lineRange.Start, lineRange.End)
 }
