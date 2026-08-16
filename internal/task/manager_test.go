@@ -52,11 +52,7 @@ func Test_Manager_Start(t *testing.T) {
 // Tests for -[Manager.isTerminal] function.
 func Test_Manager_isTerminal(t *testing.T) {
 	t.Run("should return true if the output is a terminal", func(t *testing.T) {
-		mockPTY, mockTTY := testutils.CreatePTY(t)
-		t.Cleanup(func() {
-			require.NoError(t, mockPTY.Close(), "Failed to close master pty")
-			require.NoError(t, mockTTY.Close(), "Failed to close slave pty")
-		})
+		_, mockTTY := testutils.CreatePTY(t)
 
 		manager := NewManager()
 		manager.Out = mockTTY

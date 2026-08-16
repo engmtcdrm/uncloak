@@ -35,10 +35,6 @@ func Test_ErrorReader_Read(t *testing.T) {
 func Test_CreatePTY(t *testing.T) {
 	t.Run("should create a pseudo-terminal pair", func(t *testing.T) {
 		master, slave := CreatePTY(t)
-		t.Cleanup(func() {
-			require.NoError(t, master.Close(), "Failed to close master pty")
-			require.NoError(t, slave.Close(), "Failed to close slave pty")
-		})
 		assert.NotNil(t, master, "master should not be nil")
 		assert.NotNil(t, slave, "slave should not be nil")
 	})
