@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Tests for [EmptyReader.Read] method.
@@ -35,8 +36,8 @@ func Test_CreatePTY(t *testing.T) {
 	t.Run("should create a pseudo-terminal pair", func(t *testing.T) {
 		master, slave := CreatePTY(t)
 		t.Cleanup(func() {
-			master.Close()
-			slave.Close()
+			require.NoError(t, master.Close(), "Failed to close master pty")
+			require.NoError(t, slave.Close(), "Failed to close slave pty")
 		})
 		assert.NotNil(t, master, "master should not be nil")
 		assert.NotNil(t, slave, "slave should not be nil")
@@ -49,8 +50,8 @@ func Test_CreatePTYWithSize(t *testing.T) {
 		columns, rows := 80, 24
 		master, slave := CreatePTYWithSize(t, columns, rows)
 		t.Cleanup(func() {
-			master.Close()
-			slave.Close()
+			require.NoError(t, master.Close(), "Failed to close master pty")
+			require.NoError(t, slave.Close(), "Failed to close slave pty")
 		})
 		assert.NotNil(t, master, "master should not be nil")
 		assert.NotNil(t, slave, "slave should not be nil")

@@ -41,8 +41,8 @@ func CreatePTY(t *testing.T) (master *os.File, slave *os.File) {
 	m, s, err := pty.Open()
 	require.NoError(t, err, "failed to open pty")
 	t.Cleanup(func() {
-		m.Close()
-		s.Close()
+		require.NoError(t, m.Close(), "Failed to close master pty")
+		require.NoError(t, s.Close(), "Failed to close slave pty")
 	})
 
 	return m, s
