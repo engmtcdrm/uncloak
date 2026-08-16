@@ -3,8 +3,10 @@ package testutils
 import (
 	"io"
 	"os"
+	"runtime"
 	"testing"
 
+	"github.com/creack/pty"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,6 +22,48 @@ type ErrorReader struct{}
 
 func (e *ErrorReader) Read(p []byte) (n int, err error) {
 	return 0, io.ErrUnexpectedEOF
+}
+
+// CreatePTY creates a pseudo-terminal pair for testing terminal interactions.
+// The returned master and slave *os.File can be used to simulate terminal input
+// and output in tests. The master end can be used to write input as if typed by
+// a user, while the slave end can be used to read output from the terminal.
+// Both files are automatically closed after the test completes.
+//
+// Lovely stolen from https://github.com/engmtcdrm/go-pardon testutils package.
+func CreatePTY(t *testing.T) (master *os.File, slave *os.File) {
+	t.Helper()
+
+	if runtime.GOOS == "windows" {
+		t.Skip("pty is not supported on Windows")
+	}
+
+	m, s, err := pty.Open()
+	require.NoError(t, err, "failed to open pty")
+	t.Cleanup(func() {
+		m.Close()
+		s.Close()
+	})
+
+	return m, s
+}
+
+// CreatePTYWithSize creates a pseudo-terminal pair with the specified size for
+// testing terminal interactions. The returned master and slave *os.File can be
+// used to simulate terminal input and output in tests that require specific
+// terminal dimensions. Both files are automatically closed after the test
+// completes.
+//
+// Lovely stolen from https://github.com/engmtcdrm/go-pardon testutils package.
+func CreatePTYWithSize(t *testing.T, columns, rows int) (master *os.File, slave *os.File) {
+	t.Helper()
+
+	master, slave = CreatePTY(t)
+
+	err := pty.Setsize(slave, &pty.Winsize{Cols: uint16(columns), Rows: uint16(rows)})
+	require.NoError(t, err, "failed to set pty size")
+
+	return master, slave
 }
 
 // SetStdout is a helper function that stores the originl [os.Stdout], replaces

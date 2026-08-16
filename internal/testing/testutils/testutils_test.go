@@ -30,6 +30,33 @@ func Test_ErrorReader_Read(t *testing.T) {
 	})
 }
 
+// Tests for [CreatePTY] function.
+func Test_CreatePTY(t *testing.T) {
+	t.Run("should create a pseudo-terminal pair", func(t *testing.T) {
+		master, slave := CreatePTY(t)
+		t.Cleanup(func() {
+			master.Close()
+			slave.Close()
+		})
+		assert.NotNil(t, master, "master should not be nil")
+		assert.NotNil(t, slave, "slave should not be nil")
+	})
+}
+
+// Tets for [CreatePTYWithSize] function.
+func Test_CreatePTYWithSize(t *testing.T) {
+	t.Run("should create a pseudo-terminal pair with specified size", func(t *testing.T) {
+		columns, rows := 80, 24
+		master, slave := CreatePTYWithSize(t, columns, rows)
+		t.Cleanup(func() {
+			master.Close()
+			slave.Close()
+		})
+		assert.NotNil(t, master, "master should not be nil")
+		assert.NotNil(t, slave, "slave should not be nil")
+	})
+}
+
 // Tests for [SetStdout] function.
 func Test_SetStdout(t *testing.T) {
 	originalStdout := *os.Stdout
