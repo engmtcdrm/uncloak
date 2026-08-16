@@ -4,6 +4,7 @@ go 1.26.5
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.10.0
+	github.com/creack/pty v1.1.24
 	github.com/engmtcdrm/go-ansi v1.1.0
 	github.com/engmtcdrm/go-prettyprint v1.2.2
 	github.com/goccy/go-yaml v1.19.2
