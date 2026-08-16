@@ -76,7 +76,8 @@ func Load() (*Config, error) {
 		return load(bytes.NewReader(data))
 	}
 
-	return &DefaultConfig, nil
+	cfg := DefaultConfig
+	return &cfg, nil
 }
 
 // load reads the configuration from the provided reader and returns a [Config]
