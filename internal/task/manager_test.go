@@ -1,9 +1,14 @@
 package task
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/engmtcdrm/go-ansi"
+	pp "github.com/engmtcdrm/go-prettyprint"
+	"github.com/engmtcdrm/uncloak/internal/colors"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,8 +54,8 @@ func Test_Manager_isTerminal(t *testing.T) {
 	t.Run("should return true if the output is a terminal", func(t *testing.T) {
 		mockPTY, mockTTY := testutils.CreatePTY(t)
 		t.Cleanup(func() {
-			mockPTY.Close()
-			mockTTY.Close()
+			require.NoError(t, mockPTY.Close(), "Failed to close master pty")
+			require.NoError(t, mockTTY.Close(), "Failed to close slave pty")
 		})
 
 		manager := NewManager()
@@ -70,8 +75,8 @@ func Test_Manager_terminalWidth(t *testing.T) {
 	t.Run("should return the width of the terminal", func(t *testing.T) {
 		mockPTY, mockTTY := testutils.CreatePTYWithSize(t, 80, 24)
 		t.Cleanup(func() {
-			mockPTY.Close()
-			mockTTY.Close()
+			require.NoError(t, mockPTY.Close(), "Failed to close master pty")
+			require.NoError(t, mockTTY.Close(), "Failed to close slave pty")
 		})
 
 		manager := NewManager()
@@ -82,5 +87,156 @@ func Test_Manager_terminalWidth(t *testing.T) {
 	t.Run("should return a 0 width if the output is not a terminal", func(t *testing.T) {
 		manager := NewManager()
 		assert.Equal(t, 0, manager.terminalWidth())
+	})
+}
+
+// Tests for [formatTaskStatus] function.
+func Test_formatTaskStatus(t *testing.T) {
+	t.Run("should format the task status correctly when terminal has enough width", func(t *testing.T) {
+		task := NewTask("task1", "Test task")
+		task.Start()
+		task.Finish()
+
+		expectedStatus := fmt.Sprintf("%s %s %s\n", pp.Bold(colors.Green("✓")), "Test task", colors.Green(pp.Bold(task.Duration())))
+		formattedStatus := formatTaskStatus(task, 80)
+		assert.Equal(t, expectedStatus, formattedStatus)
+	})
+
+	t.Run("should truncate the task message if it exceeds the terminal width", func(t *testing.T) {
+		task := NewTask("task1", "This is a very long test task message that should be truncated")
+		task.Start()
+		task.Finish()
+
+		formattedStatus := formatTaskStatus(task, 30)
+		stripedFormattedStatus := strings.TrimSpace(ansi.Strip(formattedStatus))
+		assert.LessOrEqual(t, len(stripedFormattedStatus), 30)
+	})
+}
+
+// Tests for [renderTasks] function.
+func Test_renderTasks(t *testing.T) {
+	t.Run("should return empty string if no previous lines or tasks are provided", func(t *testing.T) {
+		rendered := renderTasks([]*Task{}, 0, 80)
+		assert.Equal(t, "", rendered)
+	})
+
+	t.Run("should render tasks correctly with previous lines and terminal width", func(t *testing.T) {
+		task1 := NewTask("task1", "Test task 1")
+		task1.Start()
+		task1.Finish()
+
+		task2 := NewTask("task2", "Test task 2")
+		task2.Start()
+		task2.Finish()
+
+		tasks := []*Task{task1, task2}
+		rendered := renderTasks(tasks, 2, 80)
+
+		expectedStatus1 := fmt.Sprintf("%s %s %s\n", pp.Bold(colors.Green("✓")), "Test task 1", colors.Green(pp.Bold(task1.Duration())))
+		expectedStatus2 := fmt.Sprintf("%s %s %s\n", pp.Bold(colors.Green("✓")), "Test task 2", colors.Green(pp.Bold(task2.Duration())))
+		expectedRendered := ansi.CursorUp(2) + ansi.ClearFromCursorToEndScreen + expectedStatus1 + expectedStatus2
+
+		assert.Equal(t, expectedRendered, rendered)
+	})
+}
+
+// Tests for [styleTaskStatus] function.
+func Test_styleTaskStatus(t *testing.T) {
+	t.Run("should return default when status is started", func(t *testing.T) {
+		task := NewTask("task1", "Test task")
+		task.Start()
+
+		// Purposely finishing and resetting to Start so we can compare styledDuration output.
+		task.Finish()
+		task.Status = Started
+
+		expectedStatus := " "
+		expectedDuration := pp.Dim(pp.Bold(task.Duration()))
+		styledStatus, styledDuration := styleTaskStatus(task)
+		assert.Equal(t, expectedStatus, styledStatus)
+		assert.Equal(t, styledDuration, expectedDuration)
+	})
+
+	t.Run("should return checkmark and green when status is finished", func(t *testing.T) {
+		task := NewTask("task1", "Test task")
+		task.Start()
+		task.Finish()
+
+		expectedStatus := pp.Bold(colors.Green("✓"))
+		expectedDuration := colors.Green(pp.Bold(task.Duration()))
+		styledStatus, styledDuration := styleTaskStatus(task)
+		assert.Equal(t, styledStatus, expectedStatus)
+		assert.Equal(t, styledDuration, expectedDuration)
+	})
+
+	t.Run("should return cross and red when status is error", func(t *testing.T) {
+		task := NewTask("task1", "Test task")
+		task.Start()
+		task.Error()
+
+		expectedStatus := pp.Bold(pp.Red("✗"))
+		expectedDuration := pp.Red(pp.Bold(task.Duration()))
+		styledStatus, styledDuration := styleTaskStatus(task)
+		assert.Equal(t, styledStatus, expectedStatus)
+		assert.Equal(t, styledDuration, expectedDuration)
+	})
+
+	t.Run("should return exclamation and yellow when status is warning", func(t *testing.T) {
+		task := NewTask("task1", "Test task")
+		task.Start()
+		task.Warning()
+
+		expectedStatus := pp.Bold(pp.Yellow("!"))
+		expectedDuration := pp.Yellow(pp.Bold(task.Duration()))
+		styledStatus, styledDuration := styleTaskStatus(task)
+		assert.Equal(t, styledStatus, expectedStatus)
+		assert.Equal(t, styledDuration, expectedDuration)
+	})
+}
+
+// Tests for [truncateTaskMessage] function.
+func Test_truncateTaskMessage(t *testing.T) {
+	// Add ANSI escape sequences so we can make sure they are striped out
+	status := pp.Dim(" ")
+	duration := pp.Dim("00:00:01")
+
+	t.Run("should return the original message if terminalWidth is less than or equal to 0", func(t *testing.T) {
+		const expectedMessage = "This is a test message"
+		const terminalWidth = 0
+
+		truncatedMessage := truncateTaskMessage([]rune(expectedMessage), terminalWidth, status, duration)
+		assert.Equal(t, expectedMessage, truncatedMessage)
+	})
+
+	t.Run("should truncate the message if it exceeds the available width", func(t *testing.T) {
+		const expectedMessage = "This is a test message that exceeds the available width"
+		const terminalWidth = 30
+
+		truncatedMessage := truncateTaskMessage([]rune(expectedMessage), terminalWidth, status, duration)
+		assert.LessOrEqual(t, len(truncatedMessage), terminalWidth)
+	})
+
+	t.Run("should return the original message if it fits within the available width", func(t *testing.T) {
+		const expectedMessage = "Short message"
+		const terminalWidth = 30
+
+		truncatedMessage := truncateTaskMessage([]rune(expectedMessage), terminalWidth, status, duration)
+		assert.Equal(t, expectedMessage, truncatedMessage)
+	})
+
+	t.Run("should return empty string if available width is less than or equal to 0", func(t *testing.T) {
+		const expectedMessage = "This is a test message"
+		const terminalWidth = 10
+
+		truncatedMessage := truncateTaskMessage([]rune(expectedMessage), terminalWidth, status, duration)
+		assert.Equal(t, "", truncatedMessage)
+	})
+
+	t.Run("should return ellipsis if available width is less than or equal to 3", func(t *testing.T) {
+		const expectedMessage = "This is a test message"
+		const terminalWidth = 14
+
+		truncatedMessage := truncateTaskMessage([]rune(expectedMessage), terminalWidth, status, duration)
+		assert.Equal(t, "...", truncatedMessage)
 	})
 }
