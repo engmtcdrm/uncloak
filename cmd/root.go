@@ -20,7 +20,7 @@ const (
 	coverageThresholdUsage = "(optional) coverage threshold override. This will also overwrite what is specified in the configuration file"
 	debugUsage             = "(optional) enable debug output, e.g. what commands are run"
 	gitTargetRefUsage      = "(optional) git target ref to compare against (default: current branch's nearest parent branch)"
-	outputUsage            = "(optional) output file to write new code missing coverage to"
+	outputUsage            = "(optional) file to write new code missing coverage out to"
 	verboseUsage           = "(optional) enable verbose output, e.g. output from go test command"
 )
 
