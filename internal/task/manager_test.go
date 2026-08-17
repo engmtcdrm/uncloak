@@ -158,7 +158,7 @@ func Test_Manager_isTerminal(t *testing.T) {
 	})
 
 	t.Run("should return false if the output is not a terminal", func(t *testing.T) {
-		// Althought os.Stdout is used, we are technically not in a terminal here
+		// Although os.Stdout is used, we are technically not in a terminal here
 		manager := NewManager()
 		assert.False(t, manager.isTerminal())
 	})
@@ -241,8 +241,8 @@ func Test_formatTaskStatus(t *testing.T) {
 		task.Finish()
 
 		formattedStatus := formatTaskStatus(task, 30)
-		stripedFormattedStatus := strings.TrimSpace(ansi.Strip(formattedStatus))
-		assert.LessOrEqual(t, len(stripedFormattedStatus), 30)
+		strippedFormattedStatus := strings.TrimSpace(ansi.Strip(formattedStatus))
+		assert.LessOrEqual(t, len(strippedFormattedStatus), 30)
 	})
 }
 
@@ -329,7 +329,7 @@ func Test_styleTaskStatus(t *testing.T) {
 
 // Tests for [truncateTaskMessage] function.
 func Test_truncateTaskMessage(t *testing.T) {
-	// Add ANSI escape sequences so we can make sure they are striped out
+	// Add ANSI escape sequences so we can make sure they are stripped out
 	status := pp.Dim(" ")
 	duration := pp.Dim("00:00:01")
 

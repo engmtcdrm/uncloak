@@ -74,7 +74,7 @@ func Test_ReadPTYOutput(t *testing.T) {
 		assert.Equal(t, expectedOutput, output)
 	})
 
-	t.Run("should read output from the psuedo-terminal if buffer size is less than or equal to 0", func(t *testing.T) {
+	t.Run("should read output from the pseudo-terminal if buffer size is less than or equal to 0", func(t *testing.T) {
 		master, slave := CreatePTYWithSize(t, 80, 30)
 
 		_, _ = slave.Write([]byte(expectedOutput))
