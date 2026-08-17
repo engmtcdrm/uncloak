@@ -78,7 +78,10 @@ func (m *Manager) Finish() {
 	var buf bytes.Buffer
 
 	fmt.Fprint(&buf, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth()))
-	fmt.Fprint(&buf, ansi.ShowCursor)
+
+	if m.isTerminal() {
+		fmt.Fprint(&buf, ansi.ShowCursor)
+	}
 
 	fmt.Fprint(m.Out, buf.String()) //nolint:errcheck
 
