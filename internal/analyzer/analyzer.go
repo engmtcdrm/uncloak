@@ -170,10 +170,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	covRes := <-covCh
 	diffRes := <-diffCh
 
-	if cfg.Debug {
-		fmt.Printf("Go coverage analysis command ran: %s\n", pp.Cyan(covRes.profile.Command))
-		fmt.Printf("Git diff analysis command ran: %s\n\n", pp.Cyan(diffRes.diff.Command))
-	}
+	printCommandsIfDebug(cfg, covRes.profile, diffRes.diff)
 
 	errs = errors.Join(covRes.err, diffRes.err)
 	if errs != nil {
@@ -181,4 +178,20 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	}
 
 	return covRes.profile, diffRes.diff, nil
+}
+
+// printCommandsIfDebug prints the commands used for Go coverage and Git diff
+// analysis if debug mode is enabled.
+func printCommandsIfDebug(cfg *config.Config, coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
+	if !cfg.Debug {
+		return
+	}
+
+	if coverageProfile != nil && coverageProfile.Command != "" {
+		fmt.Printf("Go coverage analysis command ran: %s\n", pp.Cyan(coverageProfile.Command))
+	}
+
+	if diffResults != nil && diffResults.Command != "" {
+		fmt.Printf("Git diff analysis command ran: %s\n\n", pp.Cyan(diffResults.Command))
+	}
 }
