@@ -1,9 +1,12 @@
 package testutils
 
 import (
+	"bytes"
+	"errors"
 	"io"
 	"os"
 	"runtime"
+	"syscall"
 	"testing"
 
 	"github.com/creack/pty"
@@ -65,6 +68,38 @@ func CreatePTYWithSize(t *testing.T, columns, rows int) (master *os.File, slave 
 	require.NoError(t, err, "failed to set pty size")
 
 	return master, slave
+}
+
+// ReadPTYOutput reads all available output from the provided reader until EOF
+// is reached.
+func ReadPTYOutput(t *testing.T, ptyFile io.Reader, bufferSize int) string {
+	t.Helper()
+
+	if bufferSize <= 0 {
+		bufferSize = 1024
+	}
+
+	var output bytes.Buffer
+	buffer := make([]byte, bufferSize)
+	for {
+		n, readErr := ptyFile.Read(buffer)
+		if n > 0 {
+			_, _ = output.Write(buffer[:n])
+		}
+
+		if readErr != nil {
+			if errors.Is(readErr, io.EOF) || errors.Is(readErr, syscall.EIO) {
+				break
+			}
+			require.NoError(t, readErr, "reading output should not return an error")
+		}
+
+		if n == 0 {
+			break
+		}
+	}
+
+	return output.String()
 }
 
 // SetStdout is a helper function that stores the originl [os.Stdout], replaces

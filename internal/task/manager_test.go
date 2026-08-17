@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/engmtcdrm/go-ansi"
 	pp "github.com/engmtcdrm/go-prettyprint"
@@ -46,7 +47,104 @@ func Test_Manager_AddTask(t *testing.T) {
 
 // Tests for [Manager.Start] function.
 func Test_Manager_Start(t *testing.T) {
+	t.Run("should start manager and stop when stop channel is closed", func(t *testing.T) {
+		t.Parallel()
 
+		master, slave := testutils.CreatePTYWithSize(t, 80, 30)
+		manager := NewManager()
+		manager.Out = slave
+
+		task1 := NewTask("task1", "Test task")
+		manager.AddTask(task1)
+		task1.Start()
+
+		task2 := NewTask("task2", "Test task")
+		manager.AddTask(task2)
+		task2.Start()
+
+		terminalCh := make(chan struct {
+			contents string
+		}, 1)
+
+		// Setup a goroutine to close the stop channel after a short delay so
+		// that monitorTasks will both exit and have time to run at least once.
+		go func() {
+			time.Sleep(200 * time.Millisecond)
+			close(manager.stopChan)
+			_ = slave.Close()
+			contents := testutils.ReadPTYOutput(t, master, 1024)
+
+			terminalCh <- struct {
+				contents string
+			}{contents}
+		}()
+
+		manager.Start()
+
+		terminalOutput := <-terminalCh
+		assert.Contains(t, terminalOutput.contents, "Test task")
+	})
+
+	t.Run("should start manager, but not write out tasks if the output is not a terminal", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+		manager := NewManager()
+		manager.Out = stdoutFile
+
+		task1 := NewTask("task1", "Test task")
+		manager.AddTask(task1)
+		task1.Start()
+
+		task2 := NewTask("task2", "Test task")
+		manager.AddTask(task2)
+		task2.Start()
+
+		manager.Start()
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		assert.Equal(t, "", string(contents))
+	})
+}
+
+// Tests for [Manager.Finish] function.
+func Test_Manager_Finish(t *testing.T) {
+	t.Run("should start manager and stop when Finish is called", func(t *testing.T) {
+		t.Parallel()
+
+		master, slave := testutils.CreatePTYWithSize(t, 80, 30)
+		manager := NewManager()
+		manager.Out = slave
+
+		task1 := NewTask("task1", "Test task")
+		manager.AddTask(task1)
+		task1.Start()
+
+		task2 := NewTask("task2", "Test task")
+		manager.AddTask(task2)
+		task2.Start()
+
+		terminalCh := make(chan struct {
+			contents string
+		}, 1)
+
+		// Setup a goroutine to close the stop channel after a short delay so
+		// that monitorTasks will both exit and have time to run at least once.
+		go func() {
+			time.Sleep(200 * time.Millisecond)
+			manager.Finish()
+			_ = slave.Close()
+			contents := testutils.ReadPTYOutput(t, master, 1024)
+
+			terminalCh <- struct {
+				contents string
+			}{contents}
+		}()
+
+		manager.Start()
+
+		terminalOutput := <-terminalCh
+		assert.Contains(t, terminalOutput.contents, "Test task")
+	})
 }
 
 // Tests for -[Manager.isTerminal] function.
@@ -63,6 +161,45 @@ func Test_Manager_isTerminal(t *testing.T) {
 		// Althought os.Stdout is used, we are technically not in a terminal here
 		manager := NewManager()
 		assert.False(t, manager.isTerminal())
+	})
+}
+
+// Tests for [Manager.monitorTasks] function.
+func Test_Manager_monitorTasks(t *testing.T) {
+	t.Run("should monitor tasks and return when stop channel is closed", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+		manager := NewManager()
+		manager.Out = stdoutFile
+
+		task1 := NewTask("task1", "Test task")
+		manager.AddTask(task1)
+		task1.Start()
+
+		task2 := NewTask("task2", "Test task")
+		manager.AddTask(task2)
+		task2.Start()
+
+		terminalCh := make(chan struct {
+			contents string
+		}, 1)
+
+		// Setup a goroutine to close the stop channel after a short delay so
+		// that monitorTasks will both exit and have time to run at least once.
+		go func() {
+			time.Sleep(200 * time.Millisecond)
+			close(manager.stopChan)
+
+			contents, err := os.ReadFile(stdoutFile.Name())
+			require.NoError(t, err)
+
+			terminalCh <- struct {
+				contents string
+			}{string(contents)}
+		}()
+		manager.monitorTasks()
+
+		terminalOutput := <-terminalCh
+		assert.Contains(t, terminalOutput.contents, "Test task")
 	})
 }
 

@@ -27,6 +27,17 @@ func Test_NewCodeCoverage(t *testing.T) {
 		require.NotNil(t, report)
 	})
 
+	t.Run("should return a report without error when debug is true", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+		_ = testutils.SetStdout(t)
+
+		cfg := config.DefaultConfig
+		cfg.Debug = true
+		report, err := NewCodeCoverage(&cfg)
+		require.NoError(t, err)
+		require.NotNil(t, report)
+	})
+
 	t.Run("should return an error if repository is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 
