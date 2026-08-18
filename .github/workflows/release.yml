@@ -31,7 +31,7 @@ jobs:
             go get .
             go mod tidy
 
-      - name: golangci-lint
+      - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12
