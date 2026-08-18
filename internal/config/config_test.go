@@ -144,5 +144,4 @@ func Test_validate(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "coverage-threshold must be between 0 and 100")
 	})
-
 }

@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrNoModuleName         = errors.New("no module name found in go.mod file")
-	ErroInvalidCoverageFile = errors.New("invalid coverage file format")
+	ErrNoModuleName        = errors.New("no module name found in go.mod file")
+	ErrInvalidCoverageFile = errors.New("invalid coverage file format")
 
 	panicText = []byte("panic:")
 )

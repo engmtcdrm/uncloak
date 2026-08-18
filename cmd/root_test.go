@@ -141,8 +141,8 @@ func Test_cmd_handleFlags(t *testing.T) {
 		require.NoError(t, err)
 
 		c.handleFlags(&cfg, localRootCmd)
-		assert.Equal(t, 1.0, cfg.CoverageThreshold)
-		assert.Equal(t, true, cfg.Debug)
+		assert.InDelta(t, 1.0, cfg.CoverageThreshold, 0.1)
+		assert.True(t, cfg.Debug)
 		assert.Equal(t, gitdiff.LocalMain, cfg.GitDiffOptions.TargetRef)
 	})
 }

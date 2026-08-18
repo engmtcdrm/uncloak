@@ -1,4 +1,5 @@
-// Application information such as name, version, description, etc.
+// Package app provides application information such as name, version,
+// description, etc.
 package app
 
 import (
@@ -30,7 +31,7 @@ func init() {
 	setVersion(&Version)
 }
 
-// setVersion sets the Version
+// setVersion sets the Version.
 func setVersion(version *string) {
 	if *version != "" {
 		return

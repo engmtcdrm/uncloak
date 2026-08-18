@@ -14,13 +14,13 @@ func Test_findNearestParent(t *testing.T) {
 	t.Run("should return empty parent if on main branch", func(t *testing.T) {
 		_, _ = testrepo.Init(t)
 		parent := findNearestParent()
-		require.Equal(t, "", parent)
+		require.Empty(t, parent)
 	})
 
 	t.Run("should return empty if directory is not a git repo", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		parent := findNearestParent()
-		require.Equal(t, "", parent)
+		require.Empty(t, parent)
 	})
 
 	t.Run("should return parent branch if on a child branch", func(t *testing.T) {
@@ -35,13 +35,13 @@ func Test_findNearestParent(t *testing.T) {
 		require.NoError(t, cmd.Run())
 
 		parent := findNearestParent()
-		require.Equal(t, "", parent)
+		require.Empty(t, parent)
 	})
 
 	t.Run("should return empty if git repo has little to no commits", func(t *testing.T) {
 		_, _ = testrepo.Init(t)
 		parent := findNearestParent()
-		require.Equal(t, "", parent)
+		require.Empty(t, parent)
 	})
 }
 

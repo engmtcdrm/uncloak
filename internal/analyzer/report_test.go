@@ -14,26 +14,26 @@ func Test_NewReport(t *testing.T) {
 		coverageProfile := &gocover.Profile{}
 		gitDiff := &gitdiff.Results{}
 		report := NewReport(80.0, coverageProfile, gitDiff)
-		require.Equal(t, 80.0, report.CoverageThreshold)
+		require.InDelta(t, 80.0, report.CoverageThreshold, 0.1)
 		require.Same(t, coverageProfile, report.CoverageProfile)
 		require.Same(t, gitDiff, report.GitDiffResults)
 	})
 
 	t.Run("should create a new Report instance with empty coverage profile and git diff", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
-		require.Equal(t, 80.0, report.CoverageThreshold)
+		require.InDelta(t, 80.0, report.CoverageThreshold, 0.1)
 		require.NotNil(t, report.CoverageProfile)
 		require.NotNil(t, report.GitDiffResults)
 	})
 
 	t.Run("should set threshold to 0.0 if a negative value is provided", func(t *testing.T) {
 		report := NewReport(-1.0, nil, nil)
-		require.Equal(t, 0.0, report.CoverageThreshold)
+		require.InDelta(t, 0.0, report.CoverageThreshold, 0.1)
 	})
 
 	t.Run("should set threshold to 100.0 if a value greater than 100 is provided", func(t *testing.T) {
 		report := NewReport(101.0, nil, nil)
-		require.Equal(t, 100.0, report.CoverageThreshold)
+		require.InDelta(t, 100.0, report.CoverageThreshold, 0.1)
 	})
 }
 
@@ -41,7 +41,7 @@ func Test_NewReport(t *testing.T) {
 func Test_Report_CoveragePercent(t *testing.T) {
 	t.Run("should return 100.0 if there are no new lines", func(t *testing.T) {
 		report := &Report{}
-		require.Equal(t, 100.0, report.CoveragePercent())
+		require.InDelta(t, 100.0, report.CoveragePercent(), 0.1)
 	})
 
 	t.Run("should return the correct coverage percentage", func(t *testing.T) {
@@ -52,7 +52,7 @@ func Test_Report_CoveragePercent(t *testing.T) {
 			},
 		}
 		expectedCoverage := 100 * (float64(8+3) / float64(10+5))
-		require.Equal(t, expectedCoverage, report.CoveragePercent())
+		require.InDelta(t, expectedCoverage, report.CoveragePercent(), 0.1)
 	})
 }
 

@@ -34,9 +34,9 @@ func findNearestParent() string {
 	}
 
 	var firstParentLine string
-	lines := strings.Split(string(output), "\n")
+	lines := strings.SplitSeq(string(output), "\n")
 
-	for _, line := range lines {
+	for line := range lines {
 		switch {
 		// Skip lines containing the current branch name. We only care about
 		// other branches than the current one.

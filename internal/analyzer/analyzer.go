@@ -73,7 +73,6 @@ func analyzeCoverage(report *Report, cfg *config.Config) *Report {
 }
 
 func filterFiles(cfg *config.Config, files []string) []string {
-
 	if len(cfg.Exclusions) == 0 {
 		return files
 	}
