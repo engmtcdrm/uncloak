@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/gocover"
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
 	"github.com/stretchr/testify/require"
 )
@@ -143,5 +144,36 @@ func Test_validate(t *testing.T) {
 		err := Validate(cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "coverage-threshold must be between 0 and 100")
+	})
+
+	t.Run("should return error if go-test.timeout is negative", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Timeout: -1,
+			},
+		}
+		err := Validate(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "go-test.timeout must be non-negative")
+	})
+
+	t.Run("should return no error if go-test.timeout is zero", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Timeout: 0,
+			},
+		}
+		err := Validate(cfg)
+		require.NoError(t, err)
+	})
+
+	t.Run("should return no error if go-test.timeout is positive", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Timeout: 10,
+			},
+		}
+		err := Validate(cfg)
+		require.NoError(t, err)
 	})
 }
