@@ -3,7 +3,8 @@ package task
 type Status int
 
 const (
-	Started Status = iota
+	NotStarted Status = iota
+	Started
 	Finished
 	Warning
 	Error

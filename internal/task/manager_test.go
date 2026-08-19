@@ -320,7 +320,7 @@ func Test_styleTaskStatus(t *testing.T) {
 
 		// Purposely finishing and resetting to Start so we can compare styledDuration output.
 		task.Finish()
-		task.Status = Started
+		task.SetStatus(Started)
 
 		expectedStatus := " "
 		expectedDuration := pp.Dim(pp.Bold(task.Duration()))

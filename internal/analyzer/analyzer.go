@@ -120,7 +120,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 
 		gotask.Start()
 		defer func() {
-			gotask.Message = "Finished Go coverage analysis"
+			gotask.SetMessage("Finished Go coverage analysis")
 
 			switch {
 			case err != nil:
@@ -145,7 +145,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 
 		gittask.Start()
 		defer func() {
-			gittask.Message = "Finished Git diff analysis"
+			gittask.SetMessage("Finished Git diff analysis")
 
 			switch {
 			case err != nil:

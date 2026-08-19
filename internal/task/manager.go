@@ -45,7 +45,7 @@ func (m *Manager) AddTask(task *Task) {
 	defer m.mu.Unlock()
 
 	for _, t := range m.Tasks {
-		if t.id == task.id {
+		if t.ID() == task.ID() {
 			return
 		}
 	}
@@ -150,7 +150,7 @@ func (m *Manager) terminalWidth() int {
 // formatTaskStatus formats the status of a task for display in the terminal.
 func formatTaskStatus(task *Task, terminalWidth int) string {
 	styledStatus, styledDuration := styleTaskStatus(task)
-	message := truncateTaskMessage([]rune(task.Message), terminalWidth, styledStatus, styledDuration)
+	message := truncateTaskMessage([]rune(task.Message()), terminalWidth, styledStatus, styledDuration)
 
 	return fmt.Sprintf("%s %s %s\n", styledStatus, message, styledDuration)
 }
@@ -177,7 +177,7 @@ func renderTasks(tasks []*Task, previousLines, terminalWidth int) string {
 func styleTaskStatus(task *Task) (styledStatus string, styledDuration string) {
 	styledDuration = pp.Bold(task.Duration())
 
-	switch task.Status {
+	switch task.Status() {
 	case Finished:
 		return pp.Bold(colors.Green("✓")), colors.Green(styledDuration)
 	case Error:
