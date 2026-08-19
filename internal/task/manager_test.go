@@ -45,6 +45,47 @@ func Test_Manager_AddTask(t *testing.T) {
 	})
 }
 
+// Tests for [Manager.Finish] function.
+func Test_Manager_Finish(t *testing.T) {
+	t.Run("should start manager and stop when Finish is called", func(t *testing.T) {
+		t.Parallel()
+
+		master, slave := testutils.CreatePTYWithSize(t, 80, 30)
+		manager := NewManager()
+		manager.Out = slave
+
+		task1 := NewTask("task1", "Test task")
+		manager.AddTask(task1)
+		task1.Start()
+
+		task2 := NewTask("task2", "Test task")
+		manager.AddTask(task2)
+		task2.Start()
+
+		terminalCh := make(chan struct {
+			contents string
+		}, 1)
+
+		// Setup a goroutine to close the stop channel after a short delay so
+		// that monitorTasks will both exit and have time to run at least once.
+		go func() {
+			time.Sleep(200 * time.Millisecond)
+			manager.Finish()
+			_ = slave.Close()
+			contents := testutils.ReadPTYOutput(t, master, 1024)
+
+			terminalCh <- struct {
+				contents string
+			}{contents}
+		}()
+
+		manager.Start()
+
+		terminalOutput := <-terminalCh
+		assert.Contains(t, terminalOutput.contents, "Test task")
+	})
+}
+
 // Tests for [Manager.Start] function.
 func Test_Manager_Start(t *testing.T) {
 	t.Run("should start manager and stop when stop channel is closed", func(t *testing.T) {
@@ -85,30 +126,7 @@ func Test_Manager_Start(t *testing.T) {
 		assert.Contains(t, terminalOutput.contents, "Test task")
 	})
 
-	t.Run("should start manager, but not write out tasks if the output is not a terminal", func(t *testing.T) {
-		stdoutFile := testutils.SetStdout(t)
-		manager := NewManager()
-		manager.Out = stdoutFile
-
-		task1 := NewTask("task1", "Test task")
-		manager.AddTask(task1)
-		task1.Start()
-
-		task2 := NewTask("task2", "Test task")
-		manager.AddTask(task2)
-		task2.Start()
-
-		manager.Start()
-
-		contents, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
-		assert.Equal(t, "", string(contents))
-	})
-}
-
-// Tests for [Manager.Finish] function.
-func Test_Manager_Finish(t *testing.T) {
-	t.Run("should start manager and stop when Finish is called", func(t *testing.T) {
+	t.Run("should not start a new monitor if manager has already started", func(t *testing.T) {
 		t.Parallel()
 
 		master, slave := testutils.CreatePTYWithSize(t, 80, 30)
@@ -131,7 +149,7 @@ func Test_Manager_Finish(t *testing.T) {
 		// that monitorTasks will both exit and have time to run at least once.
 		go func() {
 			time.Sleep(200 * time.Millisecond)
-			manager.Finish()
+			close(manager.stopChan)
 			_ = slave.Close()
 			contents := testutils.ReadPTYOutput(t, master, 1024)
 
@@ -141,9 +159,30 @@ func Test_Manager_Finish(t *testing.T) {
 		}()
 
 		manager.Start()
+		manager.Start() // Attempt to start the manager again, should not start a new monitor.
 
 		terminalOutput := <-terminalCh
 		assert.Contains(t, terminalOutput.contents, "Test task")
+	})
+
+	t.Run("should start manager, but not write out tasks if the output is not a terminal", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+		manager := NewManager()
+		manager.Out = stdoutFile
+
+		task1 := NewTask("task1", "Test task")
+		manager.AddTask(task1)
+		task1.Start()
+
+		task2 := NewTask("task2", "Test task")
+		manager.AddTask(task2)
+		task2.Start()
+
+		manager.Start()
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		assert.Equal(t, "", string(contents))
 	})
 }
 

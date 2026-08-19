@@ -15,14 +15,17 @@ import (
 	"golang.org/x/term"
 )
 
+// Manager manages and renders the status of multiple tasks in the terminal.
 type Manager struct {
-	Out         *os.File
-	Tasks       []*Task
-	RefreshRate time.Duration
+	Out         *os.File      // the output file (typically the terminal) where task statuses are rendered
+	Tasks       []*Task       // the list of tasks being managed
+	RefreshRate time.Duration // the interval at which the task statuses are refreshed in the terminal
 
-	mu            *sync.RWMutex
-	renderedLines int
-	stopChan      chan struct{}
+	isRunning     bool           // indicates whether the manager is currently running
+	mu            *sync.RWMutex  // protects access to the manager's state
+	monitorWG     sync.WaitGroup // tracks the lifecycle of the monitor goroutine
+	renderedLines int            // keeps track of the number of lines rendered in the terminal
+	stopChan      chan struct{}  // channel used to signal the monitor goroutine to stop
 }
 
 // NewManager creates a new instance of [Manager] with default values.
@@ -50,10 +53,40 @@ func (m *Manager) AddTask(task *Task) {
 	m.Tasks = append(m.Tasks, task)
 }
 
+// Finish stops the task manager's output loop and renders the final status of
+// all tasks.
+func (m *Manager) Finish() {
+	close(m.stopChan)
+	m.monitorWG.Wait()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.isRunning {
+		m.isRunning = false
+
+		var buf bytes.Buffer
+
+		fmt.Fprint(&buf, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth()))
+
+		if m.isTerminal() {
+			fmt.Fprint(&buf, ansi.ShowCursor)
+		}
+
+		fmt.Fprint(m.Out, buf.String()) //nolint:errcheck
+	}
+}
+
 // Start begins the task manager's output loop, which periodically renders the
 // status of all tasks to the output. It only runs if the output is a terminal.
 func (m *Manager) Start() {
 	m.mu.Lock()
+
+	// Only allow starting if the manager is not already running.
+	if m.isRunning {
+		m.mu.Unlock()
+		return
+	}
 
 	// Do not bother outputting tasks statuses if we are not in a terminal.
 	// Finish function will write the final task statuses out.
@@ -64,28 +97,10 @@ func (m *Manager) Start() {
 
 	fmt.Fprint(m.Out, ansi.HideCursor) //nolint:errcheck
 
+	m.isRunning = true
 	m.mu.Unlock()
 
-	go m.monitorTasks()
-}
-
-// Finish stops the task manager's output loop and renders the final status of
-// all tasks.
-func (m *Manager) Finish() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	var buf bytes.Buffer
-
-	fmt.Fprint(&buf, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth()))
-
-	if m.isTerminal() {
-		fmt.Fprint(&buf, ansi.ShowCursor)
-	}
-
-	fmt.Fprint(m.Out, buf.String()) //nolint:errcheck
-
-	close(m.stopChan)
+	go m.runMonitorTasks()
 }
 
 // isTerminal checks if [Manager.Out] is a terminal.
@@ -111,6 +126,14 @@ func (m *Manager) monitorTasks() {
 			time.Sleep(m.RefreshRate)
 		}
 	}
+}
+
+// runMonitorTasks tracks the monitor goroutine lifecycle for Start/Finish.
+func (m *Manager) runMonitorTasks() {
+	m.monitorWG.Add(1)
+	defer m.monitorWG.Done()
+
+	m.monitorTasks()
 }
 
 // terminalWidth returns the width of the terminal in characters. If the output
