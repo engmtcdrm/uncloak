@@ -34,6 +34,10 @@ func NewTask(name, message string) *Task {
 // end time. If the task is still running, it calculates the duration from the
 // start time to the current time.
 func (t *Task) Duration() time.Duration {
+	if t.start.IsZero() {
+		return 0
+	}
+
 	switch t.Status {
 	case Finished, Warning, Error:
 		return t.end.Sub(t.start).Round(time.Millisecond)

@@ -40,6 +40,13 @@ func Test_Task_Duration(t *testing.T) {
 		duration := task.Duration()
 		assert.GreaterOrEqual(t, duration.Milliseconds(), int64(10), "Expected duration to be at least 10 milliseconds")
 	})
+
+	t.Run("should return zero duration for a task that has not started", func(t *testing.T) {
+		task := NewTask("Test Task", "This is a test task")
+
+		duration := task.Duration()
+		assert.Equal(t, int64(0), duration.Milliseconds(), "Expected duration to be zero for a task that has not started")
+	})
 }
 
 // Tests for [Task.Error] function.
