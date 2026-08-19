@@ -138,9 +138,7 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 		if err != nil {
 			return fmt.Errorf("failed to create output file: %w", err)
 		}
-		defer func() {
-			_ = outputFile.Close()
-		}()
+		defer outputFile.Close() //nolint:errcheck
 	}
 
 	fmt.Printf("%s\n\n", colors.LightGreen("Missing coverage:"))

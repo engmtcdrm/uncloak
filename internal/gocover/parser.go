@@ -34,9 +34,7 @@ func Run() (*Profile, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = os.Remove(filePath)
-	}()
+	defer os.Remove(filePath) //nolint:errcheck
 
 	return p.parseCoverageProfile(filePath)
 }

@@ -20,9 +20,9 @@ func Test_setVersion(t *testing.T) {
 		readBuildInfo = func() (*debug.BuildInfo, bool) {
 			return nil, false
 		}
-		defer func() {
+		t.Cleanup(func() {
 			readBuildInfo = originalReadBuildInfo
-		}()
+		})
 
 		v := ""
 		setVersion(&v)
@@ -35,9 +35,9 @@ func Test_setVersion(t *testing.T) {
 		readBuildInfo = func() (*debug.BuildInfo, bool) {
 			return &debug.BuildInfo{Main: debug.Module{Version: expectedVersion}}, true
 		}
-		defer func() {
+		t.Cleanup(func() {
 			readBuildInfo = originalReadBuildInfo
-		}()
+		})
 
 		v := ""
 		setVersion(&v)
