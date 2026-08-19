@@ -23,24 +23,24 @@ var (
 func errNoOutput(cmd *exec.Cmd, targetRef string) error {
 	currentBranch := getCurrentBranch()
 
-	var sb bytes.Buffer
+	var buf bytes.Buffer
 
 	if cmd != nil && len(cmd.Args) > 0 {
-		fmt.Fprintf(&sb, "command: %q: ", strings.Join(cmd.Args, " "))
+		fmt.Fprintf(&buf, "command: %q: ", strings.Join(cmd.Args, " "))
 	}
 
-	fmt.Fprint(&sb, "git diff command produced no output.")
+	fmt.Fprint(&buf, "git diff command produced no output.")
 
 	switch {
 	case targetRef != "" && currentBranch != "":
-		fmt.Fprintf(&sb, " Is the target ref (%s) the same as the current branch (%s)?", targetRef, currentBranch)
+		fmt.Fprintf(&buf, " Is the target ref (%s) the same as the current branch (%s)?", targetRef, currentBranch)
 	case targetRef != "" && currentBranch == "":
-		fmt.Fprintf(&sb, " Is the target ref (%s) the same as the current branch?", targetRef)
+		fmt.Fprintf(&buf, " Is the target ref (%s) the same as the current branch?", targetRef)
 	case targetRef == "" && currentBranch != "":
-		fmt.Fprintf(&sb, " Is the target ref the same as the current branch (%s)?", currentBranch)
+		fmt.Fprintf(&buf, " Is the target ref the same as the current branch (%s)?", currentBranch)
 	}
 
-	return errors.New(sb.String())
+	return errors.New(buf.String())
 }
 
 func handleExecError(cmd *exec.Cmd, output []byte, err error) error {
