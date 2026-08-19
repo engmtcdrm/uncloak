@@ -12,7 +12,26 @@ on:
       - "*" # Ignore all tags
 
 jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.6
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.x.x
   test:
+    needs: linter
     strategy:
       matrix:
         go-version: [1.26.6]
@@ -27,15 +46,8 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
-      - name: Install dependencies and tidy up go mod
-        run: |
-          go get .
-          go mod tidy
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.12
+      - name: Install dependencies
+        run: go mod download
 
       - name: Run Tests
         run: go test -timeout 3m -v ./...
