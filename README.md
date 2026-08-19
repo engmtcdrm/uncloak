@@ -80,9 +80,12 @@ Exclusions support exact file matches and glob patterns. For example:
 `uncloak` supports these command-line flags:
 
 - `-c, --coverage-threshold <float>`: (optional) coverage threshold override. This will also overwrite what is specified in the configuration file
-- `-d, --debug`: enable debug output, e.g. what commands are run
-- `-t, --target-ref <string>`: git target ref to compare against
-- `-v, --verbose`: enable verbose output, e.g. output from go test command
+- `-d, --debug`: (optional) enable debug output, e.g. what commands are run
+- `-h, --help`: help for uncloak
+- `-o, --output`: (optional) file to write new code missing coverage out to
+- `-t, --target-ref <string>`: (optional) git target ref to compare against (default: current branch's nearest parent branch)
+- `-v, --verbose`: (optional) enable verbose output, e.g. output from go test command
+- `--version`: version for uncloak
 
 Example:
 
