@@ -37,8 +37,8 @@ func (e *ErrorReader) Read(p []byte) (n int, err error) {
 func CreatePTY(t *testing.T) (master *os.File, slave *os.File) {
 	t.Helper()
 
-	if runtime.GOOS == "windows" {
-		t.Skip("pty is not supported on Windows")
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("pty is not supported on Windows or macOS")
 	}
 
 	m, s, err := pty.Open()
