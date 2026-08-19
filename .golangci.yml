@@ -13,6 +13,7 @@ linters:
     - intrange
     - modernize
     - nestif
+    - revive
     - testifylint
     - thelper
     - tparallel

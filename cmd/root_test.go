@@ -224,7 +224,7 @@ func Test_outputUncoveredLineToStdout(t *testing.T) {
 
 // Tests for [outputUncoveredLinetoFile] function.
 func Test_outputUncoveredLinetoFile(t *testing.T) {
-	t.Run("should return early if file is nil", func(t *testing.T) {
+	t.Run("should return early if file is nil", func(_ *testing.T) {
 		outputUncoveredLinetoFile(nil, "file.go", analyzer.LineRange{Start: 1, End: 2})
 	})
 

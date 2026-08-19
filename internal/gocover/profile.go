@@ -2,6 +2,9 @@ package gocover
 
 import "sort"
 
+// Profile represents the coverage profile for a Go project, including the
+// coverage mode, the lines of code with coverage information, and the raw test
+// output.
 type Profile struct {
 	Mode          Mode
 	Lines         []Line
@@ -10,6 +13,7 @@ type Profile struct {
 	Command       string
 }
 
+// Line represents a block of code in a source file with coverage information.
 type Line struct {
 	FilePath    string // The absolute file path of the source file.
 	Path        string // The relative file path of the source file, relative to the module root.

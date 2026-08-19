@@ -11,8 +11,12 @@ import (
 )
 
 const (
+	// MainBranchName represents the name of the main branch in the git
+	// repository.
 	MainBranchName = "main"
-	TestRepoDir    = "test-repo-covered"
+
+	// TestRepoDir represents the directory name of the test git repository.
+	TestRepoDir = "test-repo-covered"
 )
 
 var (

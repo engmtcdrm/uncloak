@@ -1,3 +1,5 @@
+// Package main provides the entry point for the uncloak command-line
+// application.
 package main
 
 import (

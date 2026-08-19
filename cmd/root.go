@@ -62,7 +62,7 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
-func (c *cmd) run(cmd *cobra.Command, args []string) error {
+func (c *cmd) run(cmd *cobra.Command, _ []string) error {
 	header.PrintHeader()
 
 	cfg, err := config.Load()

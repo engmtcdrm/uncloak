@@ -11,7 +11,9 @@ import (
 
 type zeroReader struct{}
 
-func (z *zeroReader) Read(p []byte) (int, error) {
+// Read implements the [io.Reader] interface for the [zeroReader] type, always
+// returning 0 bytes read and no error.
+func (z *zeroReader) Read(_ []byte) (int, error) {
 	return 0, nil
 }
 

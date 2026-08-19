@@ -14,8 +14,11 @@ import (
 )
 
 const (
+	// NewBranchName is the name of the new development branch created in the
+	// test repository.
 	NewBranchName = "new-dev"
-	cleanupDelay  = 200 * time.Millisecond
+
+	cleanupDelay = 200 * time.Millisecond
 )
 
 // Init redirects stdout to a temporary file, creates a temporary directory,

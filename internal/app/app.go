@@ -16,8 +16,8 @@ const (
 	// ShortDesc provides a brief description of the application.
 	ShortDesc = "A CLI tool for analyzing new code coverage in Go files"
 
-	// RepoUrl is the URL of the application's repository.
-	RepoUrl = "https://github.com/engmtcdrm/uncloak"
+	// RepoURL is the URL of the application's repository.
+	RepoURL = "https://github.com/engmtcdrm/uncloak"
 )
 
 var (

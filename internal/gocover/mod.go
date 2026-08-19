@@ -10,6 +10,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
+// GoList represents the structure of the JSON output from `go list -m -json`.
 type GoList struct {
 	Path      string `json:"Path"`
 	Main      bool   `json:"Main"`

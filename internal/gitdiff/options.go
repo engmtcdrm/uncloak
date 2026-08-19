@@ -1,7 +1,9 @@
 package gitdiff
 
+// DefaultOptions provides the default configuration for the git diff command.
 var DefaultOptions = Options{}
 
+// Options represents the configuration options for the git diff command.
 type Options struct {
 	TargetRef string // Target ref for git diff, e.g., "origin/main" or commit hash.
 }

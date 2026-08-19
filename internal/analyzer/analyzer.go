@@ -13,7 +13,11 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/task"
 )
 
-var ErrBelowThreshold = errors.New("new code coverage below threshold")
+var (
+	// ErrBelowThreshold is returned when the new code coverage is below the
+	// configured threshold.
+	ErrBelowThreshold = errors.New("new code coverage below threshold")
+)
 
 // NewCodeCoverage analyzes the Go coverage profile and the git diff file,
 // returning a report of the coverage of new lines in the code. It returns
