@@ -10,9 +10,10 @@ const (
 type Results struct {
 	RootDir  string
 	NewLines map[string]map[int]bool
+	Command  string
 }
 
-func NewResults() (*Results, error) {
+func NewResults(command string) (*Results, error) {
 	rootDir, err := gitRootDir()
 	if err != nil {
 		return nil, err
@@ -21,6 +22,7 @@ func NewResults() (*Results, error) {
 	return &Results{
 		RootDir:  rootDir,
 		NewLines: make(map[string]map[int]bool),
+		Command:  command,
 	}, nil
 }
 

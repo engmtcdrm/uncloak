@@ -9,7 +9,7 @@ import (
 // Tests for [NewProfile] function.
 func Test_NewProfile(t *testing.T) {
 	t.Run("return empty profile with empty rawTestOutput", func(t *testing.T) {
-		profile := NewProfile([]byte{})
+		profile := NewProfile("", []byte{})
 		require.NotNil(t, profile)
 		require.Empty(t, profile.RawTestOutput)
 		require.Empty(t, profile.Lines)
@@ -17,7 +17,7 @@ func Test_NewProfile(t *testing.T) {
 	})
 
 	t.Run("return empty profile with nil rawTestOutput", func(t *testing.T) {
-		profile := NewProfile(nil)
+		profile := NewProfile("", nil)
 		require.NotNil(t, profile)
 		require.Empty(t, profile.RawTestOutput)
 		require.Empty(t, profile.Lines)
@@ -26,7 +26,7 @@ func Test_NewProfile(t *testing.T) {
 
 	t.Run("return profile with rawTestOutput", func(t *testing.T) {
 		rawTestOutput := []byte("test output")
-		profile := NewProfile(rawTestOutput)
+		profile := NewProfile("", rawTestOutput)
 		require.NotNil(t, profile)
 		require.Equal(t, rawTestOutput, profile.RawTestOutput)
 		require.Empty(t, profile.Lines)
@@ -37,13 +37,13 @@ func Test_NewProfile(t *testing.T) {
 // Tests for [Profile.Files] function.
 func Test_Profile_Files(t *testing.T) {
 	t.Run("return empty slice when no covered lines", func(t *testing.T) {
-		profile := NewProfile([]byte{})
+		profile := NewProfile("", []byte{})
 		files := profile.Files()
 		require.Empty(t, files)
 	})
 
 	t.Run("return sorted list of file paths", func(t *testing.T) {
-		profile := NewProfile([]byte{})
+		profile := NewProfile("", []byte{})
 		profile.CoveredLines["b.go"] = map[int]bool{1: true}
 		profile.CoveredLines["a.go"] = map[int]bool{1: true}
 
@@ -54,7 +54,7 @@ func Test_Profile_Files(t *testing.T) {
 
 // Tests for [Profile.IsInTestCoverage] function.
 func Test_Profile_IsInTestCoverage(t *testing.T) {
-	profile := NewProfile([]byte{})
+	profile := NewProfile("", []byte{})
 
 	profile.CoveredLines["file.go"] = map[int]bool{
 		1: true,
@@ -68,7 +68,7 @@ func Test_Profile_IsInTestCoverage(t *testing.T) {
 
 // Tests for [Profile.expandCoveredLines] function.
 func Test_Profile_expandCoveredLines(t *testing.T) {
-	profile := NewProfile([]byte{})
+	profile := NewProfile("", []byte{})
 
 	t.Run("single line", func(t *testing.T) {
 		line := Line{

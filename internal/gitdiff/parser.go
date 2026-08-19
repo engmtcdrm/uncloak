@@ -3,7 +3,6 @@ package gitdiff
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os/exec"
 	"regexp"
@@ -15,9 +14,14 @@ const hunkHeaderPattern = `@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@`
 
 var hunkHeaderRegex = regexp.MustCompile(hunkHeaderPattern)
 
+type parser struct {
+	RawGitDiffOutput []byte
+	Command          string
+}
+
 // Run executes the 'git diff' command with the provided options and parses its
 // output into a [Results] struct. If opts is nil, it uses [DefaultOptions].
-func Run(debug bool, opts *Options) (*Results, error) {
+func Run(opts *Options) (*Results, error) {
 	if opts == nil {
 		opts = &DefaultOptions
 	}
@@ -30,7 +34,9 @@ func Run(debug bool, opts *Options) (*Results, error) {
 		return nil, ErrNoParentBranch
 	}
 
-	return runAndParseGitDiff(debug, opts)
+	p := &parser{}
+
+	return p.runAndParseGitDiff(opts)
 }
 
 // parseHunkHeader checks if the line is a hunk header and if so, it updates the
@@ -53,7 +59,7 @@ func parseHunkHeader(line string, plusStartLine int) (int, bool) {
 
 // parseGitDiffData reads the git diff data from the provided reader and parses
 // it into a [Results] struct.
-func parseGitDiffData(r io.Reader) (*Results, error) {
+func (p *parser) parseGitDiffData(r io.Reader) (*Results, error) {
 	s := bufio.NewScanner(r)
 	var lines []string
 	for s.Scan() {
@@ -68,18 +74,13 @@ func parseGitDiffData(r io.Reader) (*Results, error) {
 		return nil, nil
 	}
 
-	results, err := parseLines(lines)
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
+	return p.parseLines(lines)
 }
 
 // parseLines processes the lines of a git diff and extracts the added lines for
 // Go files and returns them in a [Results] struct.
-func parseLines(lines []string) (*Results, error) {
-	results, err := NewResults()
+func (p *parser) parseLines(lines []string) (*Results, error) {
+	results, err := NewResults(p.Command)
 	if err != nil {
 		return nil, err
 	}
@@ -122,16 +123,14 @@ func parseLines(lines []string) (*Results, error) {
 
 // runAndParseGitDiff executes the git diff command with the provided options,
 // captures its output, and parses it into a [Results] struct.
-func runAndParseGitDiff(debug bool, opts *Options) (*Results, error) {
+func (p *parser) runAndParseGitDiff(opts *Options) (*Results, error) {
 	cmd := exec.Command("git", "diff")
 
 	args := optionsToArgs(opts)
 
 	cmd.Args = append(cmd.Args, args...)
 
-	if debug {
-		fmt.Printf("Running command: %s\n\n", strings.Join(cmd.Args, " "))
-	}
+	p.Command = strings.Join(cmd.Args, " ")
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -142,5 +141,5 @@ func runAndParseGitDiff(debug bool, opts *Options) (*Results, error) {
 		return nil, errNoOutput(cmd, opts.TargetRef)
 	}
 
-	return parseGitDiffData(bytes.NewReader(output))
+	return p.parseGitDiffData(bytes.NewReader(output))
 }
