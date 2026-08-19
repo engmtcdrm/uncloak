@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - feat: added flag `-o/--output` to write new code missing coverage out to a file
+- feat: display time durations while running commands in background
 
 ### Changed
 

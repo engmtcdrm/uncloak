@@ -9,6 +9,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/testing/testfiles"
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
+	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,10 +17,22 @@ import (
 func Test_NewCodeCoverage(t *testing.T) {
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+	testutils.SetStdout(t)
 
 	t.Run("should return a report without error", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 
+		report, err := NewCodeCoverage(&cfg)
+		require.NoError(t, err)
+		require.NotNil(t, report)
+	})
+
+	t.Run("should return a report without error when debug is true", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+		_ = testutils.SetStdout(t)
+
+		cfg := config.DefaultConfig
+		cfg.Debug = true
 		report, err := NewCodeCoverage(&cfg)
 		require.NoError(t, err)
 		require.NotNil(t, report)
@@ -77,6 +90,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 func Test_analyzeCoverage(t *testing.T) {
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+	testutils.SetStdout(t)
 
 	t.Run("should return a report with files", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
@@ -135,6 +149,7 @@ func Test_filterFiles(t *testing.T) {
 func Test_processFiles(t *testing.T) {
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+	testutils.SetStdout(t)
 
 	t.Run("should return a profile and diff without error", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)

@@ -2,11 +2,15 @@ package analyzer
 
 import (
 	"errors"
+	"fmt"
 	"sync"
+
+	pp "github.com/engmtcdrm/go-prettyprint"
 
 	"github.com/engmtcdrm/uncloak/internal/config"
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/gocover"
+	"github.com/engmtcdrm/uncloak/internal/task"
 )
 
 var ErrBelowThreshold = errors.New("new code coverage below threshold")
@@ -96,6 +100,9 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	var wg sync.WaitGroup
 	var errs error
 
+	tm := task.NewManager()
+	tm.Start()
+
 	covCh := make(chan struct {
 		profile *gocover.Profile
 		err     error
@@ -106,7 +113,24 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	}, 1)
 
 	wg.Go(func() {
-		p, err := gocover.Run(cfg.Debug)
+		gotask := task.NewTask("go", "Running Go coverage analysis")
+		tm.AddTask(gotask)
+
+		var err error
+
+		gotask.Start()
+		defer func() {
+			gotask.SetMessage("Finished Go coverage analysis")
+
+			switch {
+			case err != nil:
+				gotask.Error()
+			default:
+				gotask.Finish()
+			}
+		}()
+
+		p, err := gocover.Run()
 		covCh <- struct {
 			profile *gocover.Profile
 			err     error
@@ -114,7 +138,24 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	})
 
 	wg.Go(func() {
-		d, err := gitdiff.Run(cfg.Debug, &cfg.GitDiffOptions)
+		gittask := task.NewTask("git", "Running Git diff analysis")
+		tm.AddTask(gittask)
+
+		var err error
+
+		gittask.Start()
+		defer func() {
+			gittask.SetMessage("Finished Git diff analysis")
+
+			switch {
+			case err != nil:
+				gittask.Error()
+			default:
+				gittask.Finish()
+			}
+		}()
+
+		d, err := gitdiff.Run(&cfg.GitDiffOptions)
 		diffCh <- struct {
 			diff *gitdiff.Results
 			err  error
@@ -122,15 +163,35 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	})
 
 	wg.Wait()
+	tm.Finish()
+
+	fmt.Println()
 
 	covRes := <-covCh
 	diffRes := <-diffCh
 
-	errs = errors.Join(covRes.err, diffRes.err)
+	printCommandsIfDebug(cfg, covRes.profile, diffRes.diff)
 
+	errs = errors.Join(covRes.err, diffRes.err)
 	if errs != nil {
 		return nil, nil, errs
 	}
 
 	return covRes.profile, diffRes.diff, nil
+}
+
+// printCommandsIfDebug prints the commands used for Go coverage and Git diff
+// analysis if debug mode is enabled.
+func printCommandsIfDebug(cfg *config.Config, coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
+	if !cfg.Debug {
+		return
+	}
+
+	if coverageProfile != nil && coverageProfile.Command != "" {
+		fmt.Printf("Go coverage analysis command ran: %s\n", pp.Cyan(coverageProfile.Command))
+	}
+
+	if diffResults != nil && diffResults.Command != "" {
+		fmt.Printf("Git diff analysis command ran: %s\n\n", pp.Cyan(diffResults.Command))
+	}
 }
