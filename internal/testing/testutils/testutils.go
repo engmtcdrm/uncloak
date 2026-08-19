@@ -16,14 +16,18 @@ import (
 // EmptyReader is a mock reader that simulates an empty input.
 type EmptyReader struct{}
 
-func (e *EmptyReader) Read(p []byte) (n int, err error) {
+// Read implements the [io.Reader] interface for the [EmptyReader] type, always
+// returning 0 bytes read and an EOF error.
+func (e *EmptyReader) Read(_ []byte) (n int, err error) {
 	return 0, io.EOF
 }
 
 // ErrorReader is a mock reader that simulates an error when reading.
 type ErrorReader struct{}
 
-func (e *ErrorReader) Read(p []byte) (n int, err error) {
+// Read implements the [io.Reader] interface for the [ErrorReader] type, always
+// returning 0 bytes read and an unexpected EOF error.
+func (e *ErrorReader) Read(_ []byte) (n int, err error) {
 	return 0, io.ErrUnexpectedEOF
 }
 

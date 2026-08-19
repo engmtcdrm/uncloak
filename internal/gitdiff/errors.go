@@ -11,8 +11,13 @@ import (
 )
 
 var (
-	ErrNotAGitRepo    = fmt.Errorf("not a git repository: ensure you are in a git repository or provide a valid file path")
-	ErrNoParentBranch = fmt.Errorf("no parent branch found: are you on the main branch for this repository?")
+	// ErrNotAGitRepo indicates that the current directory is not a git
+	// repository.
+	ErrNotAGitRepo = errors.New("not a git repository: ensure you are in a git repository or provide a valid file path")
+
+	// ErrNoParentBranch indicates that no parent branch could be found, which
+	// may occur if the current branch is the main branch.
+	ErrNoParentBranch = errors.New("no parent branch found: are you on the main branch for this repository?")
 )
 
 func errNoOutput(cmd *exec.Cmd, targetRef string) error {

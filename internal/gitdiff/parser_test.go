@@ -47,7 +47,6 @@ func Test_Get(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
-
 }
 
 // Tests for [parseHunkHeader] function.

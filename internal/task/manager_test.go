@@ -47,6 +47,8 @@ func Test_Manager_AddTask(t *testing.T) {
 
 // Tests for [Manager.Finish] function.
 func Test_Manager_Finish(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should start manager and stop when Finish is called", func(t *testing.T) {
 		t.Parallel()
 
@@ -88,6 +90,8 @@ func Test_Manager_Finish(t *testing.T) {
 
 // Tests for [Manager.Start] function.
 func Test_Manager_Start(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should start manager and stop when stop channel is closed", func(t *testing.T) {
 		t.Parallel()
 
@@ -182,7 +186,7 @@ func Test_Manager_Start(t *testing.T) {
 
 		contents, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
-		assert.Equal(t, "", string(contents))
+		assert.Empty(t, string(contents))
 	})
 }
 
@@ -229,7 +233,7 @@ func Test_Manager_monitorTasks(t *testing.T) {
 			close(manager.stopChan)
 
 			contents, err := os.ReadFile(stdoutFile.Name())
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
 			terminalCh <- struct {
 				contents string
@@ -289,7 +293,7 @@ func Test_formatTaskStatus(t *testing.T) {
 func Test_renderTasks(t *testing.T) {
 	t.Run("should return empty string if no previous lines or tasks are provided", func(t *testing.T) {
 		rendered := renderTasks([]*Task{}, 0, 80)
-		assert.Equal(t, "", rendered)
+		assert.Empty(t, rendered)
 	})
 
 	t.Run("should render tasks correctly with previous lines and terminal width", func(t *testing.T) {
@@ -326,7 +330,7 @@ func Test_styleTaskStatus(t *testing.T) {
 		expectedDuration := pp.Dim(pp.Bold(task.Duration()))
 		styledStatus, styledDuration := styleTaskStatus(task)
 		assert.Equal(t, expectedStatus, styledStatus)
-		assert.Equal(t, styledDuration, expectedDuration)
+		assert.Equal(t, expectedDuration, styledDuration)
 	})
 
 	t.Run("should return checkmark and green when status is finished", func(t *testing.T) {
@@ -337,8 +341,8 @@ func Test_styleTaskStatus(t *testing.T) {
 		expectedStatus := pp.Bold(colors.Green("✓"))
 		expectedDuration := colors.Green(pp.Bold(task.Duration()))
 		styledStatus, styledDuration := styleTaskStatus(task)
-		assert.Equal(t, styledStatus, expectedStatus)
-		assert.Equal(t, styledDuration, expectedDuration)
+		assert.Equal(t, expectedStatus, styledStatus)
+		assert.Equal(t, expectedDuration, styledDuration)
 	})
 
 	t.Run("should return cross and red when status is error", func(t *testing.T) {
@@ -349,8 +353,8 @@ func Test_styleTaskStatus(t *testing.T) {
 		expectedStatus := pp.Bold(pp.Red("✗"))
 		expectedDuration := pp.Red(pp.Bold(task.Duration()))
 		styledStatus, styledDuration := styleTaskStatus(task)
-		assert.Equal(t, styledStatus, expectedStatus)
-		assert.Equal(t, styledDuration, expectedDuration)
+		assert.Equal(t, expectedStatus, styledStatus)
+		assert.Equal(t, expectedDuration, styledDuration)
 	})
 
 	t.Run("should return exclamation and yellow when status is warning", func(t *testing.T) {
@@ -361,8 +365,8 @@ func Test_styleTaskStatus(t *testing.T) {
 		expectedStatus := pp.Bold(pp.Yellow("!"))
 		expectedDuration := pp.Yellow(pp.Bold(task.Duration()))
 		styledStatus, styledDuration := styleTaskStatus(task)
-		assert.Equal(t, styledStatus, expectedStatus)
-		assert.Equal(t, styledDuration, expectedDuration)
+		assert.Equal(t, expectedStatus, styledStatus)
+		assert.Equal(t, expectedDuration, styledDuration)
 	})
 }
 
@@ -401,7 +405,7 @@ func Test_truncateTaskMessage(t *testing.T) {
 		const terminalWidth = 10
 
 		truncatedMessage := truncateTaskMessage([]rune(expectedMessage), terminalWidth, status, duration)
-		assert.Equal(t, "", truncatedMessage)
+		assert.Empty(t, truncatedMessage)
 	})
 
 	t.Run("should return ellipsis if available width is less than or equal to 3", func(t *testing.T) {

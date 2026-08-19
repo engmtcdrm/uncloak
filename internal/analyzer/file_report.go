@@ -2,6 +2,8 @@ package analyzer
 
 import "sort"
 
+// FileReport represents the coverage report for a single file, including
+// covered and uncovered new lines and their respective ranges.
 type FileReport struct {
 	Path                   string
 	CoveredNewLines        []int
@@ -10,6 +12,8 @@ type FileReport struct {
 	UncoveredNewLineGroups []LineRange
 }
 
+// LineRange represents a continuous range of lines in a file, with a start and
+// end line number.
 type LineRange struct {
 	Start int
 	End   int

@@ -1,7 +1,28 @@
 version: "2"
 linters:
   enable:
+    - decorder
+    - dupl
+    - errcheck
+    - errname
+    - funcorder
     - gocognit
+    - godoclint
+    - godot
+    - ineffassign
+    - intrange
+    - modernize
+    - nestif
+    - revive
+    - testifylint
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - usetesting
+    - whitespace
   settings:
     gocognit:
       min-complexity: 15

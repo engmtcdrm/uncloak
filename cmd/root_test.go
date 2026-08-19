@@ -141,8 +141,8 @@ func Test_cmd_handleFlags(t *testing.T) {
 		require.NoError(t, err)
 
 		c.handleFlags(&cfg, localRootCmd)
-		assert.Equal(t, 1.0, cfg.CoverageThreshold)
-		assert.Equal(t, true, cfg.Debug)
+		assert.InDelta(t, 1.0, cfg.CoverageThreshold, 0.1)
+		assert.True(t, cfg.Debug)
 		assert.Equal(t, gitdiff.LocalMain, cfg.GitDiffOptions.TargetRef)
 	})
 }
@@ -224,7 +224,7 @@ func Test_outputUncoveredLineToStdout(t *testing.T) {
 
 // Tests for [outputUncoveredLinetoFile] function.
 func Test_outputUncoveredLinetoFile(t *testing.T) {
-	t.Run("should return early if file is nil", func(t *testing.T) {
+	t.Run("should return early if file is nil", func(_ *testing.T) {
 		outputUncoveredLinetoFile(nil, "file.go", analyzer.LineRange{Start: 1, End: 2})
 	})
 

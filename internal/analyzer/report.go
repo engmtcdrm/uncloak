@@ -5,6 +5,9 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/gocover"
 )
 
+// Report represents the analysis report for a Go project, including the
+// coverage threshold, coverage profile, git diff results, and file-specific
+// reports.
 type Report struct {
 	CoverageThreshold float64
 	CoverageProfile   *gocover.Profile

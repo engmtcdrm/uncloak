@@ -1,3 +1,5 @@
+// Package colors provides utility functions for formatting text with different
+// colors.
 package colors
 
 import pp "github.com/engmtcdrm/go-prettyprint"

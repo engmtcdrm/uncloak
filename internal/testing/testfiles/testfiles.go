@@ -49,12 +49,12 @@ func CopyFile(t *testing.T, srcPath string, destDir string) {
 
 	srcFile, err := os.Open(srcPath)
 	require.NoError(t, err)
-	defer func() { _ = srcFile.Close() }()
+	defer srcFile.Close() //nolint:errcheck
 
 	destPath := filepath.Join(destDir, filepath.Base(srcPath))
 	destFile, err := os.Create(destPath)
 	require.NoError(t, err)
-	defer func() { _ = destFile.Close() }()
+	defer destFile.Close() //nolint:errcheck
 
 	_, err = destFile.ReadFrom(srcFile)
 	require.NoError(t, err)

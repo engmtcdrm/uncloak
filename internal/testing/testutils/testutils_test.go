@@ -11,7 +11,9 @@ import (
 
 type zeroReader struct{}
 
-func (z *zeroReader) Read(p []byte) (int, error) {
+// Read implements the [io.Reader] interface for the [zeroReader] type, always
+// returning 0 bytes read and no error.
+func (z *zeroReader) Read(_ []byte) (int, error) {
 	return 0, nil
 }
 
@@ -96,5 +98,5 @@ func Test_SetStdout(t *testing.T) {
 
 	tempFile := SetStdout(t)
 	assert.Same(t, tempFile, os.Stdout, "os.Stdout should be set to the temp file")
-	assert.NotEqual(t, originalStdout.Fd(), (*os.File)(os.Stdout).Fd(), "os.Stdout should be different from the original stdout")
+	assert.NotEqual(t, originalStdout.Fd(), (os.Stdout).Fd(), "os.Stdout should be different from the original stdout")
 }

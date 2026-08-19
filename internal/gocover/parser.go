@@ -34,9 +34,7 @@ func Run() (*Profile, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = os.Remove(filePath)
-	}()
+	defer os.Remove(filePath) //nolint:errcheck
 
 	return p.parseCoverageProfile(filePath)
 }
@@ -77,13 +75,13 @@ func (p *parser) parseCoverageProfile(filePath string) (*Profile, error) {
 // [Profile] struct.
 func (p *parser) parseLines(lines []string) (*Profile, error) {
 	if len(lines) < 2 {
-		return nil, ErroInvalidCoverageFile
+		return nil, ErrInvalidCoverageFile
 	}
 
 	profile := NewProfile(p.Command, p.RawGoTestOutput)
 
-	if strings.HasPrefix(lines[0], "mode: ") {
-		profile.Mode = Mode(strings.TrimPrefix(lines[0], "mode: "))
+	if after, ok := strings.CutPrefix(lines[0], "mode: "); ok {
+		profile.Mode = Mode(after)
 	}
 
 	for _, line := range lines[1:] {

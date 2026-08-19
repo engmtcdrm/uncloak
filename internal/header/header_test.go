@@ -17,6 +17,6 @@ func Test_PrintHeader(t *testing.T) {
 
 		content, err := os.ReadFile(tempFile.Name())
 		require.NoError(t, err)
-		require.Greater(t, len(content), 0, "Expected header output, got empty string")
+		require.NotEmpty(t, content, "Expected header output, got empty string")
 	})
 }

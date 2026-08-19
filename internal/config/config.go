@@ -1,3 +1,7 @@
+// Package config provides functionality for loading and validating the
+// configuration of the uncloak application. It supports reading configuration
+// from YAML files, applying default values, and validating the configuration
+// fields.
 package config
 
 import (
@@ -14,6 +18,8 @@ import (
 )
 
 var (
+	// DefaultConfig is the default configuration used when no config file is
+	// found.
 	DefaultConfig = Config{
 		Version:           0,
 		CoverageThreshold: 80.0,
@@ -21,11 +27,13 @@ var (
 		GoTestOptions:     gocover.Options{},
 	}
 
+	// ErrConfigFileEmpty is returned when the configuration file is empty.
 	ErrConfigFileEmpty = errors.New("config file is empty. Delete it or add valid configuration content")
 
 	configFilenames = []string{".uncloak.yml", ".uncloak.yaml"}
 )
 
+// Config represents the configuration of the uncloak application.
 type Config struct {
 	Version           int      `yaml:"version"`            // Version of the config file format.
 	Exclusions        []string `yaml:"exclusions"`         // List of file patterns to exclude from analysis.
@@ -36,11 +44,13 @@ type Config struct {
 	GoTestOptions  gocover.Options
 }
 
-type ConfigError struct {
+// Error represents an error related to the configuration.
+type Error struct {
 	Message string
 }
 
-func (e *ConfigError) Error() string {
+// Error implements the error interface for ConfigError.
+func (e *Error) Error() string {
 	return e.Message
 }
 
@@ -105,7 +115,7 @@ func load(r *bytes.Reader) (*Config, error) {
 // if any are found.
 func Validate(cfg *Config) error {
 	if cfg.CoverageThreshold < 0.0 || cfg.CoverageThreshold > 100.0 {
-		return &ConfigError{Message: "coverage-threshold must be between 0 and 100"}
+		return &Error{Message: "coverage-threshold must be between 0 and 100"}
 	}
 
 	return nil

@@ -20,7 +20,7 @@ func PrintHeader() {
 	fmt.Fprintln(&buf, colors.LightGreen("   "+app.Version))
 	fmt.Fprintln(&buf)
 	fmt.Fprintln(&buf, app.ShortDesc)
-	fmt.Fprintln(&buf, colors.MediumGreen(app.RepoUrl))
+	fmt.Fprintln(&buf, colors.MediumGreen(app.RepoURL))
 	fmt.Fprintln(&buf)
 	fmt.Print(buf.String())
 }

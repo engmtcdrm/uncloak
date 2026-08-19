@@ -1,4 +1,5 @@
-// Application information such as name, version, description, etc.
+// Package app provides application information such as name, version,
+// description, etc.
 package app
 
 import (
@@ -15,8 +16,8 @@ const (
 	// ShortDesc provides a brief description of the application.
 	ShortDesc = "A CLI tool for analyzing new code coverage in Go files"
 
-	// RepoUrl is the URL of the application's repository.
-	RepoUrl = "https://github.com/engmtcdrm/uncloak"
+	// RepoURL is the URL of the application's repository.
+	RepoURL = "https://github.com/engmtcdrm/uncloak"
 )
 
 var (
@@ -30,7 +31,7 @@ func init() {
 	setVersion(&Version)
 }
 
-// setVersion sets the Version
+// setVersion sets the Version.
 func setVersion(version *string) {
 	if *version != "" {
 		return
