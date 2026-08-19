@@ -6,6 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// Task represents a unit of work with a name, message, status, and timing
+// information.
 type Task struct {
 	Name    string
 	Message string
