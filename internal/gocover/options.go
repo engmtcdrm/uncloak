@@ -11,7 +11,7 @@ var DefaultOptions = Options{}
 // Options represents the configuration options for Go coverage analysis.
 type Options struct {
 	Count   int           `yaml:"count"`   // Number of times to run the tests for coverage analysis.
-	Timeout time.Duration `yaml:"timeout"` // Timeout for the coverage analysis in seconds.
+	Timeout time.Duration `yaml:"timeout"` // Timeout duration for the coverage analysis.
 	Verbose bool          `yaml:"verbose"` // Enable verbose output for the coverage analysis.
 }
 
