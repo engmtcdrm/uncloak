@@ -9,6 +9,7 @@ import (
 type Options struct {
 	Count   int           `yaml:"count"`   // Number of times to run the tests for coverage analysis.
 	Timeout time.Duration `yaml:"timeout"` // Timeout for the coverage analysis in seconds.
+	Verbose bool          `yaml:"verbose"` // Enable verbose output for the coverage analysis.
 }
 
 // optionsToArgs converts the Options struct into a slice of command-line
@@ -21,11 +22,15 @@ func optionsToArgs(opts *Options) []string {
 	}
 
 	if opts.Count > 0 {
-		args = append(args, "--count", fmt.Sprintf("%d", opts.Count))
+		args = append(args, "-count", fmt.Sprintf("%d", opts.Count))
 	}
 
 	if opts.Timeout > 0 {
-		args = append(args, "--timeout", fmt.Sprintf("%v", opts.Timeout))
+		args = append(args, "-timeout", fmt.Sprintf("%v", opts.Timeout))
+	}
+
+	if opts.Verbose {
+		args = append(args, "-v")
 	}
 
 	return args
