@@ -30,6 +30,16 @@ version: 0
 coverage-threshold: -10.0
 `
 
+	// ValidGoTestOptionsYaml represents a valid test YAML configuration file
+	// that exercises the go-test decoder contract.
+	ValidGoTestOptionsYaml TestYamlFile = `
+version: 0
+go-test:
+  count: 3
+  timeout: 30s
+  verbose: true
+`
+
 	// InvalidUnknownFieldYaml represents an invalid test YAML configuration
 	// file with an unknown field.
 	InvalidUnknownFieldYaml TestYamlFile = `

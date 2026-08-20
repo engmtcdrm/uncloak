@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/engmtcdrm/uncloak/internal/gocover"
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
@@ -51,6 +52,29 @@ func Test_Load(t *testing.T) {
 			CoverageThreshold: DefaultConfig.CoverageThreshold,
 			Exclusions:        []string{"main.go", "**/internal/**"},
 			GitDiffOptions:    DefaultConfig.GitDiffOptions, // Default value should be set
+			GoTestOptions:     DefaultConfig.GoTestOptions,  // Default value should be set
+		}
+
+		t.Chdir(tempDir)
+		cfg, err := Load()
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
+		require.Equal(t, expectedConfig, cfg)
+	})
+
+	t.Run("should load go-test options from yaml", func(t *testing.T) {
+		tempDir := t.TempDir()
+		_ = testconfig.CreateConfigFile(t, tempDir, testconfig.ValidGoTestOptionsYaml)
+
+		expectedConfig := &Config{
+			Version:           0,
+			CoverageThreshold: DefaultConfig.CoverageThreshold,
+			GoTestOptions: gocover.Options{
+				Count:   3,
+				Timeout: 30 * time.Second,
+				Verbose: true,
+			},
+			GitDiffOptions: DefaultConfig.GitDiffOptions,
 		}
 
 		t.Chdir(tempDir)
@@ -126,6 +150,15 @@ func Test_validate(t *testing.T) {
 		cfg := &DefaultConfig
 		err := Validate(cfg)
 		require.NoError(t, err)
+	})
+
+	t.Run("should return error if version is not 0", func(t *testing.T) {
+		cfg := &Config{
+			Version: 1,
+		}
+		err := Validate(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unsupported config version")
 	})
 
 	t.Run("should return error if coverage-threshold is negative", func(t *testing.T) {

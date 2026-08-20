@@ -115,6 +115,11 @@ func load(r *bytes.Reader) (*Config, error) {
 // Validate checks the configuration for any invalid values and returns an error
 // if any are found.
 func Validate(cfg *Config) error {
+	if cfg.Version != 0 {
+		message := fmt.Sprintf("unsupported config version: %d", cfg.Version)
+		return &ValidationError{Message: message}
+	}
+
 	if cfg.GoTestOptions.Count < 0 {
 		message := fmt.Sprintf("go-test.count must be non-negative, got %d", cfg.GoTestOptions.Count)
 		return &ValidationError{Message: message}
