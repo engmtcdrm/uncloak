@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// DefaultOptions provides the default configuration for the go test command.
+var DefaultOptions = Options{}
+
 // Options represents the configuration options for Go coverage analysis.
 type Options struct {
 	Count   int           `yaml:"count"`   // Number of times to run the tests for coverage analysis.
@@ -13,7 +16,7 @@ type Options struct {
 }
 
 // optionsToArgs converts the Options struct into a slice of command-line
-// arguments for the git diff command.
+// arguments for the go test command.
 func optionsToArgs(opts *Options) []string {
 	args := []string{}
 

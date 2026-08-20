@@ -25,7 +25,7 @@ var (
 		Version:           0,
 		CoverageThreshold: 80.0,
 		GitDiffOptions:    gitdiff.DefaultOptions,
-		GoTestOptions:     gocover.Options{},
+		GoTestOptions:     gocover.DefaultOptions,
 	}
 
 	// ErrConfigFileEmpty is returned when the configuration file is empty.
