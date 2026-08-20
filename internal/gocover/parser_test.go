@@ -15,7 +15,7 @@ import (
 
 // Tests for [Run] function.
 func Test_Get(t *testing.T) {
-	opts := &Options{}
+	opts := &DefaultOptions
 
 	t.Run("should return error if go list fails", func(t *testing.T) {
 		t.Chdir(t.TempDir())
@@ -31,6 +31,17 @@ func Test_Get(t *testing.T) {
 		t.Chdir(tempDir)
 
 		profile, err := Run(opts)
+		require.NoError(t, err)
+		require.NotNil(t, profile)
+	})
+
+	t.Run("should return valid profile for nil options", func(t *testing.T) {
+		tempDir := t.TempDir()
+		repoPath := testgit.GetTestRepoPath(t)
+		testfiles.CopyDir(t, repoPath, tempDir)
+		t.Chdir(tempDir)
+
+		profile, err := Run(nil)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 	})
