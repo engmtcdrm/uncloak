@@ -22,6 +22,10 @@ type parser struct {
 // Run executes the 'go test' command to generate a coverage profile. Finally it
 // parses the coverage profile and returns it as a [Profile] struct.
 func Run(opts *Options) (*Profile, error) {
+	if opts == nil {
+		opts = &DefaultOptions
+	}
+
 	goList, err := getGoList()
 	if err != nil {
 		return nil, err
