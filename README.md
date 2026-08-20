@@ -5,7 +5,7 @@
 At a high level, it:
 
 - runs `git diff` against the parent branch
-- runs Go tests to collect coverage data
+- runs `go test` to collect coverage data
 - compares new Go lines from the diff against the coverage profile
 - reports uncovered new lines and fails when coverage drops below the configurable threshold
 
@@ -48,20 +48,32 @@ If no config file is present, `uncloak` uses built-in defaults. Empty config fil
 ```yaml
 version: 0
 coverage-threshold: 80
+go-test:
+  count: 0
+  timeout: 10m
+  verbose: false
 exclusions: []
 ```
 
 ### Configuration fields
 
-- `version`: config file version
-- `coverage-threshold`: minimum acceptable coverage percentage for new code
-- `exclusions`: list of file paths or glob patterns to exclude from analysis
+- `version`: Config file version, currently only `0` is supported.
+- `coverage-threshold`: Minimum acceptable coverage percentage for new code.
+- `go-test`: Optional configuration for `go test` command, e.g. `-count`, `-timeout`, `-v`, etc.
+  - `count`: Number of times to run tests. If this is set above 0 it will also ignore caching that `go test` does by default.
+  - `timeout`: Test timeout duration, e.g. `30s`, `1m`, `2h`, etc. If not set, it will default to the `go test` default of 10 minutes.
+  - `verbose`: Verbose output for `go test` command.
+- `exclusions`: List of file paths or glob patterns to exclude from analysis.
 
 ### Example configuration
 
 ```yaml
 version: 0
 coverage-threshold: 90
+go-test:
+  count: 1
+  timeout: 30s
+  verbose: true
 exclusions:
   - "docs/**"
   - "**/*_generated.go"
@@ -111,4 +123,3 @@ uncloak --coverage-threshold 70.31 --verbose
 - Brand new Go files must be staged or committed for `uncloak` to analyze them.
 - The tool expects to run inside a Git repository on a branch with a parent branch.
 - The default coverage threshold is `80%`.
-- Unknown YAML fields are rejected, so config files should only contain supported keys.
