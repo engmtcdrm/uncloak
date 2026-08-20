@@ -21,7 +21,7 @@ const (
 	debugUsage             = "(optional) enable debug output, e.g. what commands are run"
 	gitTargetRefUsage      = "(optional) git target ref to compare against (default: current branch's nearest parent branch)"
 	outputUsage            = "(optional) file to write new code missing coverage out to"
-	verboseUsage           = "(optional) enable verbose output, e.g. output from go test command"
+	verboseUsage           = "(optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output"
 )
 
 var (

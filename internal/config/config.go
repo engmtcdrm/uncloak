@@ -7,6 +7,7 @@ package config
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
@@ -24,7 +25,7 @@ var (
 		Version:           0,
 		CoverageThreshold: 80.0,
 		GitDiffOptions:    gitdiff.DefaultOptions,
-		GoTestOptions:     gocover.Options{},
+		GoTestOptions:     gocover.DefaultOptions,
 	}
 
 	// ErrConfigFileEmpty is returned when the configuration file is empty.
@@ -35,23 +36,23 @@ var (
 
 // Config represents the configuration of the uncloak application.
 type Config struct {
-	Version           int      `yaml:"version"`            // Version of the config file format.
-	Exclusions        []string `yaml:"exclusions"`         // List of file patterns to exclude from analysis.
-	CoverageThreshold float64  `yaml:"coverage-threshold"` // Minimum coverage threshold.
+	Version           int             `yaml:"version"`            // Version of the config file format.
+	Exclusions        []string        `yaml:"exclusions"`         // List of file patterns to exclude from analysis.
+	CoverageThreshold float64         `yaml:"coverage-threshold"` // Minimum coverage threshold.
+	GoTestOptions     gocover.Options `yaml:"go-test"`            // Go test options for coverage analysis.
 
 	Debug          bool            // Not configurable via YAML, used for enabling debug output.
 	GitDiffOptions gitdiff.Options // Git-related configuration.
-	GoTestOptions  gocover.Options
 }
 
-// Error represents an error related to the configuration.
-type Error struct {
+// ValidationError represents an error related to the configuration validation.
+type ValidationError struct {
 	Message string
 }
 
-// Error implements the error interface for ConfigError.
-func (e *Error) Error() string {
-	return e.Message
+// Error implements the error interface for [ValidationError].
+func (e *ValidationError) Error() string {
+	return "config validation: " + e.Message
 }
 
 // IsExclusionFile checks if the given file matches any of the exclusion
@@ -114,8 +115,24 @@ func load(r *bytes.Reader) (*Config, error) {
 // Validate checks the configuration for any invalid values and returns an error
 // if any are found.
 func Validate(cfg *Config) error {
+	if cfg.Version != 0 {
+		message := fmt.Sprintf("unsupported config version: %d", cfg.Version)
+		return &ValidationError{Message: message}
+	}
+
+	if cfg.GoTestOptions.Count < 0 {
+		message := fmt.Sprintf("go-test.count must be non-negative, got %d", cfg.GoTestOptions.Count)
+		return &ValidationError{Message: message}
+	}
+
 	if cfg.CoverageThreshold < 0.0 || cfg.CoverageThreshold > 100.0 {
-		return &Error{Message: "coverage-threshold must be between 0 and 100"}
+		message := fmt.Sprintf("coverage-threshold must be between 0 and 100, got %f", cfg.CoverageThreshold)
+		return &ValidationError{Message: message}
+	}
+
+	if cfg.GoTestOptions.Timeout < 0 {
+		message := fmt.Sprintf("go-test.timeout must be non-negative, got %v", cfg.GoTestOptions.Timeout)
+		return &ValidationError{Message: message}
 	}
 
 	return nil

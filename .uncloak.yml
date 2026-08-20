@@ -1,3 +1,5 @@
 version: 0
+go-test:
+  timeout: 30s
 exclusions:
   - main.go

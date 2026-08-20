@@ -133,7 +133,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 			}
 		}()
 
-		p, err := gocover.Run()
+		p, err := gocover.Run(&cfg.GoTestOptions)
 		covCh <- struct {
 			profile *gocover.Profile
 			err     error

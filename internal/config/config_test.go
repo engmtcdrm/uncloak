@@ -4,7 +4,9 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"time"
 
+	"github.com/engmtcdrm/uncloak/internal/gocover"
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
 	"github.com/stretchr/testify/require"
 )
@@ -50,6 +52,29 @@ func Test_Load(t *testing.T) {
 			CoverageThreshold: DefaultConfig.CoverageThreshold,
 			Exclusions:        []string{"main.go", "**/internal/**"},
 			GitDiffOptions:    DefaultConfig.GitDiffOptions, // Default value should be set
+			GoTestOptions:     DefaultConfig.GoTestOptions,  // Default value should be set
+		}
+
+		t.Chdir(tempDir)
+		cfg, err := Load()
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
+		require.Equal(t, expectedConfig, cfg)
+	})
+
+	t.Run("should load go-test options from yaml", func(t *testing.T) {
+		tempDir := t.TempDir()
+		_ = testconfig.CreateConfigFile(t, tempDir, testconfig.ValidGoTestOptionsYaml)
+
+		expectedConfig := &Config{
+			Version:           0,
+			CoverageThreshold: DefaultConfig.CoverageThreshold,
+			GoTestOptions: gocover.Options{
+				Count:   3,
+				Timeout: 30 * time.Second,
+				Verbose: true,
+			},
+			GitDiffOptions: DefaultConfig.GitDiffOptions,
 		}
 
 		t.Chdir(tempDir)
@@ -127,6 +152,15 @@ func Test_validate(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("should return error if version is not 0", func(t *testing.T) {
+		cfg := &Config{
+			Version: 1,
+		}
+		err := Validate(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unsupported config version")
+	})
+
 	t.Run("should return error if coverage-threshold is negative", func(t *testing.T) {
 		cfg := &Config{
 			CoverageThreshold: -1.0,
@@ -143,5 +177,67 @@ func Test_validate(t *testing.T) {
 		err := Validate(cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "coverage-threshold must be between 0 and 100")
+	})
+
+	t.Run("should return error if go-test.timeout is negative", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Timeout: -1,
+			},
+		}
+		err := Validate(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "go-test.timeout must be non-negative")
+	})
+
+	t.Run("should return no error if go-test.timeout is zero", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Timeout: 0,
+			},
+		}
+		err := Validate(cfg)
+		require.NoError(t, err)
+	})
+
+	t.Run("should return no error if go-test.timeout is positive", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Timeout: 10,
+			},
+		}
+		err := Validate(cfg)
+		require.NoError(t, err)
+	})
+
+	t.Run("should return error if go-test.count is negative", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Count: -1,
+			},
+		}
+		err := Validate(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "go-test.count must be non-negative")
+	})
+
+	t.Run("should return no error if go-test.count is zero", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Count: 0,
+			},
+		}
+		err := Validate(cfg)
+		require.NoError(t, err)
+	})
+
+	t.Run("should return no error if go-test.count is positive", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Count: 5,
+			},
+		}
+		err := Validate(cfg)
+		require.NoError(t, err)
 	})
 }
