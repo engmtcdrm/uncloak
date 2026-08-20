@@ -7,7 +7,7 @@ import (
 
 // Options represents the configuration options for Go coverage analysis.
 type Options struct {
-	Rerun   bool          `yaml:"rerun"`   // Whether to rerun tests to generate coverage data.
+	Count   int           `yaml:"count"`   // Number of times to run the tests for coverage analysis.
 	Timeout time.Duration `yaml:"timeout"` // Timeout for the coverage analysis in seconds.
 }
 
@@ -18,6 +18,10 @@ func optionsToArgs(opts *Options) []string {
 
 	if opts == nil {
 		return args
+	}
+
+	if opts.Count > 0 {
+		args = append(args, "--count", fmt.Sprintf("%d", opts.Count))
 	}
 
 	if opts.Timeout > 0 {

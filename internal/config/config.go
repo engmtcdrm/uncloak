@@ -115,6 +115,11 @@ func load(r *bytes.Reader) (*Config, error) {
 // Validate checks the configuration for any invalid values and returns an error
 // if any are found.
 func Validate(cfg *Config) error {
+	if cfg.GoTestOptions.Count < 0 {
+		message := fmt.Sprintf("go-test.count must be non-negative, got %d", cfg.GoTestOptions.Count)
+		return &ValidationError{Message: message}
+	}
+
 	if cfg.CoverageThreshold < 0.0 || cfg.CoverageThreshold > 100.0 {
 		message := fmt.Sprintf("coverage-threshold must be between 0 and 100, got %f", cfg.CoverageThreshold)
 		return &ValidationError{Message: message}

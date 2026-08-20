@@ -176,4 +176,35 @@ func Test_validate(t *testing.T) {
 		err := Validate(cfg)
 		require.NoError(t, err)
 	})
+
+	t.Run("should return error if go-test.count is negative", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Count: -1,
+			},
+		}
+		err := Validate(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "go-test.count must be non-negative")
+	})
+
+	t.Run("should return no error if go-test.count is zero", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Count: 0,
+			},
+		}
+		err := Validate(cfg)
+		require.NoError(t, err)
+	})
+
+	t.Run("should return no error if go-test.count is positive", func(t *testing.T) {
+		cfg := &Config{
+			GoTestOptions: gocover.Options{
+				Count: 5,
+			},
+		}
+		err := Validate(cfg)
+		require.NoError(t, err)
+	})
 }
