@@ -10,8 +10,7 @@ import (
 // Tests for [optionsToArgs] function.
 func Test_optionsToArgs(t *testing.T) {
 	t.Run("should return empty slice when options is nil", func(t *testing.T) {
-		var opts *Options = nil
-		args := optionsToArgs(opts)
+		args := optionsToArgs(nil)
 		require.Empty(t, args)
 	})
 
