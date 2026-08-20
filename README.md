@@ -96,7 +96,7 @@ Exclusions support exact file matches and glob patterns. For example:
 - `-h, --help`: help for uncloak
 - `-o, --output`: (optional) file to write new code missing coverage out to
 - `-t, --target-ref <string>`: (optional) git target ref to compare against (default: current branch's nearest parent branch)
-- `-v, --verbose`: (optional) enable verbose output, e.g. output from go test command
+- `-v, --verbose`: (optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output
 - `--version`: version for uncloak
 
 Example:
