@@ -52,6 +52,6 @@ func Test_getGoList(t *testing.T) {
 
 		moduleName, err := getGoList(ctx)
 		require.Error(t, err)
-		require.NotEmpty(t, moduleName)
+		require.Empty(t, moduleName)
 	})
 }
