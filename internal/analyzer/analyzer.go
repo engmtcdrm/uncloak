@@ -213,11 +213,12 @@ func printCommandsIfDebug(cfg *config.Config, coverageProfile *gocover.Profile, 
 }
 
 func joinTaskErrors(ctx context.Context, errs ...error) error {
-	var exitErr *exec.ExitError
+	// var exitErr *exec.ExitError
 	var filteredErrs []error
 
 	for _, err := range errs {
-		if err != nil && !errors.As(err, &exitErr) && errors.Is(ctx.Err(), context.Canceled) {
+		// if err != nil && !errors.As(err, &exitErr) && errors.Is(ctx.Err(), context.Canceled) {
+		if err != nil && errors.Is(ctx.Err(), context.Canceled) {
 			filteredErrs = append(filteredErrs, err)
 		}
 	}
