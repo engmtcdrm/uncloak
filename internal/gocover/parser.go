@@ -3,6 +3,7 @@ package gocover
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -21,12 +22,12 @@ type parser struct {
 
 // Run executes the 'go test' command to generate a coverage profile. Finally it
 // parses the coverage profile and returns it as a [Profile] struct.
-func Run(opts *Options) (*Profile, error) {
+func Run(ctx context.Context, opts *Options) (*Profile, error) {
 	if opts == nil {
 		opts = &DefaultOptions
 	}
 
-	goList, err := getGoList()
+	goList, err := getGoList(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func Run(opts *Options) (*Profile, error) {
 		GoList:  goList,
 	}
 
-	filePath, err := p.runTestCoverage()
+	filePath, err := p.runTestCoverage(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +125,7 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 // runTestCoverage executes `go test -coverprofile` to generate a coverage
 // profile file. It is the caller's responsibility to remove the file when it is
 // no longer needed.
-func (p *parser) runTestCoverage() (string, error) {
+func (p *parser) runTestCoverage(ctx context.Context) (string, error) {
 	tempDir, err := os.MkdirTemp("", "uncloak-*")
 	if err != nil {
 		return "", err
@@ -132,7 +133,7 @@ func (p *parser) runTestCoverage() (string, error) {
 
 	tempCoverFile := filepath.Join(tempDir, "coverage.out")
 
-	cmd := exec.Command("go", "test")
+	cmd := exec.CommandContext(ctx, "go", "test")
 
 	args := optionsToArgs(p.Options)
 	cmd.Args = append(cmd.Args, args...)

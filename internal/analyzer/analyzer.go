@@ -1,8 +1,10 @@
 package analyzer
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os/exec"
 	"sync"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
@@ -100,6 +102,9 @@ func filterFiles(cfg *config.Config, files []string) []string {
 // concurrently. It returns the parsed coverage profile and git diff, or an
 // error if any occurs during parsing.
 func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var wg sync.WaitGroup
 	var errs error
 
@@ -127,13 +132,20 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 
 			switch {
 			case err != nil:
-				gotask.Error()
+				var exitErr *exec.ExitError
+				if errors.As(err, &exitErr) && errors.Is(ctx.Err(), context.Canceled) {
+					gotask.SetMessage("Go coverage analysis stopped prematurely due to other task failure")
+					gotask.Warning()
+				} else {
+					gotask.Error()
+				}
+				cancel()
 			default:
 				gotask.Finish()
 			}
 		}()
 
-		p, err := gocover.Run(&cfg.GoTestOptions)
+		p, err := gocover.Run(ctx, &cfg.GoTestOptions)
 		covCh <- struct {
 			profile *gocover.Profile
 			err     error
@@ -153,12 +165,13 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 			switch {
 			case err != nil:
 				gittask.Error()
+				cancel()
 			default:
 				gittask.Finish()
 			}
 		}()
 
-		d, err := gitdiff.Run(&cfg.GitDiffOptions)
+		d, err := gitdiff.Run(ctx, &cfg.GitDiffOptions)
 		diffCh <- struct {
 			diff *gitdiff.Results
 			err  error
@@ -175,7 +188,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 
 	printCommandsIfDebug(cfg, covRes.profile, diffRes.diff)
 
-	errs = errors.Join(covRes.err, diffRes.err)
+	errs = joinTaskErrors(ctx, covRes.err, diffRes.err)
 	if errs != nil {
 		return nil, nil, errs
 	}
@@ -197,4 +210,21 @@ func printCommandsIfDebug(cfg *config.Config, coverageProfile *gocover.Profile, 
 	if diffResults != nil && diffResults.Command != "" {
 		fmt.Printf("Git diff analysis command ran: %s\n\n", pp.Cyan(diffResults.Command))
 	}
+}
+
+func joinTaskErrors(ctx context.Context, errs ...error) error {
+	var exitErr *exec.ExitError
+	var filteredErrs []error
+
+	for _, err := range errs {
+		if err != nil && !errors.As(err, &exitErr) && errors.Is(ctx.Err(), context.Canceled) {
+			filteredErrs = append(filteredErrs, err)
+		}
+	}
+
+	if len(filteredErrs) == 0 {
+		return nil
+	}
+
+	return errors.Join(filteredErrs...)
 }
