@@ -28,6 +28,8 @@ func findNearestParent() string {
 		return ""
 	}
 
+	// return ""
+
 	currentBranch := getCurrentBranch()
 	if currentBranch == "" {
 		return ""

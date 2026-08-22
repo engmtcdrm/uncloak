@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os/exec"
 	"sync"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
@@ -13,6 +12,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/gocover"
 	"github.com/engmtcdrm/uncloak/internal/task"
+	"github.com/engmtcdrm/uncloak/internal/utils"
 )
 
 var (
@@ -121,20 +121,19 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	}, 1)
 
 	wg.Go(func() {
-		gotask := task.NewTask("go", "Running Go coverage analysis")
+		gotask := task.NewTask("go", "Running Go test coverage analysis")
 		tm.AddTask(gotask)
 
 		var err error
 
 		gotask.Start()
 		defer func() {
-			gotask.SetMessage("Finished Go coverage analysis")
+			gotask.SetMessage("Finished Go test coverage analysis")
 
 			switch {
 			case err != nil:
-				var exitErr *exec.ExitError
-				if errors.As(err, &exitErr) && errors.Is(ctx.Err(), context.Canceled) {
-					gotask.SetMessage("Go coverage analysis stopped prematurely due to other task failure")
+				if utils.WasExecTerminated(err) {
+					gotask.SetMessage("Go test coverage analysis stopped prematurely due to other task failure")
 					gotask.Warning()
 				} else {
 					gotask.Error()
@@ -204,7 +203,7 @@ func printCommandsIfDebug(cfg *config.Config, coverageProfile *gocover.Profile, 
 	}
 
 	if coverageProfile != nil && coverageProfile.Command != "" {
-		fmt.Printf("Go coverage analysis command ran: %s\n", pp.Cyan(coverageProfile.Command))
+		fmt.Printf("Go test coverage analysis command ran: %s\n", pp.Cyan(coverageProfile.Command))
 	}
 
 	if diffResults != nil && diffResults.Command != "" {
@@ -218,7 +217,7 @@ func joinTaskErrors(ctx context.Context, errs ...error) error {
 
 	for _, err := range errs {
 		// if err != nil && !errors.As(err, &exitErr) && errors.Is(ctx.Err(), context.Canceled) {
-		if err != nil && errors.Is(ctx.Err(), context.Canceled) {
+		if !utils.WasExecTerminated(err) {
 			filteredErrs = append(filteredErrs, err)
 		}
 	}
