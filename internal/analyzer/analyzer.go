@@ -109,12 +109,10 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var wg sync.WaitGroup
-	var errs error
-
 	tm := task.NewManager()
 	tm.Start()
 
+	var wg sync.WaitGroup
 	var diff *gitdiff.Results
 	var diffErr error
 	var profile *gocover.Profile
@@ -139,9 +137,11 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 
 	fmt.Println()
 
-	printCommandsIfDebug(cfg, profile, diff)
+	if cfg.Debug {
+		printCommands(profile, diff)
+	}
 
-	errs = joinTaskErrors(profileErr, diffErr)
+	errs := joinTaskErrors(profileErr, diffErr)
 	if errs != nil {
 		return nil, nil, errs
 	}
@@ -204,19 +204,14 @@ func runTaskGoCoverage(ctx context.Context, tm *task.Manager, opts *gocover.Opti
 	return p, err
 }
 
-// printCommandsIfDebug prints the commands used for Go coverage and Git diff
-// analysis if debug mode is enabled.
-func printCommandsIfDebug(cfg *config.Config, coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
-	if !cfg.Debug {
-		return
+// printCommands prints the commands used for Git diff and Go coverage analysis.
+func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
+	if diffResults != nil && diffResults.Command != "" {
+		fmt.Printf("Git diff analysis command ran: %s\n", pp.Cyan(diffResults.Command))
 	}
 
 	if coverageProfile != nil && coverageProfile.Command != "" {
-		fmt.Printf("Go test coverage analysis command ran: %s\n", pp.Cyan(coverageProfile.Command))
-	}
-
-	if diffResults != nil && diffResults.Command != "" {
-		fmt.Printf("Git diff analysis command ran: %s\n\n", pp.Cyan(diffResults.Command))
+		fmt.Printf("Go test coverage analysis command ran: %s\n\n", pp.Cyan(coverageProfile.Command))
 	}
 }
 
