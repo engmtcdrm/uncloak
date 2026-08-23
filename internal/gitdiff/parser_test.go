@@ -1,6 +1,7 @@
 package gitdiff
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -13,18 +14,20 @@ import (
 
 // Tests for [Run] function.
 func Test_Get(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("should return results with valid options", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 		opts := &DefaultOptions
 
-		results, err := Run(opts)
+		results, err := Run(ctx, opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
 
 	t.Run("should return results when opts is nil", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
-		results, err := Run(nil)
+		results, err := Run(ctx, nil)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
@@ -33,7 +36,7 @@ func Test_Get(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := &DefaultOptions
 
-		results, err := Run(opts)
+		results, err := Run(ctx, opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -43,7 +46,7 @@ func Test_Get(t *testing.T) {
 		t.Chdir(tempDir)
 		opts := &DefaultOptions
 
-		results, err := Run(opts)
+		results, err := Run(ctx, opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -273,13 +276,14 @@ func Test_parseLines(t *testing.T) {
 
 // Tests for [runAndParseGitDiff] function.
 func Test_runAndParseGitDiff(t *testing.T) {
+	ctx := context.Background()
 	p := &parser{}
 
 	t.Run("should return error if current directory is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := &DefaultOptions
 
-		results, err := p.runAndParseGitDiff(opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
 		assert.Nil(t, results)
 	})
@@ -291,7 +295,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 
 		_, _ = testrepo.Init(t)
 
-		results, err := p.runAndParseGitDiff(opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
 		assert.Nil(t, results)
 	})
@@ -300,7 +304,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 		opts := &DefaultOptions
 
-		results, err := p.runAndParseGitDiff(opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
@@ -309,7 +313,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 		opts := &DefaultOptions
 
-		results, err := p.runAndParseGitDiff(opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})

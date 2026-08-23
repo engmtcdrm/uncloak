@@ -3,6 +3,7 @@ package gitdiff
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io"
 	"os/exec"
 	"regexp"
@@ -21,7 +22,7 @@ type parser struct {
 
 // Run executes the 'git diff' command with the provided options and parses its
 // output into a [Results] struct. If opts is nil, it uses [DefaultOptions].
-func Run(opts *Options) (*Results, error) {
+func Run(ctx context.Context, opts *Options) (*Results, error) {
 	if opts == nil {
 		opts = &DefaultOptions
 	}
@@ -36,7 +37,7 @@ func Run(opts *Options) (*Results, error) {
 
 	p := &parser{}
 
-	return p.runAndParseGitDiff(opts)
+	return p.runAndParseGitDiff(ctx, opts)
 }
 
 // parseHunkHeader checks if the line is a hunk header and if so, it updates the
@@ -123,8 +124,8 @@ func (p *parser) parseLines(lines []string) (*Results, error) {
 
 // runAndParseGitDiff executes the git diff command with the provided options,
 // captures its output, and parses it into a [Results] struct.
-func (p *parser) runAndParseGitDiff(opts *Options) (*Results, error) {
-	cmd := exec.Command("git", "diff")
+func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Results, error) {
+	cmd := exec.CommandContext(ctx, "git", "diff")
 
 	args := optionsToArgs(opts)
 
