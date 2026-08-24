@@ -1,6 +1,7 @@
 package gitdiff
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -13,6 +14,8 @@ import (
 
 // Tests for [errNoOutput] function.
 func Test_errNoOutput(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("nil input produces error with empty command", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 		expectedErr := fmt.Sprintf("git diff command produced no output. Is the target ref (%s) the same as the current branch (%s)?",
@@ -20,7 +23,7 @@ func Test_errNoOutput(t *testing.T) {
 			testrepo.NewBranchName,
 		)
 
-		err := errNoOutput(nil, testgit.MainBranchName)
+		err := errNoOutput(ctx, nil, testgit.MainBranchName)
 		require.Error(t, err)
 		require.Equal(t, expectedErr, err.Error())
 	})
@@ -32,8 +35,8 @@ func Test_errNoOutput(t *testing.T) {
 			testgit.MainBranchName,
 		)
 
-		cmd := exec.Command("git", "diff", "--cached")
-		err := errNoOutput(cmd, testgit.MainBranchName)
+		cmd := exec.CommandContext(ctx, "git", "diff", "--cached")
+		err := errNoOutput(ctx, cmd, testgit.MainBranchName)
 		require.Error(t, err)
 		require.Equal(t, expectedErr, err.Error())
 	})
@@ -44,8 +47,8 @@ func Test_errNoOutput(t *testing.T) {
 			testgit.MainBranchName,
 		)
 
-		cmd := exec.Command("git", "diff", "--cached")
-		err := errNoOutput(cmd, "")
+		cmd := exec.CommandContext(ctx, "git", "diff", "--cached")
+		err := errNoOutput(ctx, cmd, "")
 		require.Error(t, err)
 		require.Equal(t, expectedErr, err.Error())
 	})
@@ -58,7 +61,7 @@ func Test_errNoOutput(t *testing.T) {
 		t.Chdir(t.TempDir())
 
 		cmd := exec.Command("git", "diff", "--cached")
-		err := errNoOutput(cmd, testgit.MainBranchName)
+		err := errNoOutput(ctx, cmd, testgit.MainBranchName)
 		require.Error(t, err)
 		require.Equal(t, expectedErr, err.Error())
 	})

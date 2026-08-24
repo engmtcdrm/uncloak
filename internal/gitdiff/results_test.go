@@ -1,6 +1,7 @@
 package gitdiff
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,8 +9,10 @@ import (
 
 // Tests for [NewResults] function.
 func Test_NewResults(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("should return a Results instance with the root directory", func(t *testing.T) {
-		results, err := NewResults("")
+		results, err := NewResults(ctx, "")
 		require.NoError(t, err)
 		require.NotNil(t, results)
 		require.NotEmpty(t, results.RootDir)
@@ -19,7 +22,7 @@ func Test_NewResults(t *testing.T) {
 	t.Run("should return an error when exec fails", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Setenv("PATH", tempDir)
-		results, err := NewResults("")
+		results, err := NewResults(ctx, "")
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -27,8 +30,10 @@ func Test_NewResults(t *testing.T) {
 
 // Tests for [Results.Files] function.
 func Test_Results_Files(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("return empty slice when no new lines", func(t *testing.T) {
-		results, err := NewResults("")
+		results, err := NewResults(ctx, "")
 		require.NoError(t, err)
 
 		files := results.Files()
@@ -36,7 +41,7 @@ func Test_Results_Files(t *testing.T) {
 	})
 
 	t.Run("return sorted list of file paths", func(t *testing.T) {
-		results, err := NewResults("")
+		results, err := NewResults(ctx, "")
 		require.NoError(t, err)
 		results.NewLines["b.go"] = map[int]bool{1: true}
 		results.NewLines["a.go"] = map[int]bool{1: true}

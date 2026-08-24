@@ -75,6 +75,7 @@ func Test_parseHunkHeader(t *testing.T) {
 
 // Tests for [parseGitDiffData] function.
 func Test_parseGitDiffData(t *testing.T) {
+	ctx := context.Background()
 	p := &parser{}
 	diffData := `diff --git a/internal/gitdiff/parser.go b/internal/gitdiff/parser.go
 new file mode 100644
@@ -87,21 +88,21 @@ index 0000000..6d36618
 
 	t.Run("Should return error if scanner encounters an error", func(t *testing.T) {
 		r := &testutils.ErrorReader{}
-		results, err := p.parseGitDiffData(r)
+		results, err := p.parseGitDiffData(ctx, r)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
 
 	t.Run("should return nil results for empty input", func(t *testing.T) {
 		r := &testutils.EmptyReader{}
-		results, err := p.parseGitDiffData(r)
+		results, err := p.parseGitDiffData(ctx, r)
 		require.NoError(t, err)
 		require.Nil(t, results)
 	})
 
 	t.Run("should parse valid git diff data", func(t *testing.T) {
 		r := strings.NewReader(diffData)
-		results, err := p.parseGitDiffData(r)
+		results, err := p.parseGitDiffData(ctx, r)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 		assert.Len(t, results.Files(), 1)
@@ -112,7 +113,7 @@ index 0000000..6d36618
 		t.Chdir(t.TempDir())
 
 		r := strings.NewReader(diffData)
-		results, err := p.parseGitDiffData(r)
+		results, err := p.parseGitDiffData(ctx, r)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -120,7 +121,9 @@ index 0000000..6d36618
 
 // Tests for [parseLines] function.
 func Test_parseLines(t *testing.T) {
+	ctx := context.Background()
 	p := &parser{}
+
 	t.Run("should correctly identify new lines on new files", func(t *testing.T) {
 		lines := []string{
 			"diff --git a/internal/gitdiff/parser.go b/internal/gitdiff/parser.go",
@@ -152,7 +155,7 @@ func Test_parseLines(t *testing.T) {
 			"+func report() {}",
 		}
 
-		results, err := p.parseLines(lines)
+		results, err := p.parseLines(ctx, lines)
 		require.NoError(t, err)
 		assert.Len(t, results.Files(), 3)
 		assert.Equal(t, map[int]bool{1: true, 2: true}, results.NewLines["internal/gitdiff/parser.go"])
@@ -174,7 +177,7 @@ func Test_parseLines(t *testing.T) {
 			"+This is another existing line",
 		}
 
-		results, err := p.parseLines(lines)
+		results, err := p.parseLines(ctx, lines)
 		require.Error(t, err)
 		assert.Nil(t, results)
 	})
@@ -268,7 +271,7 @@ func Test_parseLines(t *testing.T) {
 			},
 		}
 
-		results, err := p.parseLines(lines)
+		results, err := p.parseLines(ctx, lines)
 		require.NoError(t, err)
 		require.Equal(t, expectedLines, results.NewLines)
 	})

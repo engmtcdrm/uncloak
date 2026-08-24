@@ -27,11 +27,11 @@ func Run(ctx context.Context, opts *Options) (*Results, error) {
 		opts = &DefaultOptions
 	}
 
-	if !isGitDir() {
+	if !isGitDir(ctx) {
 		return nil, ErrNotAGitRepo
 	}
 
-	if !hasParent() {
+	if !hasParent(ctx) {
 		return nil, ErrNoParentBranch
 	}
 
@@ -60,7 +60,7 @@ func parseHunkHeader(line string, plusStartLine int) (int, bool) {
 
 // parseGitDiffData reads the git diff data from the provided reader and parses
 // it into a [Results] struct.
-func (p *parser) parseGitDiffData(r io.Reader) (*Results, error) {
+func (p *parser) parseGitDiffData(ctx context.Context, r io.Reader) (*Results, error) {
 	s := bufio.NewScanner(r)
 	var lines []string
 	for s.Scan() {
@@ -75,13 +75,13 @@ func (p *parser) parseGitDiffData(r io.Reader) (*Results, error) {
 		return nil, nil
 	}
 
-	return p.parseLines(lines)
+	return p.parseLines(ctx, lines)
 }
 
 // parseLines processes the lines of a git diff and extracts the added lines for
 // Go files and returns them in a [Results] struct.
-func (p *parser) parseLines(lines []string) (*Results, error) {
-	results, err := NewResults(p.Command)
+func (p *parser) parseLines(ctx context.Context, lines []string) (*Results, error) {
+	results, err := NewResults(ctx, p.Command)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (p *parser) parseLines(lines []string) (*Results, error) {
 func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Results, error) {
 	cmd := exec.CommandContext(ctx, "git", "diff")
 
-	args := optionsToArgs(opts)
+	args := optionsToArgs(ctx, opts)
 
 	cmd.Args = append(cmd.Args, args...)
 
@@ -139,8 +139,8 @@ func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Result
 	}
 
 	if len(output) == 0 {
-		return nil, errNoOutput(cmd, opts.TargetRef)
+		return nil, errNoOutput(ctx, cmd, opts.TargetRef)
 	}
 
-	return p.parseGitDiffData(bytes.NewReader(output))
+	return p.parseGitDiffData(ctx, bytes.NewReader(output))
 }

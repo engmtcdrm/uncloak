@@ -1,6 +1,7 @@
 package gitdiff
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -10,14 +11,16 @@ import (
 
 // Tests for [optionsToArgs] function.
 func Test_optionsToArgs(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("should return empty args for nil options", func(t *testing.T) {
-		args := optionsToArgs(nil)
+		args := optionsToArgs(ctx, nil)
 		require.Empty(t, args)
 	})
 
 	t.Run("should return empty args for empty options", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
-		args := optionsToArgs(&Options{})
+		args := optionsToArgs(ctx, &Options{})
 		require.Len(t, args, 4)
 		require.Equal(t, "main -- . --unified=0", strings.Join(args, " "))
 	})
@@ -26,7 +29,7 @@ func Test_optionsToArgs(t *testing.T) {
 		opts := &Options{
 			TargetRef: OriginMain,
 		}
-		args := optionsToArgs(opts)
+		args := optionsToArgs(ctx, opts)
 		require.Len(t, args, 4)
 		require.Equal(t, OriginMain+" -- . --unified=0", strings.Join(args, " "))
 	})
