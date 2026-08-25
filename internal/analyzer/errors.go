@@ -6,16 +6,16 @@ type taskCanceledError struct {
 }
 
 // newTaskCanceledError creates a new taskCanceledError with the given error.
-func newTaskCanceledError(err error) *taskCanceledError {
-	return &taskCanceledError{e: err}
+func newTaskCanceledError(err error) taskCanceledError {
+	return taskCanceledError{e: err}
 }
 
 // Error returns the error message of the underlying error.
-func (t *taskCanceledError) Error() string {
+func (t taskCanceledError) Error() string {
 	return t.e.Error()
 }
 
 // Unwrap returns the underlying error.
-func (t *taskCanceledError) Unwrap() error {
+func (t taskCanceledError) Unwrap() error {
 	return t.e
 }
