@@ -34,7 +34,7 @@ func Test_findNearestParent(t *testing.T) {
 
 	t.Run("should return empty if git is in a detached HEAD state", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
-		cmd := exec.Command("git", "checkout", "--detach", "HEAD")
+		cmd := exec.CommandContext(ctx, "git", "checkout", "--detach", "HEAD")
 		require.NoError(t, cmd.Run())
 
 		parent := findNearestParent(ctx)

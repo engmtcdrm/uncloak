@@ -60,7 +60,7 @@ func Test_errNoOutput(t *testing.T) {
 
 		t.Chdir(t.TempDir())
 
-		cmd := exec.Command("git", "diff", "--cached")
+		cmd := exec.CommandContext(ctx, "git", "diff", "--cached")
 		err := errNoOutput(ctx, cmd, testgit.MainBranchName)
 		require.Error(t, err)
 		require.Equal(t, expectedErr, err.Error())
@@ -69,16 +69,18 @@ func Test_errNoOutput(t *testing.T) {
 
 // Tests for [handleExecError] function.
 func Test_handleExecError(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("should return ErrGitDoesNotExist when git is not found", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Setenv("PATH", tempDir)
-		cmd := exec.Command("git", "diff")
+		cmd := exec.CommandContext(ctx, "git", "diff")
 		err := handleExecError(cmd, nil, &exec.Error{Name: "git", Err: exec.ErrNotFound})
 		require.ErrorIs(t, err, exec.ErrNotFound)
 	})
 
 	t.Run("should return an error with command and output when exec fails", func(t *testing.T) {
-		cmd := exec.Command("git", "diff")
+		cmd := exec.CommandContext(ctx, "git", "diff")
 		err := handleExecError(cmd, []byte("output"), &exec.ExitError{Stderr: []byte("stderr")})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "git diff")
@@ -87,7 +89,7 @@ func Test_handleExecError(t *testing.T) {
 	})
 
 	t.Run("should return an error with command and output when exec fails with unknown error", func(t *testing.T) {
-		cmd := exec.Command("git", "diff")
+		cmd := exec.CommandContext(ctx, "git", "diff")
 		err := handleExecError(cmd, []byte("output"), errors.New("unknown error"))
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "git diff")

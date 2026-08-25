@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"testing"
@@ -10,8 +11,10 @@ import (
 
 // Tests for [ExecError] function.
 func Test_ExecError(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("ExecError returns formatted error message", func(t *testing.T) {
-		cmd := exec.Command("git", "diff")
+		cmd := exec.CommandContext(ctx, "git", "diff")
 		output := []byte("some output")
 		err := fmt.Errorf("some error")
 
