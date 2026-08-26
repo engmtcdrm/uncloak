@@ -1,4 +1,4 @@
-.PHONY: menv test testv testcover testcoverall build run buildexample runexample
+.PHONY: menv test testv testcover testcoverall build run buildexample runexample lint
 
 PARENT_DIR := $(notdir $(CURDIR))
 
@@ -51,3 +51,7 @@ runexample:
 	@cd examples; \
 	go run .; \
 	cd ..
+
+lint:
+	@echo "Running golangci-lint..."
+	@golangci-lint run --timeout 5m
