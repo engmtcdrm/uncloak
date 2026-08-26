@@ -88,17 +88,18 @@ func (m *Manager) Start() {
 		return
 	}
 
-	// Do not bother outputting tasks statuses if we are not in a terminal.
-	// Finish function will write the final task statuses out.
-	if !m.isTerminal() {
-		m.mu.Unlock()
-		return
+	if m.isTerminal() {
+		fmt.Fprint(m.Out, ansi.HideCursor) //nolint:errcheck
 	}
-
-	fmt.Fprint(m.Out, ansi.HideCursor) //nolint:errcheck
 
 	m.isRunning = true
 	m.mu.Unlock()
+
+	// Do not bother outputting tasks statuses if we are not in a terminal.
+	// Finish function will write the final task statuses out.
+	if !m.isTerminal() {
+		return
+	}
 
 	go m.runMonitorTasks()
 }
