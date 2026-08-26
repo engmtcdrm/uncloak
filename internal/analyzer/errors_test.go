@@ -27,19 +27,23 @@ func Test_newTaskCanceledError(t *testing.T) {
 
 // Tests for [taskCanceledError.Error] function.
 func Test_taskCanceledError_Error(t *testing.T) {
-	t.Run("should return the error message of the underlying error", func(t *testing.T) {
-		const expectedMessage = "original error"
-		err := errors.New(expectedMessage)
+	t.Run("should return the error message", func(t *testing.T) {
+		const originalMessage = "original error"
+		err := errors.New(originalMessage)
 		taskErr := newTaskCanceledError(err)
+
 		require.Error(t, taskErr)
 		assert.Equal(t, taskErr.e, err)
+
+		expectedMessage := "task canceled: " + originalMessage
 		assert.Equal(t, expectedMessage, taskErr.Error())
 	})
 
-	t.Run("should return an empty string if the underlying error is nil", func(t *testing.T) {
+	t.Run("should return the task canceled message if the underlying error is nil", func(t *testing.T) {
 		taskErr := newTaskCanceledError(nil)
 		require.Error(t, taskErr)
 		require.NoError(t, taskErr.e)
+		assert.Equal(t, "task canceled", taskErr.Error())
 	})
 }
 
