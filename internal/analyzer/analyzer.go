@@ -102,6 +102,36 @@ func filterFiles(cfg *config.Config, files []string) []string {
 	return filteredFiles
 }
 
+// joinTaskErrors combines multiple errors into a single error, excluding any
+// [taskCanceledError] instances.
+func joinTaskErrors(errs ...error) error {
+	var taskCanceledErr taskCanceledError
+	var filteredErrs []error
+
+	for _, err := range errs {
+		if err != nil && !errors.As(err, &taskCanceledErr) {
+			filteredErrs = append(filteredErrs, err)
+		}
+	}
+
+	if len(filteredErrs) == 0 {
+		return nil
+	}
+
+	return errors.Join(filteredErrs...)
+}
+
+// printCommands prints the commands used for Git diff and Go coverage analysis.
+func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
+	if diffResults != nil && diffResults.Command != "" {
+		fmt.Printf("Git diff analysis command ran: %s\n", pp.Cyan(diffResults.Command))
+	}
+
+	if coverageProfile != nil && coverageProfile.Command != "" {
+		fmt.Printf("Go test coverage analysis command ran: %s\n\n", pp.Cyan(coverageProfile.Command))
+	}
+}
+
 // processFiles reads and parses the Go coverage profile and the git diff file
 // concurrently. It returns the parsed coverage profile and git diff, or an
 // error if any occurs during parsing.
@@ -202,34 +232,4 @@ func runTaskGoCoverage(ctx context.Context, tm *task.Manager, opts *gocover.Opti
 	}
 
 	return p, err
-}
-
-// printCommands prints the commands used for Git diff and Go coverage analysis.
-func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
-	if diffResults != nil && diffResults.Command != "" {
-		fmt.Printf("Git diff analysis command ran: %s\n", pp.Cyan(diffResults.Command))
-	}
-
-	if coverageProfile != nil && coverageProfile.Command != "" {
-		fmt.Printf("Go test coverage analysis command ran: %s\n\n", pp.Cyan(coverageProfile.Command))
-	}
-}
-
-// joinTaskErrors combines multiple errors into a single error, excluding any
-// [taskCanceledError] instances.
-func joinTaskErrors(errs ...error) error {
-	var taskCanceledErr *taskCanceledError
-	var filteredErrs []error
-
-	for _, err := range errs {
-		if err != nil && !errors.As(err, &taskCanceledErr) {
-			filteredErrs = append(filteredErrs, err)
-		}
-	}
-
-	if len(filteredErrs) == 0 {
-		return nil
-	}
-
-	return errors.Join(filteredErrs...)
 }
