@@ -272,25 +272,36 @@ func Test_processFiles(t *testing.T) {
 }
 
 // Tests for [runTaskGitDiff] function.
+//
+//nolint:dupl
 func Test_runTaskGitDiff(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("should return diff results without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+	runTask := func(ctx context.Context, t *testing.T, stdoutFile *os.File) (*gitdiff.Results, error) {
+		t.Helper()
 
-		stdoutFile := testutils.SetStdout(t)
 		defaultConfig := config.DefaultConfig
 		tm := task.NewManager()
 		tm.Out = stdoutFile
 		tm.Start()
 
 		diffResults, err := runTaskGitDiff(ctx, tm, &defaultConfig.GitDiffOptions)
-		require.NoError(t, err)
-		require.NotNil(t, diffResults)
 		require.NotEmpty(t, tm.Tasks)
 		assert.Len(t, tm.Tasks, 1)
 
 		tm.Finish()
+
+		return diffResults, err
+	}
+
+	t.Run("should return diff results without error", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+
+		stdoutFile := testutils.SetStdout(t)
+
+		diffResults, err := runTask(ctx, t, stdoutFile)
+		require.NoError(t, err)
+		require.NotNil(t, diffResults)
 
 		output, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
@@ -307,18 +318,10 @@ func Test_runTaskGitDiff(t *testing.T) {
 		t.Chdir(tempDir)
 
 		stdoutFile := testutils.SetStdout(t)
-		defaultConfig := config.DefaultConfig
-		tm := task.NewManager()
-		tm.Out = stdoutFile
-		tm.Start()
 
-		diffResults, err := runTaskGitDiff(ctx, tm, &defaultConfig.GitDiffOptions)
+		diffResults, err := runTask(ctx, t, stdoutFile)
 		require.Error(t, err)
 		require.Nil(t, diffResults)
-		require.NotEmpty(t, tm.Tasks)
-		assert.Len(t, tm.Tasks, 1)
-
-		tm.Finish()
 
 		output, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
@@ -337,20 +340,11 @@ func Test_runTaskGitDiff(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 
 		stdoutFile := testutils.SetStdout(t)
-		defaultConfig := config.DefaultConfig
-		tm := task.NewManager()
-		tm.Out = stdoutFile
-		tm.Start()
 
-		diffResults, err := runTaskGitDiff(ctx, tm, &defaultConfig.GitDiffOptions)
+		diffResults, err := runTask(ctx, t, stdoutFile)
 		require.Error(t, err)
 		require.ErrorAs(t, err, &taskCanceledError{})
-		require.ErrorAs(t, err, &context.Canceled)
 		require.Nil(t, diffResults)
-		require.NotEmpty(t, tm.Tasks)
-		assert.Len(t, tm.Tasks, 1)
-
-		tm.Finish()
 
 		output, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
@@ -363,26 +357,37 @@ func Test_runTaskGitDiff(t *testing.T) {
 	})
 }
 
-// // Tests for [runTaskGoCoverage] function.
+// Tests for [runTaskGoCoverage] function.
+//
+//nolint:dupl
 func Test_runTaskGoCoverage(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("should return coverage profile without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+	runTask := func(ctx context.Context, t *testing.T, stdoutFile *os.File) (*gocover.Profile, error) {
+		t.Helper()
 
-		stdoutFile := testutils.SetStdout(t)
 		defaultConfig := config.DefaultConfig
 		tm := task.NewManager()
 		tm.Out = stdoutFile
 		tm.Start()
 
 		profile, err := runTaskGoCoverage(ctx, tm, &defaultConfig.GoTestOptions)
-		require.NoError(t, err)
-		require.NotNil(t, profile)
 		require.NotEmpty(t, tm.Tasks)
 		assert.Len(t, tm.Tasks, 1)
 
 		tm.Finish()
+
+		return profile, err
+	}
+
+	t.Run("should return coverage profile without error", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(t)
+
+		stdoutFile := testutils.SetStdout(t)
+
+		profile, err := runTask(ctx, t, stdoutFile)
+		require.NoError(t, err)
+		require.NotNil(t, profile)
 
 		output, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
@@ -399,18 +404,10 @@ func Test_runTaskGoCoverage(t *testing.T) {
 		t.Chdir(tempDir)
 
 		stdoutFile := testutils.SetStdout(t)
-		defaultConfig := config.DefaultConfig
-		tm := task.NewManager()
-		tm.Out = stdoutFile
-		tm.Start()
 
-		profile, err := runTaskGoCoverage(ctx, tm, &defaultConfig.GoTestOptions)
+		profile, err := runTask(ctx, t, stdoutFile)
 		require.Error(t, err)
 		require.Nil(t, profile)
-		require.NotEmpty(t, tm.Tasks)
-		assert.Len(t, tm.Tasks, 1)
-
-		tm.Finish()
 
 		output, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
@@ -429,20 +426,11 @@ func Test_runTaskGoCoverage(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t)
 
 		stdoutFile := testutils.SetStdout(t)
-		defaultConfig := config.DefaultConfig
-		tm := task.NewManager()
-		tm.Out = stdoutFile
-		tm.Start()
 
-		profile, err := runTaskGoCoverage(ctx, tm, &defaultConfig.GoTestOptions)
+		profile, err := runTask(ctx, t, stdoutFile)
 		require.Error(t, err)
 		require.ErrorAs(t, err, &taskCanceledError{})
-		require.ErrorAs(t, err, &context.Canceled)
 		require.Nil(t, profile)
-		require.NotEmpty(t, tm.Tasks)
-		assert.Len(t, tm.Tasks, 1)
-
-		tm.Finish()
 
 		output, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
