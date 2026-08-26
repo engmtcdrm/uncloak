@@ -7,16 +7,16 @@ menv:
 	@echo "Parent directory name: $(PARENT_DIR)"
 
 test:
-	@go test ./...
+	@go test -timeout 1m ./...
 
 testv:
-	@go test -v ./...
+	@go test -timeout 1m -v ./...
 
 testcover:
-	@go test -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html && rm coverage.out
+	@go test -timeout 1m  -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html && rm coverage.out
 
 testcoverall:
-	@go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html && rm coverage.out
+	@go test -timeout 1m  ./... -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html && rm coverage.out
 
 # Build for application
 build:
