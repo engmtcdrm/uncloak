@@ -28,7 +28,7 @@ func Test_Get(t *testing.T) {
 
 	t.Run("should return valid profile for empty filePath", func(t *testing.T) {
 		tempDir := t.TempDir()
-		repoPath := testgit.GetTestRepoPath(t)
+		repoPath := testgit.GetTestRepoPath(ctx, t)
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
@@ -39,7 +39,7 @@ func Test_Get(t *testing.T) {
 
 	t.Run("should return valid profile for nil options", func(t *testing.T) {
 		tempDir := t.TempDir()
-		repoPath := testgit.GetTestRepoPath(t)
+		repoPath := testgit.GetTestRepoPath(ctx, t)
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
@@ -222,7 +222,7 @@ func Test_parser_runTestCoverage(t *testing.T) {
 
 	t.Run("should return valid file path for successful test coverage run", func(t *testing.T) {
 		tempDir := t.TempDir()
-		repoPath := testgit.GetTestRepoPath(t)
+		repoPath := testgit.GetTestRepoPath(ctx, t)
 		testfiles.CopyDir(t, repoPath, tempDir)
 
 		t.Chdir(tempDir)

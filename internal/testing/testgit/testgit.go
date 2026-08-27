@@ -1,6 +1,7 @@
 package testgit
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -45,7 +46,7 @@ type gitCmd struct {
 
 // AddCommit adds and commits changes in the git repository with the given
 // commit message.
-func AddCommit(t *testing.T, commitMsg string) {
+func AddCommit(ctx context.Context, t *testing.T, commitMsg string) {
 	t.Helper()
 
 	repoPath := getwd(t)
@@ -57,12 +58,12 @@ func AddCommit(t *testing.T, commitMsg string) {
 			args = append(args, commitMsg)
 		}
 
-		execCmd(t, args, repoPath)
+		execCmd(ctx, t, args, repoPath)
 	}
 }
 
 // CreateBranch creates a new branch and checks it out in the git repository.
-func CreateBranch(t *testing.T, branchName string) {
+func CreateBranch(ctx context.Context, t *testing.T, branchName string) {
 	t.Helper()
 
 	repoPath := getwd(t)
@@ -70,36 +71,36 @@ func CreateBranch(t *testing.T, branchName string) {
 	for _, cmd := range gitCreateBranchCmds {
 		args := cmd.args
 		args = append(args, branchName)
-		execCmd(t, args, repoPath)
+		execCmd(ctx, t, args, repoPath)
 	}
 }
 
 // GetTestRepoPath returns the absolute path to the test git repository
 // [TestRepoDir].
-func GetTestRepoPath(t *testing.T) string {
+func GetTestRepoPath(ctx context.Context, t *testing.T) string {
 	t.Helper()
 
-	repoPath := filepath.Join(rootDir(t), TestRepoDir)
+	repoPath := filepath.Join(rootDir(ctx, t), TestRepoDir)
 	return repoPath
 }
 
 // Init initializes a git repository in the current working directory.
-func Init(t *testing.T) {
+func Init(ctx context.Context, t *testing.T) {
 	t.Helper()
 
 	repoPath := getwd(t)
 
 	for _, cmd := range gitInitCmds {
-		execCmd(t, cmd.args, repoPath)
+		execCmd(ctx, t, cmd.args, repoPath)
 	}
 }
 
 // execCmd executes a command in the given repository path and checks for
 // errors.
-func execCmd(t *testing.T, args []string, repoPath string) {
+func execCmd(ctx context.Context, t *testing.T, args []string, repoPath string) {
 	t.Helper()
 
-	execCmd := exec.Command(args[0], args[1:]...)
+	execCmd := exec.CommandContext(ctx, args[0], args[1:]...)
 	execCmd.Dir = repoPath
 	output, err := execCmd.CombinedOutput()
 	require.NoError(t, err, "Failed to run command %q, output: %s", args, string(output))
@@ -116,10 +117,10 @@ func getwd(t *testing.T) string {
 }
 
 // rootDir returns the root directory of the git repository.
-func rootDir(t *testing.T) string {
+func rootDir(ctx context.Context, t *testing.T) string {
 	t.Helper()
 
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--show-toplevel")
 
 	output, err := cmd.Output()
 	require.NoError(t, err, "Failed to get git root directory")

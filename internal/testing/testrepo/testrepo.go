@@ -1,6 +1,7 @@
 package testrepo
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,7 +25,7 @@ const (
 // Init redirects stdout to a temporary file, creates a temporary directory,
 // and initializes a git repository in that directory. It returns the path to
 // the temporary directory and the file handle for the redirected stdout.
-func Init(t *testing.T) (string, *os.File) {
+func Init(ctx context.Context, t *testing.T) (string, *os.File) {
 	t.Helper()
 
 	stdoutFile := testutils.SetStdout(t)
@@ -43,8 +44,8 @@ func Init(t *testing.T) (string, *os.File) {
 	})
 
 	t.Chdir(tempDir)
-	testgit.Init(t)
-	testgit.AddCommit(t, "Initial commit")
+	testgit.Init(ctx, t)
+	testgit.AddCommit(ctx, t, "Initial commit")
 
 	return tempDir, stdoutFile
 }
@@ -54,11 +55,11 @@ func Init(t *testing.T) (string, *os.File) {
 // repo files to the temporary directory, creates a new branch, and commits the
 // changes. It returns the path to the temporary directory and the file handle
 // for the redirected stdout.
-func InitWithFileCopy(t *testing.T) (string, *os.File) {
+func InitWithFileCopy(ctx context.Context, t *testing.T) (string, *os.File) {
 	t.Helper()
 
 	stdoutFile := testutils.SetStdout(t)
-	repoPath := testgit.GetTestRepoPath(t)
+	repoPath := testgit.GetTestRepoPath(ctx, t)
 	tempDir := t.TempDir()
 	t.Cleanup(func() {
 		// Sleep for a short duration to ensure that any pending operations are completed
@@ -74,13 +75,13 @@ func InitWithFileCopy(t *testing.T) (string, *os.File) {
 	})
 
 	t.Chdir(tempDir)
-	testgit.Init(t)
-	testgit.AddCommit(t, "Initial commit")
+	testgit.Init(ctx, t)
+	testgit.AddCommit(ctx, t, "Initial commit")
 
 	// Copy the test repo and commit the changes
 	testfiles.CopyDir(t, repoPath, tempDir)
-	testgit.CreateBranch(t, NewBranchName)
-	testgit.AddCommit(t, "New development")
+	testgit.CreateBranch(ctx, t, NewBranchName)
+	testgit.AddCommit(ctx, t, "New development")
 
 	return tempDir, stdoutFile
 }
