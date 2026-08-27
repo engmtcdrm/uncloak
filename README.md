@@ -91,6 +91,7 @@ Exclusions support exact file matches and glob patterns. For example:
 
 `uncloak` supports these command-line flags:
 
+- `-C, --coverage-file <string>`: (optional) path to the Go coverage file. If not specified, the default is to use the go tool to generate the coverage file
 - `-c, --coverage-threshold <float>`: (optional) coverage threshold override. This will also overwrite what is specified in the configuration file
 - `-d, --debug`: (optional) enable debug output, e.g. what commands are run
 - `-h, --help`: help for uncloak
