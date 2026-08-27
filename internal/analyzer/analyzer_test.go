@@ -379,7 +379,7 @@ func Test_runTaskGoCoverage(t *testing.T) {
 		tm.Out = stdoutFile
 		tm.Start()
 
-		profile, err := runTaskGoCoverage(ctx, tm, &defaultConfig.GoTestOptions)
+		profile, err := runTaskGoCoverage(ctx, tm, defaultConfig.CoverageFile, &defaultConfig.GoTestOptions)
 		require.NotEmpty(t, tm.Tasks)
 		assert.Len(t, tm.Tasks, 1)
 

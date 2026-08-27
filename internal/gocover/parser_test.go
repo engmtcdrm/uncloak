@@ -15,14 +15,14 @@ import (
 )
 
 // Tests for [Run] function.
-func Test_Get(t *testing.T) {
+func Test_Run(t *testing.T) {
 	ctx := context.Background()
 	opts := &DefaultOptions
 
 	t.Run("should return error if go list fails", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 
-		_, err := Run(ctx, opts)
+		_, err := Run(ctx, "", opts)
 		require.Error(t, err)
 	})
 
@@ -32,7 +32,7 @@ func Test_Get(t *testing.T) {
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
-		profile, err := Run(ctx, opts)
+		profile, err := Run(ctx, "", opts)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 	})
@@ -43,7 +43,7 @@ func Test_Get(t *testing.T) {
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
-		profile, err := Run(ctx, nil)
+		profile, err := Run(ctx, "", nil)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 	})
@@ -60,7 +60,7 @@ func Test_Get(t *testing.T) {
 		err := os.Chmod(tempDir, 0000)
 		require.NoError(t, err)
 
-		profile, err := Run(ctx, opts)
+		profile, err := Run(ctx, "", opts)
 		require.Error(t, err)
 		require.Nil(t, profile)
 	})

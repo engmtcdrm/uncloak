@@ -42,7 +42,8 @@ type Config struct {
 	GoTestOptions     gocover.Options `yaml:"go-test"`            // Go test options for coverage analysis.
 
 	Debug          bool            // Not configurable via YAML, used for enabling debug output.
-	GitDiffOptions gitdiff.Options // Git-related configuration.
+	CoverageFile   string          // Not configurable via YAML, used for specifying the Go coverage file path.
+	GitDiffOptions gitdiff.Options // Not configurable via YAML, Git-related configuration.
 }
 
 // ValidationError represents an error related to the configuration validation.
