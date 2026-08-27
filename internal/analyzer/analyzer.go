@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -49,6 +50,9 @@ func NewCodeCoverage(cfg *config.Config) (*Report, error) {
 	return report, nil
 }
 
+// analyzeCoverage analyzes the coverage of new lines in the given report based
+// on the configuration. It returns the updated report with the analyzed
+// coverage.
 func analyzeCoverage(report *Report, cfg *config.Config) *Report {
 	filteredFiles := filterFiles(cfg, report.GitDiffResults.Files())
 
@@ -80,6 +84,8 @@ func analyzeCoverage(report *Report, cfg *config.Config) *Report {
 	return report
 }
 
+// filterFiles filters the given list of files based on the exclusions specified
+// in the configuration. It returns a new list of files that are not excluded.
 func filterFiles(cfg *config.Config, files []string) []string {
 	if len(cfg.Exclusions) == 0 {
 		return files
@@ -96,73 +102,64 @@ func filterFiles(cfg *config.Config, files []string) []string {
 	return filteredFiles
 }
 
+// joinTaskErrors combines multiple errors into a single error, excluding any
+// [taskCanceledError] instances.
+func joinTaskErrors(errs ...error) error {
+	var taskCanceledErr taskCanceledError
+	var filteredErrs []error
+
+	for _, err := range errs {
+		if err != nil && !errors.As(err, &taskCanceledErr) {
+			filteredErrs = append(filteredErrs, err)
+		}
+	}
+
+	if len(filteredErrs) == 0 {
+		return nil
+	}
+
+	return errors.Join(filteredErrs...)
+}
+
+// printCommands prints the commands used for Git diff and Go coverage analysis.
+func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
+	if diffResults != nil && diffResults.Command != "" {
+		fmt.Printf("Git diff analysis command ran: %s\n", pp.Cyan(diffResults.Command))
+	}
+
+	if coverageProfile != nil && coverageProfile.Command != "" {
+		fmt.Printf("Go test coverage analysis command ran: %s\n\n", pp.Cyan(coverageProfile.Command))
+	}
+}
+
 // processFiles reads and parses the Go coverage profile and the git diff file
 // concurrently. It returns the parsed coverage profile and git diff, or an
 // error if any occurs during parsing.
 func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error) {
-	var wg sync.WaitGroup
-	var errs error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	tm := task.NewManager()
 	tm.Start()
 
-	covCh := make(chan struct {
-		profile *gocover.Profile
-		err     error
-	}, 1)
-	diffCh := make(chan struct {
-		diff *gitdiff.Results
-		err  error
-	}, 1)
+	var wg sync.WaitGroup
+	var diff *gitdiff.Results
+	var diffErr error
+	var profile *gocover.Profile
+	var profileErr error
 
 	wg.Go(func() {
-		gotask := task.NewTask("go", "Running Go coverage analysis")
-		tm.AddTask(gotask)
-
-		var err error
-
-		gotask.Start()
-		defer func() {
-			gotask.SetMessage("Finished Go coverage analysis")
-
-			switch {
-			case err != nil:
-				gotask.Error()
-			default:
-				gotask.Finish()
-			}
-		}()
-
-		p, err := gocover.Run(&cfg.GoTestOptions)
-		covCh <- struct {
-			profile *gocover.Profile
-			err     error
-		}{p, err}
+		diff, diffErr = runTaskGitDiff(ctx, tm, &cfg.GitDiffOptions)
+		if diffErr != nil {
+			cancel()
+		}
 	})
 
 	wg.Go(func() {
-		gittask := task.NewTask("git", "Running Git diff analysis")
-		tm.AddTask(gittask)
-
-		var err error
-
-		gittask.Start()
-		defer func() {
-			gittask.SetMessage("Finished Git diff analysis")
-
-			switch {
-			case err != nil:
-				gittask.Error()
-			default:
-				gittask.Finish()
-			}
-		}()
-
-		d, err := gitdiff.Run(&cfg.GitDiffOptions)
-		diffCh <- struct {
-			diff *gitdiff.Results
-			err  error
-		}{d, err}
+		profile, profileErr = runTaskGoCoverage(ctx, tm, &cfg.GoTestOptions)
+		if profileErr != nil {
+			cancel()
+		}
 	})
 
 	wg.Wait()
@@ -170,31 +167,69 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 
 	fmt.Println()
 
-	covRes := <-covCh
-	diffRes := <-diffCh
+	if cfg.Debug {
+		printCommands(profile, diff)
+	}
 
-	printCommandsIfDebug(cfg, covRes.profile, diffRes.diff)
-
-	errs = errors.Join(covRes.err, diffRes.err)
+	errs := joinTaskErrors(profileErr, diffErr)
 	if errs != nil {
 		return nil, nil, errs
 	}
 
-	return covRes.profile, diffRes.diff, nil
+	return profile, diff, nil
 }
 
-// printCommandsIfDebug prints the commands used for Go coverage and Git diff
-// analysis if debug mode is enabled.
-func printCommandsIfDebug(cfg *config.Config, coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
-	if !cfg.Debug {
-		return
+// runTaskGitDiff executes the Git diff analysis task and returns the resulting
+// diff results and any error encountered.
+func runTaskGitDiff(ctx context.Context, tm *task.Manager, opts *gitdiff.Options) (*gitdiff.Results, error) {
+	gittask := task.NewTask("git", "Running Git diff analysis")
+	tm.AddTask(gittask)
+
+	gittask.Start()
+
+	d, err := gitdiff.Run(ctx, opts)
+
+	gittask.SetMessage("Finished Git diff analysis")
+
+	switch {
+	case err != nil:
+		if errors.Is(ctx.Err(), context.Canceled) {
+			gittask.SetMessage("Git diff analysis stopped prematurely due to other task failure")
+			gittask.Warning()
+			err = newTaskCanceledError(err)
+		} else {
+			gittask.Error()
+		}
+	default:
+		gittask.Finish()
 	}
 
-	if coverageProfile != nil && coverageProfile.Command != "" {
-		fmt.Printf("Go coverage analysis command ran: %s\n", pp.Cyan(coverageProfile.Command))
+	return d, err
+}
+
+// runTaskGoCoverage executes the Go test coverage analysis task and returns the
+// resulting coverage profile and any error encountered.
+func runTaskGoCoverage(ctx context.Context, tm *task.Manager, opts *gocover.Options) (*gocover.Profile, error) {
+	gotask := task.NewTask("go", "Running Go test coverage analysis")
+	tm.AddTask(gotask)
+
+	gotask.Start()
+	p, err := gocover.Run(ctx, opts)
+
+	gotask.SetMessage("Finished Go test coverage analysis")
+
+	switch {
+	case err != nil:
+		if errors.Is(ctx.Err(), context.Canceled) {
+			gotask.SetMessage("Go test coverage analysis stopped prematurely due to other task failure")
+			gotask.Warning()
+			err = newTaskCanceledError(err)
+		} else {
+			gotask.Error()
+		}
+	default:
+		gotask.Finish()
 	}
 
-	if diffResults != nil && diffResults.Command != "" {
-		fmt.Printf("Git diff analysis command ran: %s\n\n", pp.Cyan(diffResults.Command))
-	}
+	return p, err
 }

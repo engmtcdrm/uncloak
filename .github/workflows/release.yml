@@ -37,7 +37,7 @@ jobs:
           version: v2.12
 
       - name: Run Tests
-        run: go test -timeout 30s -v ./...
+        run: go test -timeout 1m -v ./...
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7

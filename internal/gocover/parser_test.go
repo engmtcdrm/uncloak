@@ -2,6 +2,7 @@ package gocover
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -15,12 +16,13 @@ import (
 
 // Tests for [Run] function.
 func Test_Get(t *testing.T) {
+	ctx := context.Background()
 	opts := &DefaultOptions
 
 	t.Run("should return error if go list fails", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 
-		_, err := Run(opts)
+		_, err := Run(ctx, opts)
 		require.Error(t, err)
 	})
 
@@ -30,7 +32,7 @@ func Test_Get(t *testing.T) {
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
-		profile, err := Run(opts)
+		profile, err := Run(ctx, opts)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 	})
@@ -41,7 +43,7 @@ func Test_Get(t *testing.T) {
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
-		profile, err := Run(nil)
+		profile, err := Run(ctx, nil)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 	})
@@ -58,7 +60,7 @@ func Test_Get(t *testing.T) {
 		err := os.Chmod(tempDir, 0000)
 		require.NoError(t, err)
 
-		profile, err := Run(opts)
+		profile, err := Run(ctx, opts)
 		require.Error(t, err)
 		require.Nil(t, profile)
 	})
@@ -185,6 +187,7 @@ func Test_parser_parseLines(t *testing.T) {
 
 // Tests for [parser.runTestCoverage] function.
 func Test_parser_runTestCoverage(t *testing.T) {
+	ctx := context.Background()
 	p := &parser{
 		GoList: &GoList{
 			Module: "test.com/testmodule",
@@ -203,7 +206,7 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		err := os.Chmod(tempDir, 0000)
 		require.NoError(t, err)
 
-		filePath, err := p.runTestCoverage()
+		filePath, err := p.runTestCoverage(ctx)
 		require.Error(t, err)
 		require.Empty(t, filePath)
 	})
@@ -212,7 +215,7 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
 
-		filePath, err := p.runTestCoverage()
+		filePath, err := p.runTestCoverage(ctx)
 		require.Error(t, err)
 		require.Empty(t, filePath)
 	})
@@ -223,7 +226,7 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		testfiles.CopyDir(t, repoPath, tempDir)
 
 		t.Chdir(tempDir)
-		filePath, err := p.runTestCoverage()
+		filePath, err := p.runTestCoverage(ctx)
 		require.NoError(t, err)
 		require.NotEmpty(t, filePath)
 	})

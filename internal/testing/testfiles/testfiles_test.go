@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	pp "github.com/engmtcdrm/go-prettyprint"
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/stretchr/testify/require"
 )
@@ -39,5 +40,42 @@ func Test_CopyDir(t *testing.T) {
 		for _, entry := range entries {
 			require.NotEqual(t, ".git", entry.Name())
 		}
+	})
+}
+
+// Tests for [ReadFile] function.
+func Test_ReadFile(t *testing.T) {
+	t.Run("should read the content of a file", func(t *testing.T) {
+		const expectedContent = "Hello, World!"
+		tempDir := t.TempDir()
+		filePath := filepath.Join(tempDir, "testfile.txt")
+		CreateFile(t, filePath, expectedContent)
+
+		content := ReadFile(t, filePath)
+		require.Equal(t, expectedContent, content)
+	})
+}
+
+// Tests for [ReadFileWithANSIStrip] function.
+func Test_ReadFileWithANSIStrip(t *testing.T) {
+	t.Run("should read the content of a file and strip ANSI escape sequences", func(t *testing.T) {
+		const expectedContent = "Hello, World!"
+		var ansiContent = pp.Red(expectedContent)
+		tempDir := t.TempDir()
+		filePath := filepath.Join(tempDir, "testfile.txt")
+		CreateFile(t, filePath, ansiContent)
+
+		content := ReadFileWithANSIStrip(t, filePath)
+		require.Equal(t, expectedContent, content)
+	})
+
+	t.Run("should handle files without ANSI escape sequences", func(t *testing.T) {
+		const expectedContent = "Hello, World!"
+		tempDir := t.TempDir()
+		filePath := filepath.Join(tempDir, "testfile.txt")
+		CreateFile(t, filePath, expectedContent)
+
+		content := ReadFileWithANSIStrip(t, filePath)
+		require.Equal(t, expectedContent, content)
 	})
 }

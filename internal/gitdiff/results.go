@@ -1,6 +1,9 @@
 package gitdiff
 
-import "sort"
+import (
+	"context"
+	"sort"
+)
 
 const (
 	// OriginMain represents the main branch on the remote repository.
@@ -22,8 +25,8 @@ type Results struct {
 // NewResults creates a new Results instance by determining the git root
 // directory and initializing the NewLines map. It returns an error if the git
 // root directory cannot be determined.
-func NewResults(command string) (*Results, error) {
-	rootDir, err := gitRootDir()
+func NewResults(ctx context.Context, command string) (*Results, error) {
+	rootDir, err := gitRootDir(ctx)
 	if err != nil {
 		return nil, err
 	}

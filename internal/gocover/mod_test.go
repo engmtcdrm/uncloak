@@ -1,6 +1,7 @@
 package gocover
 
 import (
+	"context"
 	"os"
 	"runtime"
 	"testing"
@@ -11,15 +12,17 @@ import (
 
 // Tests for [getGoList] function.
 func Test_getGoList(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("valid module name return", func(t *testing.T) {
-		moduleName, err := getGoList()
+		moduleName, err := getGoList(ctx)
 		require.NoError(t, err)
 		require.NotEmpty(t, moduleName, "Expected module name, got empty string")
 	})
 
 	t.Run("error when go.mod is missing", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		moduleName, err := getGoList()
+		moduleName, err := getGoList(ctx)
 		require.Error(t, err)
 		require.Empty(t, moduleName)
 	})
@@ -36,7 +39,7 @@ func Test_getGoList(t *testing.T) {
 		err := os.RemoveAll(tempDir)
 		require.NoError(t, err, "Failed to remove temporary directory")
 
-		moduleName, err := getGoList()
+		moduleName, err := getGoList(ctx)
 		require.Error(t, err)
 		require.Empty(t, moduleName)
 	})
@@ -47,7 +50,7 @@ func Test_getGoList(t *testing.T) {
 
 		testfiles.CreateFile(t, "go.mod", "module\n\ngo 1.26")
 
-		moduleName, err := getGoList()
+		moduleName, err := getGoList(ctx)
 		require.Error(t, err)
 		require.Empty(t, moduleName)
 	})

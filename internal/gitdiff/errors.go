@@ -2,6 +2,7 @@ package gitdiff
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -20,8 +21,8 @@ var (
 	ErrNoParentBranch = errors.New("no parent branch found: are you on the main branch for this repository?")
 )
 
-func errNoOutput(cmd *exec.Cmd, targetRef string) error {
-	currentBranch := getCurrentBranch()
+func errNoOutput(ctx context.Context, cmd *exec.Cmd, targetRef string) error {
+	currentBranch := getCurrentBranch(ctx)
 
 	var buf bytes.Buffer
 

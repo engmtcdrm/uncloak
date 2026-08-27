@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/engmtcdrm/go-ansi"
 	"github.com/stretchr/testify/require"
 )
 
@@ -58,4 +59,26 @@ func CopyFile(t *testing.T, srcPath string, destDir string) {
 
 	_, err = destFile.ReadFrom(srcFile)
 	require.NoError(t, err)
+}
+
+// ReadFile reads the content of a file at the specified filePath and returns it
+// as a string.
+func ReadFile(t *testing.T, filePath string) string {
+	t.Helper()
+
+	output, err := os.ReadFile(filePath)
+	require.NoError(t, err)
+
+	return string(output)
+}
+
+// ReadFileWithANSIStrip reads the content of a file at the specified filePath,
+// removes any ANSI escape sequences, and returns the cleaned content as a
+// string.
+func ReadFileWithANSIStrip(t *testing.T, filePath string) string {
+	t.Helper()
+
+	output := ReadFile(t, filePath)
+
+	return ansi.Strip(output)
 }

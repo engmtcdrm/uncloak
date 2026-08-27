@@ -1,6 +1,7 @@
 package gocover
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -22,8 +23,8 @@ type GoList struct {
 
 // getGoList calls `go list -m -json` to retrieve module information and returns
 // that information.
-func getGoList() (*GoList, error) {
-	cmd := exec.Command("go", "list", "-m", "-json")
+func getGoList(ctx context.Context) (*GoList, error) {
+	cmd := exec.CommandContext(ctx, "go", "list", "-m", "-json")
 
 	output, err := cmd.Output()
 	if err != nil {
