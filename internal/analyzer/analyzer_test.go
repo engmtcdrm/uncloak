@@ -345,9 +345,10 @@ func Test_runTaskGitDiff(t *testing.T) {
 
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		cancel() // Cancel the context immediately to simulate a canceled operation.
 
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
+
+		cancel() // Cancel the context immediately to simulate a canceled operation.
 
 		stdoutFile := testutils.SetStdout(t)
 
