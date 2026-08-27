@@ -249,25 +249,38 @@ func Test_printCommands(t *testing.T) {
 func Test_processFiles(t *testing.T) {
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
-	testutils.SetStdout(t)
 
 	t.Run("should return a profile and diff without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, stdoutFile := testrepo.InitWithFileCopy(t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 		require.NotNil(t, diff)
+
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
+
+		assert.Contains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✗", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
 	})
 
 	t.Run("should return error if repository is not a git repository", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
 
+		stdoutFile := testutils.SetStdout(t)
+
 		profile, diff, err := processFiles(&cfg)
 		require.Error(t, err)
+		require.NotErrorAs(t, err, &taskCanceledError{})
 		require.Nil(t, profile)
 		require.Nil(t, diff)
+
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
+		assert.NotContains(t, output, "✓", "Captured output:\n%s", output)
+		assert.Contains(t, output, "✗", "Captured output:\n%s", output)
+		assert.Contains(t, output, "!", "Captured output:\n%s", output)
 	})
 }
 
@@ -303,14 +316,11 @@ func Test_runTaskGitDiff(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, diffResults)
 
-		output, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
 
-		outputStr := string(output)
-
-		assert.Contains(t, outputStr, "✓", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "✗", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "!", "Captured output:\n%s", outputStr)
+		assert.Contains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✗", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
 	})
 
 	t.Run("should return error if repository is not a git repository", func(t *testing.T) {
@@ -323,14 +333,11 @@ func Test_runTaskGitDiff(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, diffResults)
 
-		output, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
 
-		outputStr := string(output)
-
-		assert.Contains(t, outputStr, "✗", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "✓", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "!", "Captured output:\n%s", outputStr)
+		assert.Contains(t, output, "✗", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
 	})
 
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
@@ -346,14 +353,11 @@ func Test_runTaskGitDiff(t *testing.T) {
 		require.ErrorAs(t, err, &taskCanceledError{})
 		require.Nil(t, diffResults)
 
-		output, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
 
-		outputStr := string(output)
-
-		assert.Contains(t, outputStr, "!", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "✓", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "✗", "Captured output:\n%s", outputStr)
+		assert.Contains(t, output, "!", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✗", "Captured output:\n%s", output)
 	})
 }
 
@@ -389,14 +393,11 @@ func Test_runTaskGoCoverage(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 
-		output, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
 
-		outputStr := string(output)
-
-		assert.Contains(t, outputStr, "✓", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "✗", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "!", "Captured output:\n%s", outputStr)
+		assert.Contains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✗", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
 	})
 
 	t.Run("should return error if threshold is not met", func(t *testing.T) {
@@ -409,14 +410,11 @@ func Test_runTaskGoCoverage(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, profile)
 
-		output, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
 
-		outputStr := string(output)
-
-		assert.Contains(t, outputStr, "✗", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "✓", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "!", "Captured output:\n%s", outputStr)
+		assert.Contains(t, output, "✗", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
 	})
 
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
@@ -432,13 +430,10 @@ func Test_runTaskGoCoverage(t *testing.T) {
 		require.ErrorAs(t, err, &taskCanceledError{})
 		require.Nil(t, profile)
 
-		output, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
 
-		outputStr := string(output)
-
-		assert.Contains(t, outputStr, "!", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "✓", "Captured output:\n%s", outputStr)
-		assert.NotContains(t, outputStr, "✗", "Captured output:\n%s", outputStr)
+		assert.Contains(t, output, "!", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✗", "Captured output:\n%s", output)
 	})
 }
