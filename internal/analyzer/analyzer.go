@@ -156,7 +156,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	})
 
 	wg.Go(func() {
-		profile, profileErr = runTaskGoCoverage(ctx, tm, &cfg.GoTestOptions)
+		profile, profileErr = runTaskGoCoverage(ctx, tm, cfg.CoverageFile, &cfg.GoTestOptions)
 		if profileErr != nil {
 			cancel()
 		}
@@ -209,12 +209,12 @@ func runTaskGitDiff(ctx context.Context, tm *task.Manager, opts *gitdiff.Options
 
 // runTaskGoCoverage executes the Go test coverage analysis task and returns the
 // resulting coverage profile and any error encountered.
-func runTaskGoCoverage(ctx context.Context, tm *task.Manager, opts *gocover.Options) (*gocover.Profile, error) {
+func runTaskGoCoverage(ctx context.Context, tm *task.Manager, coverageFilePath string, opts *gocover.Options) (*gocover.Profile, error) {
 	gotask := task.NewTask("go", "Running Go test coverage analysis")
 	tm.AddTask(gotask)
 
 	gotask.Start()
-	p, err := gocover.Run(ctx, opts)
+	p, err := gocover.Run(ctx, coverageFilePath, opts)
 
 	gotask.SetMessage("Finished Go test coverage analysis")
 
