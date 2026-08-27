@@ -20,9 +20,10 @@ type parser struct {
 	Command         string
 }
 
-// Run executes the 'go test' command to generate a coverage profile. Finally it
-// parses the coverage profile and returns it as a [Profile] struct.
-func Run(ctx context.Context, opts *Options) (*Profile, error) {
+// Run executes the 'go test' command to generate a coverage profile at the
+// specified filePath. If filePath is empty, a temporary file will be created.
+// Finally, it parses the coverage profile and returns it as a [Profile] struct.
+func Run(ctx context.Context, filePath string, opts *Options) (*Profile, error) {
 	if opts == nil {
 		opts = &DefaultOptions
 	}
@@ -37,11 +38,13 @@ func Run(ctx context.Context, opts *Options) (*Profile, error) {
 		GoList:  goList,
 	}
 
-	filePath, err := p.runTestCoverage(ctx)
-	if err != nil {
-		return nil, err
+	if filePath == "" {
+		filePath, err = p.runTestCoverage(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer os.Remove(filePath) //nolint:errcheck
 	}
-	defer os.Remove(filePath) //nolint:errcheck
 
 	return p.parseCoverageProfile(filePath)
 }
