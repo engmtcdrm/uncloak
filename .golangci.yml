@@ -1,6 +1,7 @@
 version: "2"
 linters:
   enable:
+    - containedctx
     - decorder
     - dupl
     - errcheck
@@ -13,6 +14,7 @@ linters:
     - intrange
     - modernize
     - nestif
+    - noctx
     - revive
     - testifylint
     - thelper

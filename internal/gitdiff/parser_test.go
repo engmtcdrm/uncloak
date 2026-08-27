@@ -17,7 +17,7 @@ func Test_Get(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should return results with valid options", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := &DefaultOptions
 
 		results, err := Run(ctx, opts)
@@ -26,7 +26,7 @@ func Test_Get(t *testing.T) {
 	})
 
 	t.Run("should return results when opts is nil", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		results, err := Run(ctx, nil)
 		require.NoError(t, err)
 		require.NotNil(t, results)
@@ -42,7 +42,7 @@ func Test_Get(t *testing.T) {
 	})
 
 	t.Run("should return error when there is no parent branch", func(t *testing.T) {
-		tempDir, _ := testrepo.Init(t)
+		tempDir, _ := testrepo.Init(ctx, t)
 		t.Chdir(tempDir)
 		opts := &DefaultOptions
 
@@ -296,7 +296,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 			TargetRef: testgit.MainBranchName,
 		}
 
-		_, _ = testrepo.Init(t)
+		_, _ = testrepo.Init(ctx, t)
 
 		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
@@ -304,7 +304,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 	})
 
 	t.Run("should return results for valid git diff command", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := &DefaultOptions
 
 		results, err := p.runAndParseGitDiff(ctx, opts)
@@ -313,7 +313,7 @@ func Test_runAndParseGitDiff(t *testing.T) {
 	})
 
 	t.Run("should return results for valid git diff command with debug true", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := &DefaultOptions
 
 		results, err := p.runAndParseGitDiff(ctx, opts)

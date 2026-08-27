@@ -17,7 +17,7 @@ func Test_errNoOutput(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("nil input produces error with empty command", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		expectedErr := fmt.Sprintf("git diff command produced no output. Is the target ref (%s) the same as the current branch (%s)?",
 			testgit.MainBranchName,
 			testrepo.NewBranchName,
@@ -29,7 +29,7 @@ func Test_errNoOutput(t *testing.T) {
 	})
 
 	t.Run("non-nil input produces error with command", func(t *testing.T) {
-		_, _ = testrepo.Init(t)
+		_, _ = testrepo.Init(ctx, t)
 		expectedErr := fmt.Sprintf("command: \"git diff --cached\": git diff command produced no output. Is the target ref (%s) the same as the current branch (%s)?",
 			testgit.MainBranchName,
 			testgit.MainBranchName,
@@ -42,7 +42,7 @@ func Test_errNoOutput(t *testing.T) {
 	})
 
 	t.Run("empty targetRef produces error without targetRef", func(t *testing.T) {
-		_, _ = testrepo.Init(t)
+		_, _ = testrepo.Init(ctx, t)
 		expectedErr := fmt.Sprintf("command: \"git diff --cached\": git diff command produced no output. Is the target ref the same as the current branch (%s)?",
 			testgit.MainBranchName,
 		)

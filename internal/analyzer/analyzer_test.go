@@ -21,12 +21,13 @@ import (
 
 // Tests for [NewCodeCoverage] function.
 func Test_NewCodeCoverage(t *testing.T) {
+	ctx := context.Background()
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 	testutils.SetStdout(t)
 
 	t.Run("should return a report without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 
 		report, err := NewCodeCoverage(&cfg)
 		require.NoError(t, err)
@@ -34,7 +35,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return a report without error when debug is true", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		_ = testutils.SetStdout(t)
 
 		cfg := config.DefaultConfig
@@ -53,7 +54,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return an error if there are no new lines from git diff", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 
 		cfg := config.DefaultConfig
 		cfg.GitDiffOptions.TargetRef = testrepo.NewBranchName
@@ -64,7 +65,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return an error when coverage is below threshold", func(t *testing.T) {
-		tempDir, _ := testrepo.InitWithFileCopy(t)
+		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
 		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
 		err := os.Remove(rmTestFile)
 		require.NoError(t, err)
@@ -75,16 +76,16 @@ func Test_NewCodeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return no error when none of the new lines are part of the coverage profile", func(t *testing.T) {
-		repoPath := testgit.GetTestRepoPath(t)
-		tempDir, _ := testrepo.Init(t)
+		repoPath := testgit.GetTestRepoPath(ctx, t)
+		tempDir, _ := testrepo.Init(ctx, t)
 
 		testfiles.CopyDir(t, repoPath, tempDir)
-		testgit.AddCommit(t, "Add more files")
+		testgit.AddCommit(ctx, t, "Add more files")
 
 		readmePath := filepath.Join(tempDir, "README.md")
 		testfiles.CreateFile(t, readmePath, "# Test README\nThis is a test README file.")
-		testgit.CreateBranch(t, testrepo.NewBranchName)
-		testgit.AddCommit(t, "Updated README.md")
+		testgit.CreateBranch(ctx, t, testrepo.NewBranchName)
+		testgit.AddCommit(ctx, t, "Updated README.md")
 
 		report, err := NewCodeCoverage(&cfg)
 		require.NoError(t, err)
@@ -94,12 +95,13 @@ func Test_NewCodeCoverage(t *testing.T) {
 
 // Tests for [analyzeCoverage] function.
 func Test_analyzeCoverage(t *testing.T) {
+	ctx := context.Background()
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 	testutils.SetStdout(t)
 
 	t.Run("should return a report with files", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
@@ -113,7 +115,7 @@ func Test_analyzeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return a report with excluded files", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 
 		cfg := config.DefaultConfig
 		cfg.Exclusions = []string{"utils/utils.go"}
@@ -247,11 +249,12 @@ func Test_printCommands(t *testing.T) {
 
 // Tests for [processFiles] function.
 func Test_processFiles(t *testing.T) {
+	ctx := context.Background()
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 
 	t.Run("should return a profile and diff without error", func(t *testing.T) {
-		_, stdoutFile := testrepo.InitWithFileCopy(t)
+		_, stdoutFile := testrepo.InitWithFileCopy(ctx, t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
@@ -308,7 +311,7 @@ func Test_runTaskGitDiff(t *testing.T) {
 	}
 
 	t.Run("should return diff results without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 
 		stdoutFile := testutils.SetStdout(t)
 
@@ -342,9 +345,10 @@ func Test_runTaskGitDiff(t *testing.T) {
 
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		cancel() // Cancel the context immediately to simulate a canceled operation.
 
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+
+		cancel() // Cancel the context immediately to simulate a canceled operation.
 
 		stdoutFile := testutils.SetStdout(t)
 
@@ -385,7 +389,7 @@ func Test_runTaskGoCoverage(t *testing.T) {
 	}
 
 	t.Run("should return coverage profile without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 
 		stdoutFile := testutils.SetStdout(t)
 
@@ -419,9 +423,10 @@ func Test_runTaskGoCoverage(t *testing.T) {
 
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		cancel() // Cancel the context immediately to simulate a canceled operation.
 
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+
+		cancel() // Cancel the context immediately to simulate a canceled operation.
 
 		stdoutFile := testutils.SetStdout(t)
 

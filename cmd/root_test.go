@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,13 +19,15 @@ import (
 
 // Tests for [Execute] function.
 func Test_Execute(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("Execute runs without error when in git repository", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		require.NoError(t, Execute())
 	})
 
 	t.Run("Execute runs with error if coverage is below default", func(t *testing.T) {
-		tempDir, _ := testrepo.InitWithFileCopy(t)
+		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
 		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
 		err := os.Remove(rmTestFile)
 		require.NoError(t, err)
@@ -36,8 +39,10 @@ func Test_Execute(t *testing.T) {
 
 // Tests for [cmd.run] function.
 func Test_run(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("should run the command without error when in git repository", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		c := &cmd{}
 		localRootCmd := rootCmd
 
@@ -46,7 +51,7 @@ func Test_run(t *testing.T) {
 	})
 
 	t.Run("should run without error when in git repository and with arguments", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		c := &cmd{}
 		localRootCmd := rootCmd
 
@@ -71,7 +76,7 @@ func Test_run(t *testing.T) {
 	})
 
 	t.Run("should error when config file is invalid", func(t *testing.T) {
-		tempDir, _ := testrepo.Init(t)
+		tempDir, _ := testrepo.Init(ctx, t)
 		c := &cmd{}
 		localRootCmd := rootCmd
 
@@ -92,7 +97,7 @@ func Test_run(t *testing.T) {
 	})
 
 	t.Run("should error when coverage-threshold is negative", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		c := &cmd{}
 		localRootCmd := rootCmd
 
@@ -105,7 +110,7 @@ func Test_run(t *testing.T) {
 	})
 
 	t.Run("should error when output file cannot be written", func(t *testing.T) {
-		tempDir, _ := testrepo.InitWithFileCopy(t)
+		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
 		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
 		err := os.Remove(rmTestFile)
 		require.NoError(t, err)
@@ -122,8 +127,10 @@ func Test_run(t *testing.T) {
 
 // Tests for [cmd.handleFlags] function.
 func Test_cmd_handleFlags(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("should set config values from flags", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		c := &cmd{}
 		cfg := config.DefaultConfig
 		localRootCmd := rootCmd
@@ -152,10 +159,12 @@ func Test_outputUncoveredLines(t *testing.T) {
 	initReport := func(t *testing.T) (tempDir string, stdoutFile *os.File, report *analyzer.Report) {
 		t.Helper()
 
+		ctx := context.Background()
+
 		cfg := config.DefaultConfig
 		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 
-		tempDir, stdoutFile = testrepo.InitWithFileCopy(t)
+		tempDir, stdoutFile = testrepo.InitWithFileCopy(ctx, t)
 		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
 		err := os.Remove(rmTestFile)
 		require.NoError(t, err)

@@ -19,7 +19,7 @@ func Test_optionsToArgs(t *testing.T) {
 	})
 
 	t.Run("should return empty args for empty options", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t)
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		args := optionsToArgs(ctx, &Options{})
 		require.Len(t, args, 4)
 		require.Equal(t, "main -- . --unified=0", strings.Join(args, " "))

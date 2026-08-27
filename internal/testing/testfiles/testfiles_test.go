@@ -1,6 +1,7 @@
 package testfiles
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,10 +27,12 @@ func Test_CreateFile(t *testing.T) {
 
 // Tests for [CopyDir] function.
 func Test_CopyDir(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("CopyDir copies files from source to temp directory", func(t *testing.T) {
 		tempDir := t.TempDir()
 
-		repoPath := testgit.GetTestRepoPath(t)
+		repoPath := testgit.GetTestRepoPath(ctx, t)
 
 		CopyDir(t, repoPath, tempDir)
 		entries, err := os.ReadDir(tempDir)
