@@ -135,8 +135,13 @@ func Test_cmd_handleFlags(t *testing.T) {
 		cfg := config.DefaultConfig
 		localRootCmd := rootCmd
 
+		const expectedCoverageFile = "coverage.out"
+		c.coverageFile = expectedCoverageFile
+		err := localRootCmd.Flags().Set("coverage-file", expectedCoverageFile)
+		require.NoError(t, err)
+
 		c.coverageThreshold = 1.0
-		err := localRootCmd.Flags().Set("coverage-threshold", "1.0")
+		err = localRootCmd.Flags().Set("coverage-threshold", "1.0")
 		require.NoError(t, err)
 
 		c.debug = true
@@ -148,6 +153,7 @@ func Test_cmd_handleFlags(t *testing.T) {
 		require.NoError(t, err)
 
 		c.handleFlags(&cfg, localRootCmd)
+		assert.Equal(t, expectedCoverageFile, cfg.CoverageFile)
 		assert.InDelta(t, 1.0, cfg.CoverageThreshold, 0.1)
 		assert.True(t, cfg.Debug)
 		assert.Equal(t, gitdiff.LocalMain, cfg.GitDiffOptions.TargetRef)

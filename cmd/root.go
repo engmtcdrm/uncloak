@@ -17,6 +17,7 @@ import (
 
 const (
 	floatFormat            = "%.2f%%"
+	coverageFileUsage      = "(optional) path to the go coverage file. If not specified, the default is to use the go tool to generate the coverage file"
 	coverageThresholdUsage = "(optional) coverage threshold override. This will also overwrite what is specified in the configuration file"
 	debugUsage             = "(optional) enable debug output, e.g. what commands are run"
 	gitTargetRefUsage      = "(optional) git target ref to compare against (default: current branch's nearest parent branch)"
@@ -30,6 +31,7 @@ var (
 
 type cmd struct {
 	coverageThreshold float64
+	coverageFile      string
 	debug             bool
 	gitTargetRef      string
 	verbose           bool
@@ -50,6 +52,7 @@ func init() {
 
 	rootCmd.SilenceUsage = true
 
+	rootCmd.Flags().StringVarP(&c.coverageFile, "coverage-file", "C", "", coverageFileUsage)
 	rootCmd.Flags().Float64VarP(&c.coverageThreshold, "coverage-threshold", "c", config.DefaultConfig.CoverageThreshold, coverageThresholdUsage)
 	rootCmd.Flags().BoolVarP(&c.debug, "debug", "d", false, debugUsage)
 	rootCmd.Flags().StringVarP(&c.gitTargetRef, "target-ref", "t", "", gitTargetRefUsage)
@@ -109,6 +112,10 @@ func (c *cmd) run(cmd *cobra.Command, _ []string) error {
 // handleFlags updates the configuration based on the command-line flags that
 // were set.
 func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
+	if cmd.Flags().Changed("coverage-file") {
+		cfg.CoverageFile = c.coverageFile
+	}
+
 	if cmd.Flags().Changed("coverage-threshold") {
 		cfg.CoverageThreshold = c.coverageThreshold
 	}
