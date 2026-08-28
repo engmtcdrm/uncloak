@@ -40,7 +40,7 @@ const (
 var (
 	rootCmd *cobra.Command
 
-	gitTargetRefErr = errors.New("flag -t/--target-ref is required. This should be the target git branch to compare against, e.g. 'main'")
+	errGitTargetRef = errors.New("flag -t/--target-ref is required. This should be the target git branch to compare against, e.g. 'main'")
 )
 
 type cmd struct {
@@ -149,7 +149,7 @@ func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
 func (c *cmd) validateFlags(cmd *cobra.Command, _ []string) error {
 	if !cmd.Flags().Changed(gitTargetRefFlagName) {
 		rootCmd.SilenceUsage = false
-		return gitTargetRefErr
+		return errGitTargetRef
 	}
 
 	return nil
