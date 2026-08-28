@@ -18,6 +18,8 @@ func Green(a ...any) string {
 	return pp.Fg24Bit(97, 179, 79, a...)
 }
 
+// Greenf returns the input text formatted with a green color using the
+// specified format.
 func Greenf(format string, a ...any) string {
 	return pp.Fg24Bit(97, 179, 79, fmt.Sprintf(format, a...))
 }
