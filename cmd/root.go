@@ -102,8 +102,8 @@ func (c *cmd) run(cmd *cobra.Command, _ []string) error {
 	}
 
 	fmt.Printf("new code coverage %s is equal to or above the minimum required %s\n",
-		pp.Greenf(floatFormat, report.CoveragePercent()),
-		pp.Greenf(floatFormat, cfg.CoverageThreshold),
+		colors.Greenf(floatFormat, report.CoveragePercent()),
+		colors.Greenf(floatFormat, cfg.CoverageThreshold),
 	)
 
 	return nil
