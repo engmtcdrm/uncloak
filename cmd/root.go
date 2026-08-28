@@ -16,17 +16,31 @@ import (
 )
 
 const (
-	floatFormat            = "%.2f%%"
-	coverageFileUsage      = "(optional) path to the Go coverage file. If not specified, the default is to use the go tool to generate the coverage file"
-	coverageThresholdUsage = "(optional) coverage threshold override. This will also overwrite what is specified in the configuration file"
-	debugUsage             = "(optional) enable debug output, e.g. what commands are run"
-	gitTargetRefUsage      = "(optional) git target ref to compare against (default: current branch's nearest parent branch)"
-	outputUsage            = "(optional) file to write new code missing coverage out to"
-	verboseUsage           = "(optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output"
+	floatFormat = "%.2f%%"
+
+	coverageFileFlagName = "coverage-file"
+	coverageFileUsage    = "(optional) path to the Go coverage file. If not specified, the default is to use the go tool to generate the coverage file"
+
+	coverageThresholdFlagName = "coverage-threshold"
+	coverageThresholdUsage    = "(optional) coverage threshold override. This will also overwrite what is specified in the configuration file"
+
+	debugFlagName = "debug"
+	debugUsage    = "(optional) enable debug output, e.g. what commands are run"
+
+	gitTargetRefFlagName = "target-ref"
+	gitTargetRefUsage    = "(required) git target ref to compare against"
+
+	outputFlagName = "output"
+	outputUsage    = "(optional) file to write new code missing coverage out to"
+
+	verboseFlagName = "verbose"
+	verboseUsage    = "(optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output"
 )
 
 var (
 	rootCmd *cobra.Command
+
+	gitTargetRefErr = errors.New("flag -t/--target-ref is required. This should be the target git branch to compare against, e.g. 'main'")
 )
 
 type cmd struct {
@@ -47,17 +61,18 @@ func init() {
 		Long:    app.LongDesc,
 		Example: app.Name,
 		Version: app.Version,
+		PreRunE: c.validateFlags,
 		RunE:    c.run,
 	}
 
 	rootCmd.SilenceUsage = true
 
-	rootCmd.Flags().StringVarP(&c.coverageFile, "coverage-file", "C", "", coverageFileUsage)
-	rootCmd.Flags().Float64VarP(&c.coverageThreshold, "coverage-threshold", "c", config.DefaultConfig.CoverageThreshold, coverageThresholdUsage)
-	rootCmd.Flags().BoolVarP(&c.debug, "debug", "d", false, debugUsage)
-	rootCmd.Flags().StringVarP(&c.gitTargetRef, "target-ref", "t", "", gitTargetRefUsage)
-	rootCmd.Flags().StringVarP(&c.output, "output", "o", "", outputUsage)
-	rootCmd.Flags().BoolVarP(&c.verbose, "verbose", "v", false, verboseUsage)
+	rootCmd.Flags().StringVarP(&c.coverageFile, coverageFileFlagName, "C", "", coverageFileUsage)
+	rootCmd.Flags().Float64VarP(&c.coverageThreshold, coverageThresholdFlagName, "c", config.DefaultConfig.CoverageThreshold, coverageThresholdUsage)
+	rootCmd.Flags().BoolVarP(&c.debug, debugFlagName, "d", false, debugUsage)
+	rootCmd.Flags().StringVarP(&c.gitTargetRef, gitTargetRefFlagName, "t", "", gitTargetRefUsage)
+	rootCmd.Flags().StringVarP(&c.output, outputFlagName, "o", "", outputUsage)
+	rootCmd.Flags().BoolVarP(&c.verbose, verboseFlagName, "v", false, verboseUsage)
 }
 
 // Execute executes the root command.
@@ -112,21 +127,32 @@ func (c *cmd) run(cmd *cobra.Command, _ []string) error {
 // handleFlags updates the configuration based on the command-line flags that
 // were set.
 func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
-	if cmd.Flags().Changed("coverage-file") {
+	if cmd.Flags().Changed(coverageFileFlagName) {
 		cfg.CoverageFile = c.coverageFile
 	}
 
-	if cmd.Flags().Changed("coverage-threshold") {
+	if cmd.Flags().Changed(coverageThresholdFlagName) {
 		cfg.CoverageThreshold = c.coverageThreshold
 	}
 
-	if cmd.Flags().Changed("debug") {
+	if cmd.Flags().Changed(debugFlagName) {
 		cfg.Debug = c.debug
 	}
 
-	if cmd.Flags().Changed("target-ref") {
+	if cmd.Flags().Changed(gitTargetRefFlagName) {
 		cfg.GitDiffOptions.TargetRef = c.gitTargetRef
 	}
+}
+
+// validateFlags checks that the required flags are set and returns an error if
+// any validations fail.
+func (c *cmd) validateFlags(cmd *cobra.Command, _ []string) error {
+	if !cmd.Flags().Changed(gitTargetRefFlagName) {
+		rootCmd.SilenceUsage = false
+		return gitTargetRefErr
+	}
+
+	return nil
 }
 
 // outputUncoveredLines writes the uncovered lines from the report to
