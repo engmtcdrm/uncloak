@@ -23,6 +23,9 @@ func Test_Execute(t *testing.T) {
 
 	t.Run("Execute runs without error when in git repository", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		localRootCmd := rootCmd
+		localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
+
 		require.NoError(t, Execute())
 	})
 
