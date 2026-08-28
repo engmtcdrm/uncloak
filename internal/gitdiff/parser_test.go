@@ -2,6 +2,7 @@ package gitdiff
 
 import (
 	"context"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -44,6 +45,18 @@ func Test_Get(t *testing.T) {
 	t.Run("should return error when there is no parent branch", func(t *testing.T) {
 		tempDir, _ := testrepo.Init(ctx, t)
 		t.Chdir(tempDir)
+		opts := &DefaultOptions
+
+		results, err := Run(ctx, opts)
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
+
+	t.Run("should return error if git is in a detached HEAD state", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		cmd := exec.CommandContext(ctx, "git", "checkout", "--detach", "HEAD")
+		require.NoError(t, cmd.Run())
+
 		opts := &DefaultOptions
 
 		results, err := Run(ctx, opts)

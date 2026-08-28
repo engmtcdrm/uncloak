@@ -14,11 +14,12 @@ import (
 var (
 	// ErrNotAGitRepo indicates that the current directory is not a git
 	// repository.
-	ErrNotAGitRepo = errors.New("not a git repository: ensure you are in a git repository or provide a valid file path")
+	ErrNotAGitRepo = errors.New("not a git repository: ensure you are in a git repository")
 
-	// ErrNoParentBranch indicates that no parent branch could be found, which
-	// may occur if the current branch is the main branch.
-	ErrNoParentBranch = errors.New("no parent branch found: are you on the main branch for this repository?")
+	// ErrNoCurrentBranch indicates that there is no current branch found in the
+	// git repository. This can happen if the repository is in a detached HEAD
+	// state or if there are no commits in the repository.
+	ErrNoCurrentBranch = errors.New("no current branch found: ensure you are on a valid git branch. If you are in a detached HEAD state, please provide a valid target ref to compare against")
 )
 
 func errNoOutput(ctx context.Context, cmd *exec.Cmd, targetRef string) error {

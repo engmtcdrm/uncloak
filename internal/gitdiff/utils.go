@@ -3,67 +3,8 @@ package gitdiff
 import (
 	"context"
 	"os/exec"
-	"regexp"
 	"strings"
 )
-
-const (
-	branchBracketPattern      = `.*\[(.*)\].*`
-	branchSpecialCharsPattern = `[\^~].*`
-)
-
-var (
-	regexBranchBracket      = regexp.MustCompile(branchBracketPattern)
-	regexBranchSpecialChars = regexp.MustCompile(branchSpecialCharsPattern)
-)
-
-// findNearestParent retrieves the name of the nearest parent branch of the
-// current branch by executing the "git show-branch" command and parsing its
-// output. It returns the name of the nearest parent branch if found or an empty
-// string otherwise.
-func findNearestParent(ctx context.Context) string {
-	cmd := exec.CommandContext(ctx, "git", "show-branch")
-
-	output, err := cmd.Output()
-	if err != nil {
-		return ""
-	}
-
-	currentBranch := getCurrentBranch(ctx)
-	if currentBranch == "" {
-		return ""
-	}
-
-	var firstParentLine string
-	lines := strings.SplitSeq(string(output), "\n")
-
-	for line := range lines {
-		switch {
-		// Skip lines containing the current branch name. We only care about
-		// other branches than the current one.
-		case strings.Contains(line, currentBranch):
-			continue
-		// Skip any lines without a "*". The "*" indicates the line is part of
-		// the current branch's ancestry.
-		case !strings.Contains(line, "*"):
-			continue
-		}
-
-		firstParentLine = line
-		break
-	}
-
-	if firstParentLine == "" {
-		return ""
-	}
-
-	groupMatches := regexBranchBracket.FindStringSubmatch(firstParentLine)
-	if len(groupMatches) < 2 {
-		return ""
-	}
-
-	return regexBranchSpecialChars.ReplaceAllString(groupMatches[1], "")
-}
 
 // getCurrentBranch retrieves the name of the current Git branch by executing
 // the "git branch --show-current" command. It returns the branch name if the
@@ -91,13 +32,6 @@ func gitRootDir(ctx context.Context) (string, error) {
 	}
 
 	return strings.TrimSpace(string(output)), nil
-}
-
-// hasParent checks if the current Git branch has a parent branch by calling
-// the findNearestParent function. It returns true if a parent branch is found,
-// and false otherwise.
-func hasParent(ctx context.Context) bool {
-	return findNearestParent(ctx) != ""
 }
 
 // isGitDir checks if the current working directory is a git repository by

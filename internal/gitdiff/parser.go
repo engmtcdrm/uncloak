@@ -4,11 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+
+	pp "github.com/engmtcdrm/go-prettyprint"
 )
 
 const hunkHeaderPattern = `@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@`
@@ -31,8 +34,13 @@ func Run(ctx context.Context, opts *Options) (*Results, error) {
 		return nil, ErrNotAGitRepo
 	}
 
-	if !hasParent(ctx) {
-		return nil, ErrNoParentBranch
+	currentBranch := getCurrentBranch(ctx)
+	if currentBranch == "" {
+		return nil, ErrNoCurrentBranch
+	}
+
+	if opts.TargetRef == currentBranch {
+		return nil, fmt.Errorf("target ref (%s) cannot be the same as the current branch (%s): ensure you are comparing against a different branch", pp.Red(opts.TargetRef), pp.Red(currentBranch))
 	}
 
 	p := &parser{}
@@ -127,7 +135,7 @@ func (p *parser) parseLines(ctx context.Context, lines []string) (*Results, erro
 func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Results, error) {
 	cmd := exec.CommandContext(ctx, "git", "diff")
 
-	args := optionsToArgs(ctx, opts)
+	args := optionsToArgs(opts)
 
 	cmd.Args = append(cmd.Args, args...)
 
