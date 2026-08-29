@@ -22,6 +22,14 @@ func Test_Green(t *testing.T) {
 	require.Equal(t, expected, coloredText)
 }
 
+// Tests for [Greenf] function.
+func Test_Greenf(t *testing.T) {
+	text := "Hello, World!"
+	coloredText := Greenf("%s", text)
+	expected := "\x1b[38;2;97;179;79mHello, World!\x1b[0m"
+	require.Equal(t, expected, coloredText)
+}
+
 // Tests for [MediumGreen] function.
 func Test_MediumGreen(t *testing.T) {
 	text := "Hello, World!"

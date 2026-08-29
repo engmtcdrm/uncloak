@@ -2,7 +2,11 @@
 // colors.
 package colors
 
-import pp "github.com/engmtcdrm/go-prettyprint"
+import (
+	"fmt"
+
+	pp "github.com/engmtcdrm/go-prettyprint"
+)
 
 // LightGreen returns the input text formatted with a light green color.
 func LightGreen(a ...any) string {
@@ -12,6 +16,12 @@ func LightGreen(a ...any) string {
 // Green returns the input text formatted with a green color.
 func Green(a ...any) string {
 	return pp.Fg24Bit(97, 179, 79, a...)
+}
+
+// Greenf returns the input text formatted with a green color using the
+// specified format.
+func Greenf(format string, a ...any) string {
+	return pp.Fg24Bit(97, 179, 79, fmt.Sprintf(format, a...))
 }
 
 // MediumGreen returns the input text formatted with a medium green color.
