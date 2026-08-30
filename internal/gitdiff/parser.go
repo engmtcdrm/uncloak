@@ -4,14 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
-
-	pp "github.com/engmtcdrm/go-prettyprint"
 )
 
 const hunkHeaderPattern = `@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@`
@@ -40,7 +37,7 @@ func Run(ctx context.Context, opts *Options) (*Results, error) {
 	}
 
 	if opts.TargetRef == currentBranch {
-		return nil, fmt.Errorf("target ref (%s) cannot be the same as the current branch (%s): ensure you are comparing against a different branch", pp.Red(opts.TargetRef), pp.Red(currentBranch))
+		return nil, NewErrSameBranch(opts.TargetRef, currentBranch)
 	}
 
 	p := &parser{}

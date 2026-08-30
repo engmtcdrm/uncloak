@@ -193,11 +193,16 @@ func runTaskGitDiff(ctx context.Context, tm *task.Manager, opts *gitdiff.Options
 
 	switch {
 	case err != nil:
-		if errors.Is(ctx.Err(), context.Canceled) {
-			gittask.SetMessage("Git diff analysis stopped prematurely due to other task failure")
+		errSameBranch := &gitdiff.ErrSameBranch{}
+		switch {
+		case errors.As(err, &errSameBranch):
+			gittask.SetMessage("Git diff analysis skipped because current branch and target ref are the same")
+			gittask.Warning()
+		case errors.Is(ctx.Err(), context.Canceled):
+			gittask.SetMessage("Git diff analysis stopped due to issue in Go test coverage analysis task")
 			gittask.Warning()
 			err = newTaskCanceledError(err)
-		} else {
+		default:
 			gittask.Error()
 		}
 	default:
@@ -221,7 +226,7 @@ func runTaskGoCoverage(ctx context.Context, tm *task.Manager, coverageFilePath s
 	switch {
 	case err != nil:
 		if errors.Is(ctx.Err(), context.Canceled) {
-			gotask.SetMessage("Go test coverage analysis stopped prematurely due to other task failure")
+			gotask.SetMessage("Go test coverage analysis stopped due to issue in git diff analysis")
 			gotask.Warning()
 			err = newTaskCanceledError(err)
 		} else {

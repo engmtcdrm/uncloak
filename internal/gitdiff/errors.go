@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
+	pp "github.com/engmtcdrm/go-prettyprint"
 	"github.com/engmtcdrm/uncloak/internal/utils"
 )
 
@@ -21,6 +22,22 @@ var (
 	// state or if there are no commits in the repository.
 	ErrNoCurrentBranch = errors.New("no current branch found: ensure you are on a valid git branch. If you are in a detached HEAD state, please provide a valid target ref to compare against")
 )
+
+type ErrSameBranch struct {
+	TargetRef     string
+	CurrentBranch string
+}
+
+func NewErrSameBranch(targetRef, currentBranch string) *ErrSameBranch {
+	return &ErrSameBranch{
+		TargetRef:     targetRef,
+		CurrentBranch: currentBranch,
+	}
+}
+
+func (e *ErrSameBranch) Error() string {
+	return fmt.Sprintf("target ref (%s) is the same as the current branch (%s)", pp.Red(e.TargetRef), pp.Red(e.CurrentBranch))
+}
 
 func errNoOutput(ctx context.Context, cmd *exec.Cmd, targetRef string) error {
 	currentBranch := getCurrentBranch(ctx)

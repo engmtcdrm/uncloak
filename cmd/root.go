@@ -12,6 +12,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/app"
 	"github.com/engmtcdrm/uncloak/internal/colors"
 	"github.com/engmtcdrm/uncloak/internal/config"
+	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/header"
 )
 
@@ -27,11 +28,11 @@ const (
 	debugFlagName = "debug"
 	debugUsage    = "(optional) enable debug output, e.g. what commands are run"
 
-	gitTargetRefFlagName = "target-ref"
-	gitTargetRefUsage    = "(required) git target ref to compare against"
-
 	outputFlagName = "output"
 	outputUsage    = "(optional) file to write new code missing coverage out to"
+
+	targetRefFlagName = "target-ref"
+	targetRefUsage    = "(required) git target ref to compare against, e.g. 'main'"
 
 	verboseFlagName = "verbose"
 	verboseUsage    = "(optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output"
@@ -40,7 +41,7 @@ const (
 var (
 	rootCmd *cobra.Command
 
-	errGitTargetRef = errors.New("flag -t/--target-ref is required. This should be the target git branch to compare against, e.g. 'main'")
+	errGitTargetRef = errors.New("flag -t/--target-ref is required. This should be the target ref to compare against, e.g. 'main'")
 )
 
 type cmd struct {
@@ -70,7 +71,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&c.coverageFile, coverageFileFlagName, "C", "", coverageFileUsage)
 	rootCmd.Flags().Float64VarP(&c.coverageThreshold, coverageThresholdFlagName, "c", config.DefaultConfig.CoverageThreshold, coverageThresholdUsage)
 	rootCmd.Flags().BoolVarP(&c.debug, debugFlagName, "d", false, debugUsage)
-	rootCmd.Flags().StringVarP(&c.gitTargetRef, gitTargetRefFlagName, "t", "", gitTargetRefUsage)
+	rootCmd.Flags().StringVarP(&c.gitTargetRef, targetRefFlagName, "t", "", targetRefUsage)
 	rootCmd.Flags().StringVarP(&c.output, outputFlagName, "o", "", outputUsage)
 	rootCmd.Flags().BoolVarP(&c.verbose, verboseFlagName, "v", false, verboseUsage)
 }
@@ -96,6 +97,16 @@ func (c *cmd) run(cmd *cobra.Command, _ []string) error {
 
 	report, err := analyzer.NewCodeCoverage(cfg)
 	if err != nil && !errors.Is(err, analyzer.ErrBelowThreshold) {
+		errSameBranch := &gitdiff.ErrSameBranch{}
+
+		// If the user provided the same target ref branch as the current
+		// branch, skip throwing an error because it is not an actual failure.
+		// This is primarily here for pipelines to prevent unnecessary failures
+		// when the target ref is the same as the current branch.
+		if errors.As(err, &errSameBranch) {
+			return nil
+		}
+
 		return err
 	}
 
@@ -139,7 +150,7 @@ func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
 		cfg.Debug = c.debug
 	}
 
-	if cmd.Flags().Changed(gitTargetRefFlagName) {
+	if cmd.Flags().Changed(targetRefFlagName) {
 		cfg.GitDiffOptions.TargetRef = c.gitTargetRef
 	}
 }
@@ -147,8 +158,7 @@ func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
 // validateFlags checks that the required flags are set and returns an error if
 // any validations fail.
 func (c *cmd) validateFlags(cmd *cobra.Command, _ []string) error {
-	if !cmd.Flags().Changed(gitTargetRefFlagName) {
-		rootCmd.SilenceUsage = false
+	if !cmd.Flags().Changed(targetRefFlagName) {
 		return errGitTargetRef
 	}
 
