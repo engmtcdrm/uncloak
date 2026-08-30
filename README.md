@@ -1,10 +1,10 @@
 # uncloak
 
-`uncloak` is a CLI tool for analyzing new Go code coverage on the current branch with the current branch's nearest parent branch.
+`uncloak` is a CLI tool for analyzing new Go code coverage in the current branch with a target reference (e.g. target branch or commit SHA).
 
 At a high level, it:
 
-- runs `git diff` against the parent branch
+- runs `git diff` against the specified target reference
 - runs `go test` to collect coverage data
 - compares new Go lines from the diff against the coverage profile
 - reports uncovered new lines and fails when coverage drops below the configurable threshold
@@ -27,8 +27,7 @@ Run `uncloak` from the root of a Git repository:
 uncloak
 ```
 
-By default, `uncloak` will analyze against the nearest parent branch of the current branch.
-That default behavior requires a branch with a parent branch, so feature branches are the intended use.
+By default, `uncloak` will analyze the current branch with the specified target reference.
 
 If coverage is below the threshold, the command exits with an error and prints the uncovered new line ranges.
 
@@ -50,7 +49,6 @@ version: 0
 coverage-threshold: 80
 go-test:
   count: 0
-  timeout: 10m
   verbose: false
 exclusions: []
 ```
@@ -61,7 +59,7 @@ exclusions: []
 - `coverage-threshold`: Minimum acceptable coverage percentage for new code.
 - `go-test`: Optional configuration for `go test` command, e.g. `-count`, `-timeout`, `-v`, etc.
   - `count`: Number of times to run tests. If this is set above 0 it will also ignore caching that `go test` does by default.
-  - `timeout`: Test timeout duration, e.g. `30s`, `1m`, `2h`, etc. If not set, it will default to the `go test` default of 10 minutes.
+  - `timeout`: Test timeout duration, e.g. `30s`, `1m`, `2h`, etc. If not set, there is no timeout set.
   - `verbose`: Verbose output for `go test` command.
 - `exclusions`: List of file paths or glob patterns to exclude from analysis.
 
@@ -96,7 +94,7 @@ Exclusions support exact file matches and glob patterns. For example:
 - `-d, --debug`: (optional) enable debug output, e.g. what commands are run
 - `-h, --help`: help for uncloak
 - `-o, --output`: (optional) file to write new code missing coverage out to
-- `-t, --target-ref <string>`: (optional) git target ref to compare against (default: current branch's nearest parent branch)
+- `-t, --target-ref <string>`: (required) git target ref to compare against (default: current branch's nearest parent branch)
 - `-v, --verbose`: (optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output
 - `--version`: version for uncloak
 
@@ -114,7 +112,7 @@ uncloak --coverage-threshold 70.31 --verbose
 ## Example workflow
 
 1. Create or switch to a feature branch.
-2. Make changes.
+2. Make changes and commit.
 3. Run `uncloak` from the repository root.
 4. Review any uncovered new lines.
 5. Add tests or adjust code until the new coverage meets the threshold.
