@@ -14,7 +14,7 @@ import (
 )
 
 // Tests for [Run] function.
-func Test_Get(t *testing.T) {
+func Test_Run(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should return results with valid options", func(t *testing.T) {
@@ -86,8 +86,8 @@ func Test_parseHunkHeader(t *testing.T) {
 	})
 }
 
-// Tests for [parseGitDiffData] function.
-func Test_parseGitDiffData(t *testing.T) {
+// Tests for [parser.parseGitDiffData] function.
+func Test_parser_parseGitDiffData(t *testing.T) {
 	ctx := context.Background()
 	p := &parser{}
 	diffData := `diff --git a/internal/gitdiff/parser.go b/internal/gitdiff/parser.go
@@ -132,8 +132,8 @@ index 0000000..6d36618
 	})
 }
 
-// Tests for [parseLines] function.
-func Test_parseLines(t *testing.T) {
+// Tests for [parser.parseLines] function.
+func Test_parser_parseLines(t *testing.T) {
 	ctx := context.Background()
 	p := &parser{}
 
@@ -290,8 +290,8 @@ func Test_parseLines(t *testing.T) {
 	})
 }
 
-// Tests for [runAndParseGitDiff] function.
-func Test_runAndParseGitDiff(t *testing.T) {
+// Tests for [parser.runAndParseGitDiff] function.
+func Test_parser_runAndParseGitDiff(t *testing.T) {
 	ctx := context.Background()
 	p := &parser{}
 
