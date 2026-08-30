@@ -133,9 +133,31 @@ func Test_cmd_ValidateFlags(t *testing.T) {
 
 		err := localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
 		require.NoError(t, err)
+		c.gitTargetRef = gitdiff.LocalMain
 
 		err = c.ValidateFlags(localRootCmd, nil)
 		require.NoError(t, err)
+	})
+
+	t.Run("should return error if cmd.gitTargetRef is empty", func(t *testing.T) {
+		c := &cmd{}
+		localRootCmd := newRootCmd()
+
+		err := localRootCmd.Flags().Set("target-ref", "")
+		require.NoError(t, err)
+
+		err = c.ValidateFlags(localRootCmd, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("should return error if target ref flag is not set, but cmd.gitTargetRef is provided", func(t *testing.T) {
+		c := &cmd{}
+		localRootCmd := newRootCmd()
+
+		c.gitTargetRef = gitdiff.LocalMain
+
+		err := c.ValidateFlags(localRootCmd, nil)
+		require.Error(t, err)
 	})
 }
 

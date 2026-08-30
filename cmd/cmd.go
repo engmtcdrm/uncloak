@@ -77,7 +77,7 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 // ValidateFlags checks that the required flags are set and returns an error if
 // any validations fail.
 func (c *cmd) ValidateFlags(cmd *cobra.Command, _ []string) error {
-	if !cmd.Flags().Changed(targetRefFlagName) {
+	if !cmd.Flags().Changed(targetRefFlagName) || c.gitTargetRef == "" {
 		return errGitTargetRef
 	}
 
