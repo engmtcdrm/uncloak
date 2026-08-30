@@ -1,4 +1,4 @@
-.PHONY: menv test testv testcover testcoverall build run buildexample runexample lint
+.PHONY: menv test testv testcover testcoverall build run lint
 
 PARENT_DIR := $(notdir $(CURDIR))
 
@@ -31,26 +31,7 @@ build:
 
 # Run for application
 run:
-	@go run .
-
-# Build for package examples
-buildexample:
-	@cd examples; \
-	echo "Size before build:"; \
-	ls -la |grep examples; \
-	ls -lh |grep examples; \
-	echo "\n\nSize after build:"; \
-	CGO_ENABLED=0 go build --ldflags "-s -w"; \
-	strip examples; \
-	ls -la |grep examples; \
-	ls -lh |grep examples; \
-	cd ..
-
-# Run for package examples
-runexample:
-	@cd examples; \
-	go run .; \
-	cd ..
+	@go run . -t main
 
 lint:
 	@echo "Running golangci-lint..."
