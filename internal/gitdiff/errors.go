@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"strings"
 
-	pp "github.com/engmtcdrm/go-prettyprint"
 	"github.com/engmtcdrm/uncloak/internal/utils"
 )
 
@@ -24,19 +23,19 @@ var (
 )
 
 type ErrSameBranch struct {
-	TargetRef     string
-	CurrentBranch string
+	targetRef     string
+	currentBranch string
 }
 
 func NewErrSameBranch(targetRef, currentBranch string) *ErrSameBranch {
 	return &ErrSameBranch{
-		TargetRef:     targetRef,
-		CurrentBranch: currentBranch,
+		targetRef:     targetRef,
+		currentBranch: currentBranch,
 	}
 }
 
 func (e *ErrSameBranch) Error() string {
-	return fmt.Sprintf("target ref (%s) is the same as the current branch (%s)", pp.Red(e.TargetRef), pp.Red(e.CurrentBranch))
+	return fmt.Sprintf("target ref (%s) is the same as the current branch (%s)", e.targetRef, e.currentBranch)
 }
 
 func errNoOutput(ctx context.Context, cmd *exec.Cmd, targetRef string) error {
