@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- refactor: changed the flag `-t/--target-ref` to be required instead of optional (#18)
+- feat: changed the flag `-t/--target-ref` to be required instead of optional (#18)
 
 ## [0.2.0] - 2026-08-18
 
