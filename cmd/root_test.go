@@ -13,6 +13,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -161,6 +162,28 @@ func Test_cmd_handleFlags(t *testing.T) {
 		assert.InDelta(t, 1.0, cfg.CoverageThreshold, 0.1)
 		assert.True(t, cfg.Debug)
 		assert.Equal(t, gitdiff.LocalMain, cfg.GitDiffOptions.TargetRef)
+	})
+}
+
+// Tests for [cmd.validateFlags] function.
+func Test_cmd_validateFlags(t *testing.T) {
+	t.Run("should return an error if target ref was not provided", func(t *testing.T) {
+		c := &cmd{}
+		localRootCmd := &cobra.Command{}
+
+		err := c.validateFlags(localRootCmd, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("should return nil if target ref is provided", func(t *testing.T) {
+		c := &cmd{}
+		localRootCmd := rootCmd
+
+		err := localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
+		require.NoError(t, err)
+
+		err = c.validateFlags(localRootCmd, nil)
+		require.NoError(t, err)
 	})
 }
 
