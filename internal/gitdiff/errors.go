@@ -22,19 +22,24 @@ var (
 	ErrNoCurrentBranch = errors.New("no current branch found: ensure you are on a valid git branch. If you are in a detached HEAD state, please provide a valid target ref to compare against")
 )
 
-type ErrSameBranch struct {
+// SameBranchError indicates that the target ref is the same as the current
+// branch.
+type SameBranchError struct {
 	targetRef     string
 	currentBranch string
 }
 
-func NewErrSameBranch(targetRef, currentBranch string) *ErrSameBranch {
-	return &ErrSameBranch{
+// NewSameBranchError creates a new ErrSameBranch with the given target ref and
+// current branch.
+func NewSameBranchError(targetRef, currentBranch string) *SameBranchError {
+	return &SameBranchError{
 		targetRef:     targetRef,
 		currentBranch: currentBranch,
 	}
 }
 
-func (e *ErrSameBranch) Error() string {
+// Error returns the error message.
+func (e *SameBranchError) Error() string {
 	return fmt.Sprintf("target ref (%s) is the same as the current branch (%s)", e.targetRef, e.currentBranch)
 }
 

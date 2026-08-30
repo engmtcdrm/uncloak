@@ -193,7 +193,7 @@ func runTaskGitDiff(ctx context.Context, tm *task.Manager, opts *gitdiff.Options
 
 	switch {
 	case err != nil:
-		errSameBranch := &gitdiff.ErrSameBranch{}
+		errSameBranch := &gitdiff.SameBranchError{}
 		switch {
 		case errors.As(err, &errSameBranch):
 			gittask.SetMessage("Git diff analysis skipped because current branch and target ref are the same")

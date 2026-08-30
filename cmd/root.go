@@ -97,7 +97,7 @@ func (c *cmd) run(cmd *cobra.Command, _ []string) error {
 
 	report, err := analyzer.NewCodeCoverage(cfg)
 	if err != nil && !errors.Is(err, analyzer.ErrBelowThreshold) {
-		errSameBranch := &gitdiff.ErrSameBranch{}
+		errSameBranch := &gitdiff.SameBranchError{}
 
 		// If the user provided the same target ref branch as the current
 		// branch, skip throwing an error because it is not an actual failure.

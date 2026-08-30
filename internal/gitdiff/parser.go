@@ -37,7 +37,7 @@ func Run(ctx context.Context, opts *Options) (*Results, error) {
 	}
 
 	if opts.TargetRef == currentBranch {
-		return nil, NewErrSameBranch(opts.TargetRef, currentBranch)
+		return nil, NewSameBranchError(opts.TargetRef, currentBranch)
 	}
 
 	p := &parser{}

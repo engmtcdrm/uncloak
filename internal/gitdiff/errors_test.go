@@ -13,30 +13,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Tests for [NewErrSameBranch] function.
+// Tests for [NewSameBranchError] function.
 func Test_NewErrSameBranch(t *testing.T) {
 	expectedTargetRef := "target-ref"
 	expectedCurrentBranch := "current-branch"
 
-	t.Run("should create a new ErrSameBranch with the given error", func(t *testing.T) {
-		errSameBranch := &ErrSameBranch{}
+	t.Run("should create a new SameBranchError with the given target ref and current branch", func(t *testing.T) {
+		errSameBranch := &SameBranchError{}
 
-		err := NewErrSameBranch(expectedTargetRef, expectedCurrentBranch)
+		err := NewSameBranchError(expectedTargetRef, expectedCurrentBranch)
 		require.Error(t, err)
-		assert.ErrorAs(t, err, &errSameBranch)
+		require.ErrorAs(t, err, &errSameBranch)
 		assert.Equal(t, expectedTargetRef, err.targetRef)
 		assert.Equal(t, expectedCurrentBranch, err.currentBranch)
 	})
 }
 
-// Tests for [ErrSameBranch.Error] function.
-func Test_ErrSameBranch_Error(t *testing.T) {
+// Tests for [SameBranchError.Error] function.
+func Test_SameBranchError_Error(t *testing.T) {
 	t.Run("should return the error message", func(t *testing.T) {
-		errSameBranch := &ErrSameBranch{}
-		err := NewErrSameBranch("target-ref", "current-branch")
+		errSameBranch := &SameBranchError{}
+		err := NewSameBranchError("target-ref", "current-branch")
 
 		require.Error(t, err)
-		assert.ErrorAs(t, err, &errSameBranch)
+		require.ErrorAs(t, err, &errSameBranch)
 
 		expectedMessage := "target ref (target-ref) is the same as the current branch (current-branch)"
 		assert.Equal(t, expectedMessage, err.Error())
