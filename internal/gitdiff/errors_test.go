@@ -9,8 +9,39 @@ import (
 
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Tests for [NewErrSameBranch] function.
+func Test_NewErrSameBranch(t *testing.T) {
+	expectedTargetRef := "target-ref"
+	expectedCurrentBranch := "current-branch"
+
+	t.Run("should create a new ErrSameBranch with the given error", func(t *testing.T) {
+		errSameBranch := &ErrSameBranch{}
+
+		err := NewErrSameBranch(expectedTargetRef, expectedCurrentBranch)
+		require.Error(t, err)
+		assert.ErrorAs(t, err, &errSameBranch)
+		assert.Equal(t, expectedTargetRef, err.targetRef)
+		assert.Equal(t, expectedCurrentBranch, err.currentBranch)
+	})
+}
+
+// Tests for [ErrSameBranch.Error] function.
+func Test_ErrSameBranch_Error(t *testing.T) {
+	t.Run("should return the error message", func(t *testing.T) {
+		errSameBranch := &ErrSameBranch{}
+		err := NewErrSameBranch("target-ref", "current-branch")
+
+		require.Error(t, err)
+		assert.ErrorAs(t, err, &errSameBranch)
+
+		expectedMessage := "target ref (target-ref) is the same as the current branch (current-branch)"
+		assert.Equal(t, expectedMessage, err.Error())
+	})
+}
 
 // Tests for [errNoOutput] function.
 func Test_errNoOutput(t *testing.T) {
