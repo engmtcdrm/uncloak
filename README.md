@@ -24,7 +24,7 @@ This installs the `uncloak` binary into your Go `bin` directory.
 Run `uncloak` from the root of a Git repository:
 
 ```bash
-uncloak
+uncloak -target-ref main
 ```
 
 `uncloak` analyzes the current branch against the target reference you provide with `-t` / `--target-ref`.
@@ -49,6 +49,7 @@ version: 0
 coverage-threshold: 80
 go-test:
   count: 0
+  timeout: 10m
   verbose: false
 exclusions: []
 ```
@@ -59,7 +60,7 @@ exclusions: []
 - `coverage-threshold`: Minimum acceptable coverage percentage for new code.
 - `go-test`: Optional configuration for `go test` command, e.g. `-count`, `-timeout`, `-v`, etc.
   - `count`: Number of times to run tests. If this is set above 0 it will also ignore caching that `go test` does by default.
-  - `timeout`: Test timeout duration, e.g. `30s`, `1m`, `2h`, etc. If not set, there is no timeout set.
+  - `timeout`: Test timeout duration, e.g. `30s`, `1m`, `2h`, etc. If not set, it will default to the `go test` default of 10 minutes.
   - `verbose`: Verbose output for `go test` command.
 - `exclusions`: List of file paths or glob patterns to exclude from analysis.
 
@@ -101,7 +102,7 @@ Exclusions support exact file matches and glob patterns. For example:
 Example:
 
 ```bash
-uncloak --coverage-threshold 70.31 --verbose
+uncloak --target-ref main --coverage-threshold 70.31 --verbose
 ```
 
 ## Exit status
