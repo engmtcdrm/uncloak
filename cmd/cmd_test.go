@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Tests for [cmd.run] function.
-func Test_cmd_run(t *testing.T) {
+// Tests for [cmd.Run] function.
+func Test_cmd_Run(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should run the command without error when in git repository", func(t *testing.T) {
@@ -102,6 +102,41 @@ func Test_cmd_run(t *testing.T) {
 		err = c.Run(localRootCmd, []string{})
 		require.Error(t, err)
 	})
+
+	t.Run("should run without returning an error if branches are the same", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		c := &cmd{}
+		localRootCmd := newRootCmd()
+
+		err := localRootCmd.Flags().Set("target-ref", testrepo.NewBranchName)
+		require.NoError(t, err)
+		c.gitTargetRef = testrepo.NewBranchName
+
+		err = c.Run(localRootCmd, []string{})
+		require.NoError(t, err)
+	})
+}
+
+// Tests for [cmd.ValidateFlags] function.
+func Test_cmd_ValidateFlags(t *testing.T) {
+	t.Run("should return an error if target ref was not provided", func(t *testing.T) {
+		c := &cmd{}
+		localRootCmd := &cobra.Command{}
+
+		err := c.ValidateFlags(localRootCmd, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("should return nil if target ref is provided", func(t *testing.T) {
+		c := &cmd{}
+		localRootCmd := newRootCmd()
+
+		err := localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
+		require.NoError(t, err)
+
+		err = c.ValidateFlags(localRootCmd, nil)
+		require.NoError(t, err)
+	})
 }
 
 // Tests for [cmd.handleFlags] function.
@@ -136,27 +171,5 @@ func Test_cmd_handleFlags(t *testing.T) {
 		assert.InDelta(t, 1.0, cfg.CoverageThreshold, 0.1)
 		assert.True(t, cfg.Debug)
 		assert.Equal(t, gitdiff.LocalMain, cfg.GitDiffOptions.TargetRef)
-	})
-}
-
-// Tests for [cmd.validateFlags] function.
-func Test_cmd_validateFlags(t *testing.T) {
-	t.Run("should return an error if target ref was not provided", func(t *testing.T) {
-		c := &cmd{}
-		localRootCmd := &cobra.Command{}
-
-		err := c.ValidateFlags(localRootCmd, nil)
-		require.Error(t, err)
-	})
-
-	t.Run("should return nil if target ref is provided", func(t *testing.T) {
-		c := &cmd{}
-		localRootCmd := newRootCmd()
-
-		err := localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
-		require.NoError(t, err)
-
-		err = c.ValidateFlags(localRootCmd, nil)
-		require.NoError(t, err)
 	})
 }
