@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: added early exit on task failure (#14)
 - feat: added `-C/--coverage-file` to provide a coverage file to do analysis on (#17)
 
+### Fixed
+
+- fix: bug where cursor remains hidden when `ctrl+c` is pressed while tasks are running (#20)
+
 ## [0.2.0] - 2026-08-18
 
 ### Added
