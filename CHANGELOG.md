@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat: changed the flag `-t/--target-ref` to be required instead of optional (#18)
 
+### Fixed
+
+- fix: bug where cursor remains hidden when `ctrl+c` is pressed while tasks are running (#20)
+
 ## [0.2.0] - 2026-08-18
 
 ### Added

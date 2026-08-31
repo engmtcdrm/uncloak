@@ -65,15 +65,7 @@ func (m *Manager) Finish() {
 	if m.isRunning {
 		m.isRunning = false
 
-		var buf bytes.Buffer
-
-		fmt.Fprint(&buf, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth()))
-
-		if m.isTerminal() {
-			fmt.Fprint(&buf, ansi.ShowCursor)
-		}
-
-		fmt.Fprint(m.Out, buf.String()) //nolint:errcheck
+		fmt.Fprint(m.Out, renderTasks(m.Tasks, m.renderedLines, m.terminalWidth())) //nolint:errcheck
 	}
 }
 
@@ -86,10 +78,6 @@ func (m *Manager) Start() {
 	if m.isRunning {
 		m.mu.Unlock()
 		return
-	}
-
-	if m.isTerminal() {
-		fmt.Fprint(m.Out, ansi.HideCursor) //nolint:errcheck
 	}
 
 	m.isRunning = true
