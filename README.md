@@ -1,11 +1,11 @@
 # uncloak
 
-`uncloak` is a CLI tool for analyzing new Go code coverage in the current branch with a target reference (e.g. target branch or commit SHA).
+`uncloak` is a CLI tool for analyzing new Go code coverage for the current HEAD reference with a specified target reference (e.g. a branch name or commit SHA).
 
 At a high level, it:
 
-- runs `git diff` against the specified target reference
-- runs `go test` to collect coverage data
+- runs `git diff` with the specified target reference against the current HEAD to find new Go lines
+- runs `go test` to collect coverage data of the current HEAD reference
 - compares new Go lines from the diff against the coverage profile
 - reports uncovered new lines and fails when coverage drops below the configurable threshold
 
@@ -27,9 +27,9 @@ Run `uncloak` from the root of a Git repository:
 uncloak -target-ref main
 ```
 
-`uncloak` analyzes the current branch against the target reference you provide with `-t` / `--target-ref`.
+`uncloak` analyzes the current HEAD reference against the target reference a user provides with `-t` / `--target-ref`.
 
-If coverage is below the threshold, the command exits with an error and prints the uncovered new line ranges.
+If coverage is below the threshold, the command exits with an error. Regardless of the coverage result, it prints the uncovered new line ranges, if any.
 
 ## Configuration
 
@@ -95,7 +95,7 @@ Exclusions support exact file matches and glob patterns. For example:
 - `-d, --debug`: (optional) enable debug output, e.g. what commands are run
 - `-h, --help`: help for uncloak
 - `-o, --output`: (optional) file to write new code missing coverage out to
-- `-t, --target-ref <string>`: (required) git target ref to compare against, e.g. `main`
+- `-t, --target-ref <string>`: (required) git target reference to compare against, e.g. a branch name or commit SHA
 - `-v, --verbose`: (optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output
 - `--version`: version for uncloak
 
@@ -120,6 +120,6 @@ uncloak --target-ref main --coverage-threshold 70.31 --verbose
 
 ## Notes
 
+- New branches must have one commit prior to being able to run `uncloak` against a target reference.
 - Brand new Go files must be staged or committed for `uncloak` to analyze them.
 - The tool expects to run inside a Git repository.
-- The default coverage threshold is `80%`.

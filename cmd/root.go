@@ -29,7 +29,7 @@ const (
 	outputUsage    = "(optional) file to write new code missing coverage out to"
 
 	targetRefFlagName = "target-ref"
-	targetRefUsage    = "(required) git target ref to compare against, e.g. 'main'"
+	targetRefUsage    = "(required) git target reference to compare against, e.g. a branch name or commit SHA"
 
 	verboseFlagName = "verbose"
 	verboseUsage    = "(optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output"
