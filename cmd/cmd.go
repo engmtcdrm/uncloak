@@ -40,12 +40,13 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 
 	report, err := analyzer.NewCodeCoverage(cfg)
 	if err != nil && !errors.Is(err, analyzer.ErrBelowThreshold) {
-		errSameBranch := &gitdiff.SameBranchError{}
+		errSameBranch := &gitdiff.SameRefError{}
 
-		// If the user provided the same target ref branch as the current
-		// branch, skip throwing an error because it is not an actual failure.
-		// This is primarily here for pipelines to prevent unnecessary failures
-		// when the target ref is the same as the current branch.
+		// If the user provided the same target reference as the current HEAD
+		// reference, skip throwing an error because it is not an actual
+		// failure. This is primarily here for pipelines to prevent unnecessary
+		// failures when the target reference is the same as the current HEAD
+		// reference.
 		if errors.As(err, &errSameBranch) {
 			return nil
 		}

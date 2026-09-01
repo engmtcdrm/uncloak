@@ -38,9 +38,10 @@ func Test_NewCodeCoverage(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		_ = testutils.SetStdout(t)
 
-		cfg := config.DefaultConfig
+		cfg := &config.DefaultConfig
 		cfg.Debug = true
-		report, err := NewCodeCoverage(&cfg)
+		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+		report, err := NewCodeCoverage(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, report)
 	})

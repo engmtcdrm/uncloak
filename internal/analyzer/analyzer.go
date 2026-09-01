@@ -193,10 +193,10 @@ func runTaskGitDiff(ctx context.Context, tm *task.Manager, opts *gitdiff.Options
 
 	switch {
 	case err != nil:
-		errSameBranch := &gitdiff.SameBranchError{}
+		errSameBranch := &gitdiff.SameRefError{}
 		switch {
 		case errors.As(err, &errSameBranch):
-			gittask.SetMessage("Git diff analysis skipped because current branch and target ref are the same")
+			gittask.SetMessage("Git diff analysis skipped because current HEAD and target references are the same")
 			gittask.Warning()
 		case errors.Is(ctx.Err(), context.Canceled):
 			gittask.SetMessage("Git diff analysis stopped due to issue in Go test coverage analysis task")

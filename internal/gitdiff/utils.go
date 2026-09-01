@@ -6,17 +6,22 @@ import (
 	"strings"
 )
 
-// getCurrentBranch retrieves the name of the current Git branch by executing
-// the "git branch --show-current" command. It returns the branch name if the
-// command is successful, or an empty string if there is an error.
-func getCurrentBranch(ctx context.Context) string {
-	cmd := exec.CommandContext(ctx, "git", "branch", "--show-current")
-	output, err := cmd.Output()
-	if err != nil {
-		return ""
-	}
+const (
+	headRef     = "HEAD"
+	gitCmd      = "git"
+	revParseCmd = "rev-parse"
+)
 
-	return strings.TrimSpace(string(output))
+// getRef retrieves the commit hash of the provided Git reference by executing
+// the `git rev-parse --verify '<ref>{^commit}'` command. It returns the commit hash and a
+// boolean indicating whether the reference is valid (true) or not (false).
+func getRef(ctx context.Context, ref string) (string, bool) {
+	peelRef := ref + "^{commit}"
+
+	cmd := exec.CommandContext(ctx, gitCmd, revParseCmd, "--verify", peelRef)
+	output, err := cmd.Output()
+	outputStr := strings.TrimSpace(string(output))
+	return outputStr, err == nil
 }
 
 // gitRootDir retrieves the root directory of the current Git repository by
@@ -24,7 +29,7 @@ func getCurrentBranch(ctx context.Context) string {
 // directory path if the command is successful, or an error if there is an
 // issue executing the command.
 func gitRootDir(ctx context.Context) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--show-toplevel")
+	cmd := exec.CommandContext(ctx, gitCmd, revParseCmd, "--show-toplevel")
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -34,12 +39,12 @@ func gitRootDir(ctx context.Context) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-// isGitDir checks if the current working directory is a git repository by
+// isGitDir checks if the current working directory is a Git repository by
 // executing the "git rev-parse --git-dir" command. if it returns true it means
 // the current working directory is in a git repository. If it returns false, it
 // means the current working directory is not in a git repository.
 func isGitDir(ctx context.Context) bool {
-	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--git-dir")
+	cmd := exec.CommandContext(ctx, gitCmd, revParseCmd, "--git-dir")
 
 	out, err := cmd.Output()
 	if err != nil {

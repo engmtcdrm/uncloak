@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	errGitTargetRef = errors.New("flag -t/--target-ref is required. This should be the target ref to compare against, e.g. 'main'")
+	errGitTargetRef = errors.New("flag -t/--target-ref is required. This should be the target reference to compare against, e.g. a branch or SHA hash of a commit")
 )
 
 // coverageThresholdError indicates that the new code coverage is below the

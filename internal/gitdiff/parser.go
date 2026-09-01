@@ -31,13 +31,9 @@ func Run(ctx context.Context, opts *Options) (*Results, error) {
 		return nil, ErrNotAGitRepo
 	}
 
-	currentBranch := getCurrentBranch(ctx)
-	if currentBranch == "" {
-		return nil, ErrNoCurrentBranch
-	}
-
-	if opts.TargetRef == currentBranch {
-		return nil, NewSameBranchError(opts.TargetRef, currentBranch)
+	err := validateRefs(ctx, opts.TargetRef, headRef)
+	if err != nil {
+		return nil, err
 	}
 
 	p := &parser{}
@@ -144,8 +140,28 @@ func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Result
 	}
 
 	if len(output) == 0 {
-		return nil, errNoOutput(ctx, cmd, opts.TargetRef)
+		return nil, ErrNoOutput
 	}
 
 	return p.parseGitDiffData(ctx, bytes.NewReader(output))
+}
+
+// validateRefs checks if the provided target reference and the current HEAD
+// reference are valid and not the same.
+func validateRefs(ctx context.Context, targetRef, headRef string) error {
+	targetRef, ok := getRef(ctx, targetRef)
+	if !ok {
+		return NewInvalidRefError(targetRef, true)
+	}
+
+	currentRef, ok := getRef(ctx, headRef)
+	if !ok {
+		return NewInvalidRefError(headRef, false)
+	}
+
+	if targetRef == currentRef {
+		return NewSameRefError(targetRef, currentRef)
+	}
+
+	return nil
 }

@@ -25,7 +25,11 @@ func Test_cmd_Run(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
-		err := c.Run(localRootCmd, []string{})
+		c.gitTargetRef = gitdiff.LocalMain
+		err := localRootCmd.Flags().Set("target-ref", c.gitTargetRef)
+		require.NoError(t, err)
+
+		err = c.Run(localRootCmd, []string{})
 		require.NoError(t, err)
 	})
 
@@ -98,6 +102,16 @@ func Test_cmd_Run(t *testing.T) {
 		localRootCmd := newRootCmd()
 
 		c.output = "/invalid/path/to/output/file"
+		err = localRootCmd.Flags().Set("output", c.output)
+		require.NoError(t, err)
+
+		c.gitTargetRef = gitdiff.LocalMain
+		err = localRootCmd.Flags().Set("target-ref", c.gitTargetRef)
+		require.NoError(t, err)
+
+		c.coverageThreshold = 25
+		err = localRootCmd.Flags().Set("coverage-threshold", "25")
+		require.NoError(t, err)
 
 		err = c.Run(localRootCmd, []string{})
 		require.Error(t, err)
@@ -108,9 +122,9 @@ func Test_cmd_Run(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
+		c.gitTargetRef = testrepo.NewBranchName
 		err := localRootCmd.Flags().Set("target-ref", testrepo.NewBranchName)
 		require.NoError(t, err)
-		c.gitTargetRef = testrepo.NewBranchName
 
 		err = c.Run(localRootCmd, []string{})
 		require.NoError(t, err)
@@ -131,9 +145,9 @@ func Test_cmd_ValidateFlags(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
+		c.gitTargetRef = gitdiff.LocalMain
 		err := localRootCmd.Flags().Set("target-ref", gitdiff.LocalMain)
 		require.NoError(t, err)
-		c.gitTargetRef = gitdiff.LocalMain
 
 		err = c.ValidateFlags(localRootCmd, nil)
 		require.NoError(t, err)

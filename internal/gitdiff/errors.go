@@ -1,69 +1,68 @@
 package gitdiff
 
 import (
-	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"os/exec"
-	"strings"
 
 	"github.com/engmtcdrm/uncloak/internal/utils"
 )
 
-var (
-	// ErrNotAGitRepo indicates that the current directory is not a git
-	// repository.
-	ErrNotAGitRepo = errors.New("not a git repository: ensure you are in a git repository")
-
-	// ErrNoCurrentBranch indicates that there is no current branch found in the
-	// git repository. This can happen if the repository is in a detached HEAD
-	// state or if there are no commits in the repository.
-	ErrNoCurrentBranch = errors.New("no current branch found: ensure you are on a valid git branch. If you are in a detached HEAD state, please provide a valid target ref to compare against")
+const (
+	errPrefix = "git diff:"
 )
 
-// SameBranchError indicates that the target ref is the same as the current
-// branch.
-type SameBranchError struct {
-	targetRef     string
-	currentBranch string
+var (
+	// ErrNoOutput indicates that the git diff command produced no output.
+	ErrNoOutput = errors.New(errPrefix + " produced no output")
+
+	// ErrNotAGitRepo indicates that the current directory is not a git
+	// repository.
+	ErrNotAGitRepo = errors.New(errPrefix + " not a git repository: ensure you are in a git repository")
+)
+
+// InvalidRefError indicates that the provided reference is invalid.
+type InvalidRefError struct {
+	ref       string
+	targetRef bool
 }
 
-// NewSameBranchError creates a new ErrSameBranch with the given target ref and
-// current branch.
-func NewSameBranchError(targetRef, currentBranch string) *SameBranchError {
-	return &SameBranchError{
-		targetRef:     targetRef,
-		currentBranch: currentBranch,
+// NewInvalidRefError creates a new [InvalidRefError] with the given reference.
+func NewInvalidRefError(ref string, targetRef bool) *InvalidRefError {
+	return &InvalidRefError{
+		ref:       ref,
+		targetRef: targetRef,
 	}
 }
 
 // Error returns the error message.
-func (e *SameBranchError) Error() string {
-	return fmt.Sprintf("target ref (%s) is the same as the current branch (%s)", e.targetRef, e.currentBranch)
+func (e *InvalidRefError) Error() string {
+	if e.targetRef {
+		return fmt.Sprintf("%s invalid target reference: %s", errPrefix, e.ref)
+	}
+
+	return fmt.Sprintf("%s invalid reference: %s", errPrefix, e.ref)
 }
 
-func errNoOutput(ctx context.Context, cmd *exec.Cmd, targetRef string) error {
-	currentBranch := getCurrentBranch(ctx)
+// SameRefError indicates that the target reference is the same as the current
+// HEAD reference.
+type SameRefError struct {
+	targetRef      string
+	currentHeadRef string
+}
 
-	var buf bytes.Buffer
-
-	if cmd != nil && len(cmd.Args) > 0 {
-		fmt.Fprintf(&buf, "command: %q: ", strings.Join(cmd.Args, " "))
+// NewSameRefError creates a new [SameRefError] with the given target reference
+// and current HEAD reference.
+func NewSameRefError(targetRef, currentHeadRef string) *SameRefError {
+	return &SameRefError{
+		targetRef:      targetRef,
+		currentHeadRef: currentHeadRef,
 	}
+}
 
-	fmt.Fprint(&buf, "git diff command produced no output.")
-
-	switch {
-	case targetRef != "" && currentBranch != "":
-		fmt.Fprintf(&buf, " Is the target ref (%s) the same as the current branch (%s)?", targetRef, currentBranch)
-	case targetRef != "" && currentBranch == "":
-		fmt.Fprintf(&buf, " Is the target ref (%s) the same as the current branch?", targetRef)
-	case targetRef == "" && currentBranch != "":
-		fmt.Fprintf(&buf, " Is the target ref the same as the current branch (%s)?", currentBranch)
-	}
-
-	return errors.New(buf.String())
+// Error returns the error message.
+func (e *SameRefError) Error() string {
+	return fmt.Sprintf("%s target reference (%s) is the same as the current HEAD (%s)", errPrefix, e.targetRef, e.currentHeadRef)
 }
 
 func handleExecError(cmd *exec.Cmd, output []byte, err error) error {

@@ -20,6 +20,7 @@ func Test_Run(t *testing.T) {
 	t.Run("should return results with valid options", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := &DefaultOptions
+		opts.TargetRef = testgit.MainBranchName
 
 		results, err := Run(ctx, opts)
 		require.NoError(t, err)
@@ -52,16 +53,17 @@ func Test_Run(t *testing.T) {
 		require.Nil(t, results)
 	})
 
-	t.Run("should return error if git is in a detached HEAD state", func(t *testing.T) {
+	t.Run("should not return error if git is in a detached HEAD state", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		cmd := exec.CommandContext(ctx, "git", "checkout", "--detach", "HEAD")
 		require.NoError(t, cmd.Run())
 
 		opts := &DefaultOptions
+		opts.TargetRef = testgit.MainBranchName
 
 		results, err := Run(ctx, opts)
-		require.Error(t, err)
-		require.Nil(t, results)
+		require.NoError(t, err)
+		require.NotNil(t, results)
 	})
 }
 
@@ -332,5 +334,45 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
+	})
+}
+
+// Tests for [validateRefs] function.
+func Test_validateRefs(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("should return error if targetRef is invalid", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		targetRef := "invalid-ref"
+
+		err := validateRefs(ctx, targetRef, headRef)
+		require.Error(t, err)
+	})
+
+	t.Run("should return error if headRef is invalid", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		targetRef := testgit.MainBranchName
+		headRef := "invalid-ref"
+
+		err := validateRefs(ctx, targetRef, headRef)
+		require.Error(t, err)
+	})
+
+	t.Run("should return error if targetRef and headRef are the same", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		targetRef := testgit.MainBranchName
+		headRef := testgit.MainBranchName
+
+		err := validateRefs(ctx, targetRef, headRef)
+		require.Error(t, err)
+	})
+
+	t.Run("should not return error if targetRef and headRef are different", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		targetRef := testgit.MainBranchName
+		headRef := "HEAD"
+
+		err := validateRefs(ctx, targetRef, headRef)
+		require.NoError(t, err)
 	})
 }
