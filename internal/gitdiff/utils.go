@@ -13,8 +13,9 @@ const (
 )
 
 // getRef retrieves the commit hash of the provided Git reference by executing
-// the `git rev-parse --verify '<ref>{^commit}'` command. It returns the commit hash and a
-// boolean indicating whether the reference is valid (true) or not (false).
+// the `git rev-parse --verify '<ref>{^commit}'` command. It returns the commit
+// hash and a boolean indicating whether the reference is valid (true) or not
+// (false).
 func getRef(ctx context.Context, ref string) (string, bool) {
 	peelRef := ref + "^{commit}"
 

@@ -52,29 +52,29 @@ func Test_InvalidRefError_Error(t *testing.T) {
 }
 
 // Tests for [NewSameRefError] function.
-func Test_NewErrSameBranch(t *testing.T) {
+func Test_NewSameRefError(t *testing.T) {
 	expectedTargetRef := "target-ref"
 	expectedCurrentBranch := "current-branch"
 
-	t.Run("should create a new SameBranchError with the given target ref and current branch", func(t *testing.T) {
-		errSameBranch := &SameRefError{}
+	t.Run("should create a new SameRefError with the given target reference and current HEAD ref", func(t *testing.T) {
+		errSameRef := &SameRefError{}
 
 		err := NewSameRefError(expectedTargetRef, expectedCurrentBranch)
 		require.Error(t, err)
-		require.ErrorAs(t, err, &errSameBranch)
+		require.ErrorAs(t, err, &errSameRef)
 		assert.Equal(t, expectedTargetRef, err.targetRef)
 		assert.Equal(t, expectedCurrentBranch, err.currentHeadRef)
 	})
 }
 
 // Tests for [SameRefError.Error] function.
-func Test_SameBranchError_Error(t *testing.T) {
+func Test_SameRefError_Error(t *testing.T) {
 	t.Run("should return the error message", func(t *testing.T) {
-		errSameBranch := &SameRefError{}
+		errSameRef := &SameRefError{}
 		err := NewSameRefError("target-ref", "current-branch")
 
 		require.Error(t, err)
-		require.ErrorAs(t, err, &errSameBranch)
+		require.ErrorAs(t, err, &errSameRef)
 
 		expectedMessage := errPrefix + " target reference (target-ref) is the same as the current HEAD (current-branch)"
 		assert.Equal(t, expectedMessage, err.Error())

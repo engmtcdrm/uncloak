@@ -7,7 +7,7 @@ import (
 )
 
 // Tests for [NewFileReport] function.
-func Test_NewReportFile(t *testing.T) {
+func Test_NewFileReport(t *testing.T) {
 	t.Run("should create a new ReportFile instance with the provided path", func(t *testing.T) {
 		reportFile := NewFileReport("path/to/file.go")
 		require.Equal(t, "path/to/file.go", reportFile.Path)
