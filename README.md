@@ -1,10 +1,10 @@
 # uncloak
 
-`uncloak` is a CLI tool for analyzing new Go code coverage for the current HEAD reference with a specified target reference (e.g. a branch name or commit SHA).
+`uncloak` is a CLI tool for analyzing new Go code coverage for the current HEAD reference with a specified target reference that resolves to a commit (e.g. a branch name or commit SHA).
 
 At a high level, it:
 
-- runs `git diff` with the specified target reference against the current HEAD to find new Go lines
+- runs `git diff` against the resolved target commit and current HEAD to find new Go lines
 - runs `go test` to collect coverage data of the current HEAD reference
 - compares new Go lines from the diff against the coverage profile
 - reports uncovered new lines and fails when coverage drops below the configurable threshold
@@ -27,7 +27,7 @@ Run `uncloak` from the root of a Git repository:
 uncloak -target-ref main
 ```
 
-`uncloak` analyzes the current HEAD reference against the target reference a user provides with `-t` / `--target-ref`.
+`uncloak` analyzes the current HEAD reference against the target reference a user provides with `-t` / `--target-ref`. If the target ref resolves to the same commit as HEAD, the diff analysis is skipped with a warning instead of failing.
 
 If coverage is below the threshold, the command exits with an error. Regardless of the coverage result, it prints the uncovered new line ranges, if any.
 
@@ -121,5 +121,5 @@ uncloak --target-ref main --coverage-threshold 70.31 --verbose
 ## Notes
 
 - New branches must have one commit prior to being able to run `uncloak` against a target reference.
-- Brand new Go files must be staged or committed for `uncloak` to analyze them.
+- Brand new Go files must be staged or committed for `uncloak` to analyze them; untracked files will not be part of the `git diff` analysis.
 - The tool expects to run inside a Git repository.
