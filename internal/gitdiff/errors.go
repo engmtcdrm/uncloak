@@ -62,7 +62,7 @@ func NewSameRefError(targetRef, currentHeadRef string) *SameRefError {
 
 // Error returns the error message.
 func (e *SameRefError) Error() string {
-	return fmt.Sprintf("%s target reference (%s) is the same as the current HEAD (%s)", errPrefix, e.targetRef, e.currentHeadRef)
+	return fmt.Sprintf("%s target reference (%s) is the same as the current HEAD reference (%s)", errPrefix, e.targetRef, e.currentHeadRef)
 }
 
 func handleExecError(cmd *exec.Cmd, output []byte, err error) error {

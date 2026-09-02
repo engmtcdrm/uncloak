@@ -50,7 +50,7 @@ func newRootCmd() *cobra.Command {
 		Use:     app.Name,
 		Short:   app.ShortDesc,
 		Long:    app.LongDesc,
-		Example: app.Name,
+		Example: app.Name + " -t main",
 		Version: app.Version,
 		PreRunE: c.ValidateFlags,
 		RunE:    c.Run,
