@@ -38,10 +38,10 @@ func Test_NewCodeCoverage(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		_ = testutils.SetStdout(t)
 
-		cfg := &config.DefaultConfig
+		cfg := config.DefaultConfig
 		cfg.Debug = true
 		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
-		report, err := NewCodeCoverage(cfg)
+		report, err := NewCodeCoverage(&cfg)
 		require.NoError(t, err)
 		require.NotNil(t, report)
 	})
@@ -119,6 +119,7 @@ func Test_analyzeCoverage(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 
 		cfg := config.DefaultConfig
+		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 		cfg.Exclusions = []string{"utils/utils.go"}
 
 		profile, diff, err := processFiles(&cfg)
@@ -298,6 +299,7 @@ func Test_runTaskGitDiff(t *testing.T) {
 		t.Helper()
 
 		defaultConfig := config.DefaultConfig
+		defaultConfig.GitDiffOptions.TargetRef = testgit.MainBranchName
 		tm := task.NewManager()
 		tm.Out = stdoutFile
 		tm.Start()
