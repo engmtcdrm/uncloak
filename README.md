@@ -1,6 +1,6 @@
 # uncloak
 
-`uncloak` is a CLI tool for analyzing new Go code coverage for the current working tree with a specified target reference that resolves to a commit (e.g. a branch name or commit SHA).
+`uncloak` is a CLI tool for analyzing new Go code coverage for the current working tree with a specified target reference that resolves to a commit (e.g. a branch name or commit hash).
 
 At a high level, it:
 
@@ -95,7 +95,7 @@ Exclusions support exact file matches and glob patterns. For example:
 - `-d, --debug`: (optional) enable debug output, e.g. what commands are run
 - `-h, --help`: help for uncloak
 - `-o, --output`: (optional) file to write new code missing coverage out to
-- `-t, --target-ref <string>`: (required) git target reference to compare against, e.g. a branch name or commit SHA
+- `-t, --target-ref <string>`: (required) git target reference to compare against, e.g. a branch name or commit hash
 - `-v, --verbose`: (optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output
 - `--version`: version for uncloak
 
