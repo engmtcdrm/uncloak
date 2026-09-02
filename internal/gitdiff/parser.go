@@ -149,7 +149,7 @@ func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Result
 // validateRefs checks if the provided target reference and the current HEAD
 // reference are valid and not the same.
 func validateRefs(ctx context.Context, targetRef, headRef string) error {
-	targetRef, ok := getRef(ctx, targetRef)
+	actualRef, ok := getRef(ctx, targetRef)
 	if !ok {
 		return NewInvalidRefError(targetRef, true)
 	}
@@ -159,8 +159,8 @@ func validateRefs(ctx context.Context, targetRef, headRef string) error {
 		return NewInvalidRefError(headRef, false)
 	}
 
-	if targetRef == currentRef {
-		return NewSameRefError(targetRef, currentRef)
+	if actualRef == currentRef {
+		return NewSameRefError(targetRef, headRef)
 	}
 
 	return nil

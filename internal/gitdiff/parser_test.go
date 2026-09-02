@@ -19,26 +19,25 @@ func Test_Run(t *testing.T) {
 
 	t.Run("should return results with valid options", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		opts := &DefaultOptions
-		opts.TargetRef = testgit.MainBranchName
+		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(ctx, &opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
 
-	t.Run("should return results when opts is nil", func(t *testing.T) {
+	t.Run("should return error when opts is nil", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		results, err := Run(ctx, nil)
-		require.NoError(t, err)
-		require.NotNil(t, results)
+		require.Error(t, err)
+		require.Nil(t, results)
 	})
 
 	t.Run("should return error when current directory is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		opts := &DefaultOptions
+		opts := Options{}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(ctx, &opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -46,9 +45,9 @@ func Test_Run(t *testing.T) {
 	t.Run("should return error when there is no parent branch", func(t *testing.T) {
 		tempDir, _ := testrepo.Init(ctx, t)
 		t.Chdir(tempDir)
-		opts := &DefaultOptions
+		opts := Options{}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(ctx, &opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -58,10 +57,9 @@ func Test_Run(t *testing.T) {
 		cmd := exec.CommandContext(ctx, "git", "checkout", "--detach", "HEAD")
 		require.NoError(t, cmd.Run())
 
-		opts := &DefaultOptions
-		opts.TargetRef = testgit.MainBranchName
+		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(ctx, &opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
@@ -299,9 +297,9 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 
 	t.Run("should return error if current directory is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		opts := &DefaultOptions
+		opts := Options{}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(ctx, &opts)
 		require.Error(t, err)
 		assert.Nil(t, results)
 	})
@@ -320,18 +318,18 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 
 	t.Run("should return results for valid git diff command", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		opts := &DefaultOptions
+		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(ctx, &opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
 
 	t.Run("should return results for valid git diff command with debug true", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		opts := &DefaultOptions
+		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(ctx, &opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
@@ -347,6 +345,7 @@ func Test_validateRefs(t *testing.T) {
 
 		err := validateRefs(ctx, targetRef, headRef)
 		require.Error(t, err)
+		require.Contains(t, err.Error(), targetRef)
 	})
 
 	t.Run("should return error if headRef is invalid", func(t *testing.T) {
@@ -356,6 +355,7 @@ func Test_validateRefs(t *testing.T) {
 
 		err := validateRefs(ctx, targetRef, headRef)
 		require.Error(t, err)
+		require.Contains(t, err.Error(), headRef)
 	})
 
 	t.Run("should return error if targetRef and headRef are the same", func(t *testing.T) {
@@ -365,6 +365,8 @@ func Test_validateRefs(t *testing.T) {
 
 		err := validateRefs(ctx, targetRef, headRef)
 		require.Error(t, err)
+		require.Contains(t, err.Error(), targetRef)
+		require.Contains(t, err.Error(), headRef)
 	})
 
 	t.Run("should not return error if targetRef and headRef are different", func(t *testing.T) {
