@@ -41,7 +41,7 @@ func Run(ctx context.Context, filePath string, opts *Options) (*Profile, error) 
 	if filePath == "" {
 		filePath, err = p.runTestCoverage(ctx)
 		if err != nil {
-			return nil, err
+			return NewProfile(p.Command, p.RawGoTestOutput), err
 		}
 		defer os.Remove(filePath) //nolint:errcheck
 	}

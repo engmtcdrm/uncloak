@@ -7,7 +7,6 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/analyzer"
 	"github.com/engmtcdrm/uncloak/internal/colors"
 	"github.com/engmtcdrm/uncloak/internal/config"
-	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/header"
 	"github.com/spf13/cobra"
 )
@@ -40,16 +39,14 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 
 	report, err := analyzer.NewCodeCoverage(cfg)
 	if err != nil && !errors.Is(err, analyzer.ErrBelowThreshold) {
-		if errors.Is(err, gitdiff.ErrNoOutput) {
-			return nil
-		}
-
 		return err
 	}
 
 	if c.verbose {
-		fmt.Printf("%s\n\n", colors.LightGreen("Go Test Output:"))
-		fmt.Println(string(report.CoverageProfile.RawTestOutput))
+		if len(report.CoverageProfile.RawTestOutput) > 0 {
+			fmt.Printf("%s\n\n", colors.LightGreen("Go Test Output:"))
+			fmt.Println(string(report.CoverageProfile.RawTestOutput))
+		}
 	}
 
 	if err := outputUncoveredLines(report, c.output); err != nil {

@@ -136,11 +136,11 @@ func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Result
 
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, handleExecError(cmd, output, err)
+		return &Results{Command: p.Command}, handleExecError(cmd, output, err)
 	}
 
 	if len(output) == 0 {
-		return nil, ErrNoOutput
+		return &Results{Command: p.Command}, ErrNoOutput
 	}
 
 	return p.parseGitDiffData(ctx, bytes.NewReader(output))

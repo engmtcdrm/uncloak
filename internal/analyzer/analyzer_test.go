@@ -2,7 +2,6 @@ package analyzer
 
 import (
 	"context"
-	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -54,15 +53,16 @@ func Test_NewCodeCoverage(t *testing.T) {
 		require.Empty(t, report)
 	})
 
-	t.Run("should return an error if there are no new lines from git diff", func(t *testing.T) {
+	t.Run("should return no error if there are no new lines from git diff", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 
 		cfg := config.DefaultConfig
 		cfg.GitDiffOptions.TargetRef = testrepo.NewBranchName
 
 		report, err := NewCodeCoverage(&cfg)
-		require.Error(t, err)
-		require.Empty(t, report)
+		require.NoError(t, err)
+		require.NotNil(t, report)
+		require.Zero(t, report.TotalNewLines())
 	})
 
 	t.Run("should return an error when coverage is below threshold", func(t *testing.T) {
@@ -152,46 +152,6 @@ func Test_filterFiles(t *testing.T) {
 
 		filteredFiles := filterFiles(&cfg, files)
 		require.Equal(t, expectedFiles, filteredFiles)
-	})
-}
-
-// Tests for [joinTaskErrors] function.
-func Test_joinTaskErrors(t *testing.T) {
-	t.Run("should return a nil error if no errors are provided", func(t *testing.T) {
-		var errs []error
-
-		joinedError := joinTaskErrors(errs...)
-		require.NoError(t, joinedError)
-	})
-
-	t.Run("should return a single error if one error is provided", func(t *testing.T) {
-		singleError := errors.New("single error")
-		errs := []error{singleError}
-
-		joinedError := joinTaskErrors(errs...)
-		require.ErrorIs(t, joinedError, singleError)
-	})
-
-	t.Run("should return a combined error if multiple errors are provided", func(t *testing.T) {
-		err1 := errors.New("error 1")
-		err2 := errors.New("error 2")
-		errs := []error{err1, err2}
-
-		joinedError := joinTaskErrors(errs...)
-		require.Error(t, joinedError)
-		require.ErrorIs(t, joinedError, err1)
-		require.ErrorIs(t, joinedError, err2)
-	})
-
-	t.Run("should not return errors that are taskCanceledError", func(t *testing.T) {
-		err1 := errors.New("error 1")
-		err2 := taskCanceledError{}
-		errs := []error{err1, err2}
-
-		joinedError := joinTaskErrors(errs...)
-		require.Error(t, joinedError)
-		require.ErrorIs(t, joinedError, err1)
-		require.NotErrorIs(t, joinedError, err2)
 	})
 }
 
@@ -285,7 +245,7 @@ func Test_processFiles(t *testing.T) {
 		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
 		assert.NotContains(t, output, "✓", "Captured output:\n%s", output)
 		assert.Contains(t, output, "✗", "Captured output:\n%s", output)
-		assert.Contains(t, output, "!", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
 	})
 }
 

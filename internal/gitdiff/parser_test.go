@@ -301,7 +301,8 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 
 		results, err := p.runAndParseGitDiff(ctx, &opts)
 		require.Error(t, err)
-		assert.Nil(t, results)
+		assert.NotNil(t, results)
+		assert.NotEmpty(t, results.Command)
 	})
 
 	t.Run("should return no output error for valid git diff command with no changes", func(t *testing.T) {
@@ -313,7 +314,8 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 
 		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
-		assert.Nil(t, results)
+		assert.NotNil(t, results)
+		assert.NotEmpty(t, results.Command)
 	})
 
 	t.Run("should return results for valid git diff command", func(t *testing.T) {

@@ -118,7 +118,7 @@ func Test_cmd_Run(t *testing.T) {
 	})
 
 	t.Run("should run without returning an error if there are no changes", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, stdoutFile := testrepo.InitWithFileCopy(ctx, t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
@@ -128,6 +128,7 @@ func Test_cmd_Run(t *testing.T) {
 
 		err = c.Run(localRootCmd, []string{})
 		require.NoError(t, err)
+		_ = stdoutFile
 	})
 }
 
