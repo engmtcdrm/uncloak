@@ -358,15 +358,13 @@ func Test_validateRefs(t *testing.T) {
 		require.Contains(t, err.Error(), headRef)
 	})
 
-	t.Run("should return error if targetRef and headRef are the same", func(t *testing.T) {
+	t.Run("should return no error if targetRef and headRef are the same", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		targetRef := testgit.MainBranchName
 		headRef := testgit.MainBranchName
 
 		err := validateRefs(ctx, targetRef, headRef)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), targetRef)
-		require.Contains(t, err.Error(), headRef)
+		require.NoError(t, err)
 	})
 
 	t.Run("should not return error if targetRef and headRef are different", func(t *testing.T) {

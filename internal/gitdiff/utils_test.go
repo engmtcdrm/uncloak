@@ -9,35 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Tests for [getRef] function.
-func Test_getRef(t *testing.T) {
-	ctx := context.Background()
-
-	t.Run("should return commit hash and true for valid reference", func(t *testing.T) {
-		testrepo.InitWithFileCopy(ctx, t)
-
-		commitHash, isValid := getRef(ctx, LocalMain)
-		require.True(t, isValid)
-		require.NotEmpty(t, commitHash)
-	})
-
-	t.Run("should return commit hash and true for HEAD reference", func(t *testing.T) {
-		testrepo.InitWithFileCopy(ctx, t)
-
-		commitHash, isValid := getRef(ctx, "HEAD")
-		require.True(t, isValid)
-		require.NotEmpty(t, commitHash)
-	})
-
-	t.Run("should return empty commit hash and false for invalid reference", func(t *testing.T) {
-		testrepo.InitWithFileCopy(ctx, t)
-
-		commitHash, isValid := getRef(ctx, "invalid-ref")
-		require.False(t, isValid)
-		require.Empty(t, commitHash)
-	})
-}
-
 // Tests for [gitRootDir] function.
 func Test_gitRootDir(t *testing.T) {
 	ctx := context.Background()
@@ -82,5 +53,28 @@ func Test_isGoFile(t *testing.T) {
 
 	t.Run("returns false for non-.go files", func(t *testing.T) {
 		require.False(t, isGoFile("file.txt"))
+	})
+}
+
+// Tests for [validateRef] function.
+func Test_validateRef(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("should return true for valid reference", func(t *testing.T) {
+		testrepo.InitWithFileCopy(ctx, t)
+
+		require.True(t, validateRef(ctx, LocalMain))
+	})
+
+	t.Run("should return true for HEAD reference", func(t *testing.T) {
+		testrepo.InitWithFileCopy(ctx, t)
+
+		require.True(t, validateRef(ctx, "HEAD"))
+	})
+
+	t.Run("should return false for invalid reference", func(t *testing.T) {
+		testrepo.InitWithFileCopy(ctx, t)
+
+		require.False(t, validateRef(ctx, "invalid-ref"))
 	})
 }
