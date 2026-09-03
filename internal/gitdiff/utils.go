@@ -49,7 +49,7 @@ func isGoFile(filePath string) bool {
 }
 
 // validateRef retrieves the commit hash of the provided Git reference by
-// executing the `git rev-parse --verify '<ref>{^commit}'` command. It returns a
+// executing the `git rev-parse --verify '<ref>^{commit}'` command. It returns a
 // boolean indicating whether the reference is valid or not.
 func validateRef(ctx context.Context, ref string) bool {
 	peelRef := ref + "^{commit}"
