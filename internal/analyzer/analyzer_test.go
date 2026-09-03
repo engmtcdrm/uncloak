@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/config"
@@ -272,7 +273,11 @@ func Test_processFiles(t *testing.T) {
 	})
 
 	t.Run("should return error if coverage output cannot be created", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
+		}
+
+		_, stdoutFile := testrepo.InitWithFileCopy(ctx, t)
 
 		tmpDir := t.TempDir()
 		t.Setenv("TMPDIR", tmpDir)
@@ -281,8 +286,6 @@ func Test_processFiles(t *testing.T) {
 		cfg := config.DefaultConfig
 		cfg.Debug = true
 		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
-
-		stdoutFile := testutils.SetStdout(t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.Error(t, err)
