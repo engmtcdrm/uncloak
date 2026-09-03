@@ -62,7 +62,9 @@ func Test_Run(t *testing.T) {
 
 		profile, err := Run(ctx, "", opts)
 		require.Error(t, err)
-		require.Nil(t, profile)
+		require.NotNil(t, profile)
+		require.Empty(t, profile.Command)
+		require.Empty(t, profile.RawTestOutput)
 	})
 }
 

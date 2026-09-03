@@ -31,8 +31,9 @@ func Run(ctx context.Context, opts *Options) (*Results, error) {
 		return nil, ErrNotAGitRepo
 	}
 
-	if !hasParent(ctx) {
-		return nil, ErrNoParentBranch
+	err := validateRefs(ctx, opts.TargetRef, headRef)
+	if err != nil {
+		return nil, err
 	}
 
 	p := &parser{}
@@ -127,7 +128,7 @@ func (p *parser) parseLines(ctx context.Context, lines []string) (*Results, erro
 func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Results, error) {
 	cmd := exec.CommandContext(ctx, "git", "diff")
 
-	args := optionsToArgs(ctx, opts)
+	args := optionsToArgs(opts)
 
 	cmd.Args = append(cmd.Args, args...)
 
@@ -135,12 +136,26 @@ func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Result
 
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, handleExecError(cmd, output, err)
+		return &Results{Command: p.Command}, handleExecError(cmd, output, err)
 	}
 
 	if len(output) == 0 {
-		return nil, errNoOutput(ctx, cmd, opts.TargetRef)
+		return &Results{Command: p.Command}, ErrNoOutput
 	}
 
 	return p.parseGitDiffData(ctx, bytes.NewReader(output))
+}
+
+// validateRefs checks if the provided target reference and the current HEAD
+// reference are valid.
+func validateRefs(ctx context.Context, targetRef, headRef string) error {
+	if ok := validateRef(ctx, targetRef); !ok {
+		return NewInvalidRefError(targetRef, true)
+	}
+
+	if ok := validateRef(ctx, headRef); !ok {
+		return NewInvalidRefError(headRef, false)
+	}
+
+	return nil
 }

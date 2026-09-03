@@ -3,50 +3,11 @@ package gitdiff
 import (
 	"context"
 	"os"
-	"os/exec"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/stretchr/testify/require"
 )
-
-// Tests for [findNearestParent] function.
-func Test_findNearestParent(t *testing.T) {
-	ctx := context.Background()
-
-	t.Run("should return empty parent if on main branch", func(t *testing.T) {
-		_, _ = testrepo.Init(ctx, t)
-		parent := findNearestParent(ctx)
-		require.Empty(t, parent)
-	})
-
-	t.Run("should return empty if directory is not a git repo", func(t *testing.T) {
-		t.Chdir(t.TempDir())
-		parent := findNearestParent(ctx)
-		require.Empty(t, parent)
-	})
-
-	t.Run("should return parent branch if on a child branch", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		parent := findNearestParent(ctx)
-		require.Equal(t, LocalMain, parent)
-	})
-
-	t.Run("should return empty if git is in a detached HEAD state", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		cmd := exec.CommandContext(ctx, "git", "checkout", "--detach", "HEAD")
-		require.NoError(t, cmd.Run())
-
-		parent := findNearestParent(ctx)
-		require.Empty(t, parent)
-	})
-
-	t.Run("should return empty if git repo has little to no commits", func(t *testing.T) {
-		_, _ = testrepo.Init(ctx, t)
-		parent := findNearestParent(ctx)
-		require.Empty(t, parent)
-	})
-}
 
 // Tests for [gitRootDir] function.
 func Test_gitRootDir(t *testing.T) {
@@ -80,21 +41,6 @@ func Test_isGitDir(t *testing.T) {
 	})
 }
 
-// Tests for [hasParent] function.
-func Test_hasParent(t *testing.T) {
-	ctx := context.Background()
-
-	t.Run("should return false with no parent", func(t *testing.T) {
-		_, _ = testrepo.Init(ctx, t)
-		require.False(t, hasParent(ctx))
-	})
-
-	t.Run("should return true with a parent", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		require.True(t, hasParent(ctx))
-	})
-}
-
 // Tests for [isGoFile] function.
 func Test_isGoFile(t *testing.T) {
 	t.Run("returns true for .go files", func(t *testing.T) {
@@ -107,5 +53,28 @@ func Test_isGoFile(t *testing.T) {
 
 	t.Run("returns false for non-.go files", func(t *testing.T) {
 		require.False(t, isGoFile("file.txt"))
+	})
+}
+
+// Tests for [validateRef] function.
+func Test_validateRef(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("should return true for valid reference", func(t *testing.T) {
+		testrepo.InitWithFileCopy(ctx, t)
+
+		require.True(t, validateRef(ctx, LocalMain))
+	})
+
+	t.Run("should return true for HEAD reference", func(t *testing.T) {
+		testrepo.InitWithFileCopy(ctx, t)
+
+		require.True(t, validateRef(ctx, "HEAD"))
+	})
+
+	t.Run("should return false for invalid reference", func(t *testing.T) {
+		testrepo.InitWithFileCopy(ctx, t)
+
+		require.False(t, validateRef(ctx, "invalid-ref"))
 	})
 }
