@@ -247,6 +247,56 @@ func Test_processFiles(t *testing.T) {
 		assert.Contains(t, output, "✗", "Captured output:\n%s", output)
 		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
 	})
+
+	t.Run("should print debug output if git diff fails before coverage starts", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Chdir(tempDir)
+
+		cfg := config.DefaultConfig
+		cfg.Debug = true
+		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+
+		stdoutFile := testutils.SetStdout(t)
+
+		profile, diff, err := processFiles(&cfg)
+		require.Error(t, err)
+		require.NotErrorAs(t, err, &taskCanceledError{})
+		require.Nil(t, profile)
+		require.Nil(t, diff)
+
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
+		assert.Contains(t, output, "✗", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
+		assert.NotEmpty(t, output)
+	})
+
+	t.Run("should return error if coverage output cannot be created", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+
+		tmpDir := t.TempDir()
+		t.Setenv("TMPDIR", tmpDir)
+		require.NoError(t, os.Chmod(tmpDir, 0o000))
+
+		cfg := config.DefaultConfig
+		cfg.Debug = true
+		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+
+		stdoutFile := testutils.SetStdout(t)
+
+		profile, diff, err := processFiles(&cfg)
+		require.Error(t, err)
+		require.NotErrorAs(t, err, &taskCanceledError{})
+		require.Nil(t, profile)
+		require.Nil(t, diff)
+
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
+		assert.Contains(t, output, "✓", "Captured output:\n%s", output)
+		assert.Contains(t, output, "✗", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
+		assert.Contains(t, output, "Git diff analysis command ran:", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "Go test coverage analysis command ran:", "Captured output:\n%s", output)
+	})
 }
 
 // Tests for [runTaskGitDiff] function.
