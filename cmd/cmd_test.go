@@ -117,7 +117,7 @@ func Test_cmd_Run(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("should run without returning an error if branches are the same", func(t *testing.T) {
+	t.Run("should run without returning an error if there are no changes", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()

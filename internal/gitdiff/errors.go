@@ -44,27 +44,6 @@ func (e *InvalidRefError) Error() string {
 	return fmt.Sprintf("%s invalid reference: %s", errPrefix, e.ref)
 }
 
-// SameRefError indicates that the target reference is the same as the current
-// HEAD reference.
-type SameRefError struct {
-	targetRef      string
-	currentHeadRef string
-}
-
-// NewSameRefError creates a new [SameRefError] with the given target reference
-// and current HEAD reference.
-func NewSameRefError(targetRef, currentHeadRef string) *SameRefError {
-	return &SameRefError{
-		targetRef:      targetRef,
-		currentHeadRef: currentHeadRef,
-	}
-}
-
-// Error returns the error message.
-func (e *SameRefError) Error() string {
-	return fmt.Sprintf("%s target reference (%s) is the same as the current HEAD reference (%s)", errPrefix, e.targetRef, e.currentHeadRef)
-}
-
 func handleExecError(cmd *exec.Cmd, output []byte, err error) error {
 	if errors.Is(err, exec.ErrNotFound) {
 		return err
