@@ -39,7 +39,8 @@ func NewProfile(command string, rawTestOutput []byte) *Profile {
 	}
 }
 
-// Files returns a sorted list of unique file paths that have coverage data in the profile.
+// Files returns a sorted list of unique file paths that have coverage data in
+// the profile.
 func (cp *Profile) Files() []string {
 	files := make([]string, 0, len(cp.CoveredLines))
 	for file := range cp.CoveredLines {

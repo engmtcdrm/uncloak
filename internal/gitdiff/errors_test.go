@@ -3,67 +3,51 @@ package gitdiff
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os/exec"
 	"testing"
 
-	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
-	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Tests for [errNoOutput] function.
-func Test_errNoOutput(t *testing.T) {
-	ctx := context.Background()
+// Tests for [NewInvalidRefError] function.
+func Test_NewInvalidRefError(t *testing.T) {
+	expectedRef := "invalid-ref"
+	expectedTargetRef := true
 
-	t.Run("nil input produces error with empty command", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		expectedErr := fmt.Sprintf("git diff command produced no output. Is the target ref (%s) the same as the current branch (%s)?",
-			testgit.MainBranchName,
-			testrepo.NewBranchName,
-		)
+	t.Run("should create a new InvalidRefError with the given ref and targetRef", func(t *testing.T) {
+		errInvalidRef := &InvalidRefError{}
 
-		err := errNoOutput(ctx, nil, testgit.MainBranchName)
+		err := NewInvalidRefError(expectedRef, expectedTargetRef)
 		require.Error(t, err)
-		require.Equal(t, expectedErr, err.Error())
+		require.ErrorAs(t, err, &errInvalidRef)
+		assert.Equal(t, expectedRef, err.ref)
+		assert.Equal(t, expectedTargetRef, err.targetRef)
+	})
+}
+
+// Tests for [InvalidRefError.Error] function.
+func Test_InvalidRefError_Error(t *testing.T) {
+	t.Run("should return the error message for target reference", func(t *testing.T) {
+		errInvalidRef := &InvalidRefError{}
+		err := NewInvalidRefError("invalid-ref", true)
+
+		require.Error(t, err)
+		require.ErrorAs(t, err, &errInvalidRef)
+
+		expectedMessage := errPrefix + " invalid target reference: invalid-ref"
+		assert.Equal(t, expectedMessage, err.Error())
 	})
 
-	t.Run("non-nil input produces error with command", func(t *testing.T) {
-		_, _ = testrepo.Init(ctx, t)
-		expectedErr := fmt.Sprintf("command: \"git diff --cached\": git diff command produced no output. Is the target ref (%s) the same as the current branch (%s)?",
-			testgit.MainBranchName,
-			testgit.MainBranchName,
-		)
+	t.Run("should return the error message for non-target reference", func(t *testing.T) {
+		errInvalidRef := &InvalidRefError{}
+		err := NewInvalidRefError("invalid-ref", false)
 
-		cmd := exec.CommandContext(ctx, "git", "diff", "--cached")
-		err := errNoOutput(ctx, cmd, testgit.MainBranchName)
 		require.Error(t, err)
-		require.Equal(t, expectedErr, err.Error())
-	})
+		require.ErrorAs(t, err, &errInvalidRef)
 
-	t.Run("empty targetRef produces error without targetRef", func(t *testing.T) {
-		_, _ = testrepo.Init(ctx, t)
-		expectedErr := fmt.Sprintf("command: \"git diff --cached\": git diff command produced no output. Is the target ref the same as the current branch (%s)?",
-			testgit.MainBranchName,
-		)
-
-		cmd := exec.CommandContext(ctx, "git", "diff", "--cached")
-		err := errNoOutput(ctx, cmd, "")
-		require.Error(t, err)
-		require.Equal(t, expectedErr, err.Error())
-	})
-
-	t.Run("empty currentBranch produces error without currentBranch", func(t *testing.T) {
-		expectedErr := fmt.Sprintf("command: \"git diff --cached\": git diff command produced no output. Is the target ref (%s) the same as the current branch?",
-			testgit.MainBranchName,
-		)
-
-		t.Chdir(t.TempDir())
-
-		cmd := exec.CommandContext(ctx, "git", "diff", "--cached")
-		err := errNoOutput(ctx, cmd, testgit.MainBranchName)
-		require.Error(t, err)
-		require.Equal(t, expectedErr, err.Error())
+		expectedMessage := errPrefix + " invalid reference: invalid-ref"
+		assert.Equal(t, expectedMessage, err.Error())
 	})
 }
 

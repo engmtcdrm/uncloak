@@ -1,47 +1,47 @@
 package gitdiff
 
 import (
-	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"os/exec"
-	"strings"
 
 	"github.com/engmtcdrm/uncloak/internal/utils"
 )
 
-var (
-	// ErrNotAGitRepo indicates that the current directory is not a git
-	// repository.
-	ErrNotAGitRepo = errors.New("not a git repository: ensure you are in a git repository or provide a valid file path")
-
-	// ErrNoParentBranch indicates that no parent branch could be found, which
-	// may occur if the current branch is the main branch.
-	ErrNoParentBranch = errors.New("no parent branch found: are you on the main branch for this repository?")
+const (
+	errPrefix = "git diff:"
 )
 
-func errNoOutput(ctx context.Context, cmd *exec.Cmd, targetRef string) error {
-	currentBranch := getCurrentBranch(ctx)
+var (
+	// ErrNoOutput indicates that the git diff command produced no output.
+	ErrNoOutput = errors.New(errPrefix + " produced no output")
 
-	var buf bytes.Buffer
+	// ErrNotAGitRepo indicates that the current directory is not a git
+	// repository.
+	ErrNotAGitRepo = errors.New(errPrefix + " not a git repository: ensure you are in a git repository")
+)
 
-	if cmd != nil && len(cmd.Args) > 0 {
-		fmt.Fprintf(&buf, "command: %q: ", strings.Join(cmd.Args, " "))
+// InvalidRefError indicates that the provided reference is invalid.
+type InvalidRefError struct {
+	ref       string
+	targetRef bool
+}
+
+// NewInvalidRefError creates a new [InvalidRefError] with the given reference.
+func NewInvalidRefError(ref string, targetRef bool) *InvalidRefError {
+	return &InvalidRefError{
+		ref:       ref,
+		targetRef: targetRef,
+	}
+}
+
+// Error returns the error message.
+func (e *InvalidRefError) Error() string {
+	if e.targetRef {
+		return fmt.Sprintf("%s invalid target reference: %s", errPrefix, e.ref)
 	}
 
-	fmt.Fprint(&buf, "git diff command produced no output.")
-
-	switch {
-	case targetRef != "" && currentBranch != "":
-		fmt.Fprintf(&buf, " Is the target ref (%s) the same as the current branch (%s)?", targetRef, currentBranch)
-	case targetRef != "" && currentBranch == "":
-		fmt.Fprintf(&buf, " Is the target ref (%s) the same as the current branch?", targetRef)
-	case targetRef == "" && currentBranch != "":
-		fmt.Fprintf(&buf, " Is the target ref the same as the current branch (%s)?", currentBranch)
-	}
-
-	return errors.New(buf.String())
+	return fmt.Sprintf("%s invalid reference: %s", errPrefix, e.ref)
 }
 
 func handleExecError(cmd *exec.Cmd, output []byte, err error) error {

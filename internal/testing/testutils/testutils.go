@@ -32,10 +32,10 @@ func (e *ErrorReader) Read(_ []byte) (n int, err error) {
 }
 
 // CreatePTY creates a pseudo-terminal pair for testing terminal interactions.
-// The returned master and slave *os.File can be used to simulate terminal input
-// and output in tests. The master end can be used to write input as if typed by
-// a user, while the slave end can be used to read output from the terminal.
-// Both files are automatically closed after the test completes.
+// The returned master and slave [*os.File] can be used to simulate terminal
+// input and output in tests. The master end can be used to write input as if
+// typed by a user, while the slave end can be used to read output from the
+// terminal. Both files are automatically closed after the test completes.
 //
 // Lovely stolen from https://github.com/engmtcdrm/go-pardon testutils package.
 func CreatePTY(t *testing.T) (master *os.File, slave *os.File) {
@@ -57,8 +57,8 @@ func CreatePTY(t *testing.T) (master *os.File, slave *os.File) {
 }
 
 // CreatePTYWithSize creates a pseudo-terminal pair with the specified size for
-// testing terminal interactions. The returned master and slave *os.File can be
-// used to simulate terminal input and output in tests that require specific
+// testing terminal interactions. The returned master and slave [*os.File] can
+// be used to simulate terminal input and output in tests that require specific
 // terminal dimensions. Both files are automatically closed after the test
 // completes.
 //

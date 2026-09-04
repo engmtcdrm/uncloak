@@ -2,6 +2,7 @@ package gitdiff
 
 import (
 	"context"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -13,30 +14,30 @@ import (
 )
 
 // Tests for [Run] function.
-func Test_Get(t *testing.T) {
+func Test_Run(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should return results with valid options", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		opts := &DefaultOptions
+		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(ctx, &opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
 
-	t.Run("should return results when opts is nil", func(t *testing.T) {
+	t.Run("should return error when opts is nil", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		results, err := Run(ctx, nil)
-		require.NoError(t, err)
-		require.NotNil(t, results)
+		require.Error(t, err)
+		require.Nil(t, results)
 	})
 
 	t.Run("should return error when current directory is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		opts := &DefaultOptions
+		opts := Options{}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(ctx, &opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -44,11 +45,23 @@ func Test_Get(t *testing.T) {
 	t.Run("should return error when there is no parent branch", func(t *testing.T) {
 		tempDir, _ := testrepo.Init(ctx, t)
 		t.Chdir(tempDir)
-		opts := &DefaultOptions
+		opts := Options{}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(ctx, &opts)
 		require.Error(t, err)
 		require.Nil(t, results)
+	})
+
+	t.Run("should not return error if git is in a detached HEAD state", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		cmd := exec.CommandContext(ctx, "git", "checkout", "--detach", "HEAD")
+		require.NoError(t, cmd.Run())
+
+		opts := Options{TargetRef: testgit.MainBranchName}
+
+		results, err := Run(ctx, &opts)
+		require.NoError(t, err)
+		require.NotNil(t, results)
 	})
 }
 
@@ -73,8 +86,8 @@ func Test_parseHunkHeader(t *testing.T) {
 	})
 }
 
-// Tests for [parseGitDiffData] function.
-func Test_parseGitDiffData(t *testing.T) {
+// Tests for [parser.parseGitDiffData] function.
+func Test_parser_parseGitDiffData(t *testing.T) {
 	ctx := context.Background()
 	p := &parser{}
 	diffData := `diff --git a/internal/gitdiff/parser.go b/internal/gitdiff/parser.go
@@ -119,8 +132,8 @@ index 0000000..6d36618
 	})
 }
 
-// Tests for [parseLines] function.
-func Test_parseLines(t *testing.T) {
+// Tests for [parser.parseLines] function.
+func Test_parser_parseLines(t *testing.T) {
 	ctx := context.Background()
 	p := &parser{}
 
@@ -277,18 +290,19 @@ func Test_parseLines(t *testing.T) {
 	})
 }
 
-// Tests for [runAndParseGitDiff] function.
-func Test_runAndParseGitDiff(t *testing.T) {
+// Tests for [parser.runAndParseGitDiff] function.
+func Test_parser_runAndParseGitDiff(t *testing.T) {
 	ctx := context.Background()
 	p := &parser{}
 
 	t.Run("should return error if current directory is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		opts := &DefaultOptions
+		opts := Options{}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(ctx, &opts)
 		require.Error(t, err)
-		assert.Nil(t, results)
+		assert.NotNil(t, results)
+		assert.NotEmpty(t, results.Command)
 	})
 
 	t.Run("should return no output error for valid git diff command with no changes", func(t *testing.T) {
@@ -300,24 +314,67 @@ func Test_runAndParseGitDiff(t *testing.T) {
 
 		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
-		assert.Nil(t, results)
+		assert.NotNil(t, results)
+		assert.NotEmpty(t, results.Command)
 	})
 
 	t.Run("should return results for valid git diff command", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		opts := &DefaultOptions
+		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(ctx, &opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
 
 	t.Run("should return results for valid git diff command with debug true", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		opts := &DefaultOptions
+		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(ctx, &opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
+	})
+}
+
+// Tests for [validateRefs] function.
+func Test_validateRefs(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("should return error if targetRef is invalid", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		targetRef := "invalid-ref"
+
+		err := validateRefs(ctx, targetRef, headRef)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), targetRef)
+	})
+
+	t.Run("should return error if headRef is invalid", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		targetRef := testgit.MainBranchName
+		headRef := "invalid-ref"
+
+		err := validateRefs(ctx, targetRef, headRef)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), headRef)
+	})
+
+	t.Run("should return no error if targetRef and headRef are the same", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		targetRef := testgit.MainBranchName
+		headRef := testgit.MainBranchName
+
+		err := validateRefs(ctx, targetRef, headRef)
+		require.NoError(t, err)
+	})
+
+	t.Run("should not return error if targetRef and headRef are different", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		targetRef := testgit.MainBranchName
+		headRef := "HEAD"
+
+		err := validateRefs(ctx, targetRef, headRef)
+		require.NoError(t, err)
 	})
 }
