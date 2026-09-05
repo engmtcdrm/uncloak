@@ -39,11 +39,11 @@ func IsFunction(file string, line int, funcDecls FuncDecls) bool {
 	return false
 }
 
-func ParseGoFiles(files []string) (map[string][]FuncDecl, error) {
-	funcList := map[string][]FuncDecl{}
+func ParseGoFiles(files []string) (FuncDecls, error) {
+	funcList := FuncDecls{}
 
 	for _, file := range files {
-		fileFuncDecl, err := parseGoFile(file)
+		fileFuncDecl, err := ParseGoFile(file)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func ParseGoFiles(files []string) (map[string][]FuncDecl, error) {
 	return funcList, nil
 }
 
-func parseGoFile(filePath string) ([]FuncDecl, error) {
+func ParseGoFile(filePath string) ([]FuncDecl, error) {
 	if !strings.HasSuffix(filePath, ".go") {
 		return nil, nil
 	}
