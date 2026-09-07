@@ -71,7 +71,8 @@ func Test_Report_GroupCoveredLines(t *testing.T) {
 	t.Run("populated file CoveredNewLines should produce CoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
-		reportFile := NewFileReport("test.go")
+		reportFile, err := NewFileReport("test.go")
+		require.NoError(t, err)
 		reportFile.CoveredNewLines = []int{1, 2, 3, 5, 6, 8}
 
 		report.Files = append(report.Files, reportFile)
@@ -100,7 +101,8 @@ func Test_Report_GroupUncoveredLines(t *testing.T) {
 	t.Run("populated file UncoveredNewLines should produce UncoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
-		reportFile := NewFileReport("test.go")
+		reportFile, err := NewFileReport("test.go")
+		require.NoError(t, err)
 		reportFile.UncoveredNewLines = []int{1, 2, 3, 5, 6, 8}
 
 		report.Files = append(report.Files, reportFile)
@@ -131,7 +133,9 @@ func Test_Report_HasUncoveredLines(t *testing.T) {
 	t.Run("should return true if any file has uncovered new lines", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{}})
-		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{1}})
+		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{1}, NewUncoveredNewLines: map[string][]int{
+			"test.go": {1},
+		}})
 		require.True(t, report.HasUncoveredLines())
 	})
 }

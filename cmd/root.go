@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"slices"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
 	"github.com/spf13/cobra"
@@ -95,14 +97,23 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 	fmt.Printf("%s\n\n", colors.LightGreen("Missing coverage:"))
 
 	for _, file := range report.Files {
-		for _, lineRange := range file.UncoveredNewLineGroups {
-			outputUncoveredLineToStdout(file.Path, lineRange)
-			outputUncoveredLinetoFile(outputFile, file.Path, lineRange)
+		if len(file.NewUncoveredNewLinesGroups) == 0 {
+			continue
 		}
 
-		if len(file.UncoveredNewLineGroups) > 0 {
-			fmt.Println()
+		// fmt.Println(pp.Bold(file.Path))
+
+		for funcName, lineRange := range file.NewUncoveredNewLinesGroups {
+			_ = lineRange
+			// outputUncoveredLineToStdout(file.Path, lineRange)
+			// outputUncoveredLineToStdout2(file.Path, funcName, lineRange)
+			outputUncoveredLineToStdout3(file, funcName)
+			// outputUncoveredLinetoFile(outputFile, file.Path, lineRange)
 		}
+
+		// if len(file.NewUncoveredNewLinesGroups) > 0 {
+		// 	fmt.Println()
+		// }
 	}
 
 	return nil
@@ -116,6 +127,112 @@ func outputUncoveredLineToStdout(filePath string, lineRange analyzer.LineRange) 
 		pp.Redf("%d", lineRange.Start),
 		pp.Redf("%d", lineRange.End),
 	)
+}
+
+// outputUncoveredLineToStdout writes the uncovered line range for a given file
+// to the [os.Stdout].
+func outputUncoveredLineToStdout2(filePath string, funcName string, lineRange []analyzer.LineRange) {
+	var buf bytes.Buffer
+
+	fmt.Fprintf(&buf, "  Function: %s\n", pp.Red(funcName))
+
+	for _, lr := range lineRange {
+		fmt.Fprintf(&buf, "    %s:%s:%s\n",
+			pp.Bold(filePath),
+			pp.Redf("%d", lr.Start),
+			pp.Redf("%d", lr.End),
+		)
+		// fmt.Fprintf(&buf, "%s    %s:%s:%s\n",
+		// 	pp.RedBgf(" %-3d ", lr.Start),
+		// 	pp.Bold(filePath),
+		// 	pp.Redf("%d", lr.Start),
+		// 	pp.Redf("%d", lr.End),
+		// )
+		// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(239, "─────"))
+		// fmt.Fprintf(&buf, "%s", pp.Dimf(" %-3d     covered code already\n", lr.End))
+	}
+
+	if len(lineRange) > 0 {
+		fmt.Fprintln(&buf)
+	}
+
+	fmt.Print(buf.String())
+}
+
+func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
+	f, ok := file.ASTFile.FuncDecls[funcName]
+	if !ok {
+		return
+	}
+
+	codeBodyLineStart := f.StartLine + 1
+	if codeBodyLineStart < 1 {
+		codeBodyLineStart = 1
+	}
+
+	codeBodyLineEnd := f.EndLine - 1
+	if codeBodyLineEnd > len(file.ASTFile.Lines) {
+		codeBodyLineEnd = len(file.ASTFile.Lines)
+	}
+
+	var buf bytes.Buffer
+
+	paddedUncoveredNewLines := make([]int, 0)
+	for _, line := range file.UncoveredNewLines {
+		for i := line - 3; i <= line+3; i++ {
+			if i >= codeBodyLineStart && i <= codeBodyLineEnd {
+				paddedUncoveredNewLines = append(paddedUncoveredNewLines, i)
+			}
+		}
+	}
+
+	slices.Sort(paddedUncoveredNewLines)
+	paddedUncoveredNewLines = slices.Compact(paddedUncoveredNewLines)
+	minLine := slices.Min(paddedUncoveredNewLines)
+	maxLine := slices.Max(paddedUncoveredNewLines)
+
+	fmt.Fprintf(&buf, "%s:%s:%s:%s\n\n", pp.Bold(file.Path), pp.Redf("%d", f.StartLine), pp.Redf("%d", f.EndLine), pp.Red(funcName))
+	fmt.Fprintf(&buf, "%s %s\n", pp.Dimf("%4d▐", f.StartLine), pp.Dim(file.ASTFile.Lines[f.StartLine-1]))
+	// fmt.Fprintf(&buf, "%s %s\n", pp.Bg8Bitf(8, "%4d:", f.StartLine), pp.Bold(file.ASTFile.Lines[f.StartLine-1]))
+
+	if minLine > f.StartLine+1 {
+		fmt.Fprintf(&buf, "%s\n", pp.Dim(" ∙∙∙▐"))
+		// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(0, " ∙∙∙ "))
+	}
+
+	for i, lineNbr := range paddedUncoveredNewLines {
+		uncovered := slices.Contains(file.UncoveredNewLines, lineNbr)
+
+		if !uncovered {
+			fmt.Fprintf(&buf, "%s %s\n", pp.Dimf("%4d▐", lineNbr), pp.Dim(file.ASTFile.Lines[lineNbr-1]))
+			// fmt.Fprintf(&buf, "%s %s\n", pp.Bg8Bitf(8, "%4d:", lineNbr), pp.Dim(file.ASTFile.Lines[lineNbr-1]))
+		} else {
+			fmt.Fprintf(&buf, "%4d%s %s\n", lineNbr, pp.Red("▐"), pp.Red(file.ASTFile.Lines[lineNbr-1]))
+			// fmt.Fprintf(&buf, "%s %s\n", pp.Bg8Bitf(1, "%4d:", lineNbr), pp.Red(file.ASTFile.Lines[lineNbr-1]))
+		}
+
+		if i < len(paddedUncoveredNewLines)-1 {
+			nextLineNbr := paddedUncoveredNewLines[i+1]
+			if nextLineNbr > lineNbr+1 {
+				fmt.Fprintf(&buf, "%s\n", pp.Dim(" ∙∙∙▐"))
+				// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(0, " ∙∙∙ "))
+			}
+		}
+	}
+
+	if maxLine+1 < f.EndLine {
+		fmt.Fprintf(&buf, "%s\n", pp.Dim(" ∙∙∙▐"))
+		// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(0, " ∙∙∙ "))
+	}
+
+	fmt.Fprintf(&buf, "%s %s\n", pp.Dimf("%4d▐", f.EndLine), pp.Dim(file.ASTFile.Lines[f.EndLine-1]))
+	// fmt.Fprintf(&buf, "%s %s\n", pp.Bg8Bitf(8, "%4d:", f.EndLine), pp.Dim(file.ASTFile.Lines[f.EndLine-1]))
+
+	// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(239, " ∙∙∙ "))
+	// fmt.Fprint(&buf, " ∙∙∙ \n")
+	fmt.Fprintln(&buf)
+
+	fmt.Print(buf.String())
 }
 
 // outputUncoveredLinetoFile writes the uncovered line range for a given file to

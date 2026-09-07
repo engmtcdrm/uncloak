@@ -111,7 +111,8 @@ func Test_analyzeCoverage(t *testing.T) {
 		report := NewReport(cfg.CoverageThreshold, profile, diff)
 		require.NotNil(t, report)
 
-		report = analyzeCoverage(report, &cfg)
+		report, err = analyzeCoverage(report, &cfg)
+		require.NoError(t, err)
 		require.NotNil(t, report)
 		require.NotEmpty(t, report.GitDiffResults.Files())
 	})
@@ -129,7 +130,8 @@ func Test_analyzeCoverage(t *testing.T) {
 		report := NewReport(cfg.CoverageThreshold, profile, diff)
 		require.NotNil(t, report)
 
-		report = analyzeCoverage(report, &cfg)
+		report, err = analyzeCoverage(report, &cfg)
+		require.NoError(t, err)
 		require.NotNil(t, report)
 		require.NotEmpty(t, report.GitDiffResults.Files())
 	})

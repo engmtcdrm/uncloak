@@ -32,7 +32,10 @@ func NewCodeCoverage(cfg *config.Config) (*Report, error) {
 	}
 
 	report := NewReport(cfg.CoverageThreshold, profile, diff)
-	report = analyzeCoverage(report, cfg)
+	report, err = analyzeCoverage(report, cfg)
+	if err != nil {
+		return report, err
+	}
 
 	// If there are no new lines, changes must have been outside of test
 	// coverage lines.
@@ -53,7 +56,7 @@ func NewCodeCoverage(cfg *config.Config) (*Report, error) {
 // analyzeCoverage analyzes the coverage of new lines in the given report based
 // on the configuration. It returns the updated report with the analyzed
 // coverage.
-func analyzeCoverage(report *Report, cfg *config.Config) *Report {
+func analyzeCoverage(report *Report, cfg *config.Config) (*Report, error) {
 	filteredFiles := filterFiles(cfg, report.GitDiffResults.Files())
 
 	for _, file := range filteredFiles {
@@ -63,25 +66,35 @@ func analyzeCoverage(report *Report, cfg *config.Config) *Report {
 			continue
 		}
 
-		reportFile := NewFileReport(file)
+		reportFile, err := NewFileReport(file)
+		if err != nil {
+			return report, err
+		}
 
 		for line := range newLines {
 			if !report.CoverageProfile.IsInTestCoverage(file, line) {
 				continue
 			}
 
+			funcName := reportFile.ASTFile.LineFunctionName(line)
+			if funcName == "" {
+				continue
+			}
+
 			if report.CoverageProfile.CoveredLines[file][line] {
+				reportFile.NewCoveredNewLines[funcName] = append(reportFile.NewCoveredNewLines[funcName], line)
 				reportFile.CoveredNewLines = append(reportFile.CoveredNewLines, line)
 				continue
 			}
 
+			reportFile.NewUncoveredNewLines[funcName] = append(reportFile.NewUncoveredNewLines[funcName], line)
 			reportFile.UncoveredNewLines = append(reportFile.UncoveredNewLines, line)
 		}
 
 		report.Files = append(report.Files, reportFile)
 	}
 
-	return report
+	return report, nil
 }
 
 // filterFiles filters the given list of files based on the exclusions specified
