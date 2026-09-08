@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strconv"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
 	"github.com/spf13/cobra"
@@ -191,46 +192,37 @@ func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
 	minLine := slices.Min(paddedUncoveredNewLines)
 	maxLine := slices.Max(paddedUncoveredNewLines)
 
-	fmt.Fprintf(&buf, "%s:%s:%s:%s\n\n", pp.Bold(file.Path), pp.Redf("%d", f.StartLine), pp.Redf("%d", f.EndLine), pp.Red(funcName))
-	fmt.Fprintf(&buf, "%s %s\n", pp.Dimf("%4d▐", f.StartLine), pp.Dim(file.ASTFile.Lines[f.StartLine-1]))
-	// fmt.Fprintf(&buf, "%s %s\n", pp.Bg8Bitf(8, "%4d:", f.StartLine), pp.Bold(file.ASTFile.Lines[f.StartLine-1]))
+	maxLineDigits := max(len(strconv.Itoa(f.EndLine)), 3)
+
+	fmt.Fprintf(&buf, "%s\n\n", pp.Boldf("%s:%d:%d", file.Path, f.StartLine, f.EndLine))
+	fmt.Fprintf(&buf, "  %s %s\n", pp.Dimf("%*d ▐", maxLineDigits, f.StartLine), pp.Dim(file.ASTFile.Lines[f.StartLine-1]))
 
 	if minLine > f.StartLine+1 {
-		fmt.Fprintf(&buf, "%s\n", pp.Dim(" ∙∙∙▐"))
-		// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(0, " ∙∙∙ "))
+		fmt.Fprintf(&buf, "  %*s\n", maxLineDigits, pp.Dim("∙∙∙ ▐"))
 	}
 
 	for i, lineNbr := range paddedUncoveredNewLines {
 		uncovered := slices.Contains(file.UncoveredNewLines, lineNbr)
 
 		if !uncovered {
-			fmt.Fprintf(&buf, "%s %s\n", pp.Dimf("%4d▐", lineNbr), pp.Dim(file.ASTFile.Lines[lineNbr-1]))
-			// fmt.Fprintf(&buf, "%s %s\n", pp.Bg8Bitf(8, "%4d:", lineNbr), pp.Dim(file.ASTFile.Lines[lineNbr-1]))
+			fmt.Fprintf(&buf, "  %s %s\n", pp.Dimf("%*d ▐", maxLineDigits, lineNbr), pp.Dim(file.ASTFile.Lines[lineNbr-1]))
 		} else {
-			fmt.Fprintf(&buf, "%4d%s %s\n", lineNbr, pp.Red("▐"), pp.Red(file.ASTFile.Lines[lineNbr-1]))
-			// fmt.Fprintf(&buf, "%s %s\n", pp.Bg8Bitf(1, "%4d:", lineNbr), pp.Red(file.ASTFile.Lines[lineNbr-1]))
+			fmt.Fprintf(&buf, "  %*d%s %s\n", maxLineDigits, lineNbr, pp.Red(" ▐"), pp.Red(file.ASTFile.Lines[lineNbr-1]))
 		}
 
 		if i < len(paddedUncoveredNewLines)-1 {
 			nextLineNbr := paddedUncoveredNewLines[i+1]
 			if nextLineNbr > lineNbr+1 {
-				fmt.Fprintf(&buf, "%s\n", pp.Dim(" ∙∙∙▐"))
-				// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(0, " ∙∙∙ "))
+				fmt.Fprintf(&buf, "  %*s\n", maxLineDigits, pp.Dim("∙∙∙ ▐"))
 			}
 		}
 	}
 
 	if maxLine+1 < f.EndLine {
-		fmt.Fprintf(&buf, "%s\n", pp.Dim(" ∙∙∙▐"))
-		// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(0, " ∙∙∙ "))
+		fmt.Fprintf(&buf, "  %*s\n", maxLineDigits, pp.Dim("∙∙∙ ▐"))
 	}
 
-	fmt.Fprintf(&buf, "%s %s\n", pp.Dimf("%4d▐", f.EndLine), pp.Dim(file.ASTFile.Lines[f.EndLine-1]))
-	// fmt.Fprintf(&buf, "%s %s\n", pp.Bg8Bitf(8, "%4d:", f.EndLine), pp.Dim(file.ASTFile.Lines[f.EndLine-1]))
-
-	// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(239, " ∙∙∙ "))
-	// fmt.Fprint(&buf, " ∙∙∙ \n")
-	fmt.Fprintln(&buf)
+	fmt.Fprintf(&buf, "  %s %s\n\n", pp.Dimf("%*d ▐", maxLineDigits, f.EndLine), pp.Dim(file.ASTFile.Lines[f.EndLine-1]))
 
 	fmt.Print(buf.String())
 }
