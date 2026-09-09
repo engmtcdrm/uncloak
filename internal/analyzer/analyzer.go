@@ -120,15 +120,15 @@ func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Result
 	var buf bytes.Buffer
 
 	if diffResults != nil && diffResults.Command != "" {
-		fmt.Fprintf(&buf, "Git diff analysis command ran: %s\n", pp.Cyan(diffResults.Command))
+		fmt.Fprintf(&buf, "Git diff analysis command that ran: %s\n", pp.Cyan(diffResults.Command))
 	}
 
 	if coverageProfile != nil && coverageProfile.Command != "" {
-		fmt.Fprintf(&buf, "Go test coverage analysis command ran: %s\n", pp.Cyan(coverageProfile.Command))
+		fmt.Fprintf(&buf, "Go test coverage analysis command that ran: %s\n", pp.Cyan(coverageProfile.Command))
 	}
 
 	if buf.Len() > 0 {
-		fmt.Fprintf(&buf, "\n")
+		fmt.Fprintln(&buf)
 	}
 
 	fmt.Print(buf.String())
@@ -144,7 +144,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 	tm := task.NewManager()
 	tm.Start()
 
-	diff, diffErr := runTaskGitDiff(ctx, tm, &cfg.GitDiffOptions)
+	diff, diffErr := runTaskGitDiff(ctx, tm, cfg.GitDiffOptions)
 	if diffErr != nil {
 		tm.Finish()
 
@@ -187,7 +187,7 @@ func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error
 
 // runTaskGitDiff executes the Git diff analysis task and returns the resulting
 // diff results and any error encountered.
-func runTaskGitDiff(ctx context.Context, tm *task.Manager, opts *gitdiff.Options) (*gitdiff.Results, error) {
+func runTaskGitDiff(ctx context.Context, tm *task.Manager, opts gitdiff.Options) (*gitdiff.Results, error) {
 	gittask := task.NewTask("git", "Running Git diff analysis")
 	tm.AddTask(gittask)
 
