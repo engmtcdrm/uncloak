@@ -2,7 +2,9 @@ package gitdiff
 
 import (
 	"context"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -21,15 +23,18 @@ func Test_Run(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, &opts)
+		results, err := Run(ctx, opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
 
-	t.Run("should return error when opts is nil", func(t *testing.T) {
+	t.Run("should return error when opts has no target ref set", func(t *testing.T) {
+		expectedErr := NewInvalidRefError("", true)
+
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		results, err := Run(ctx, nil)
+		results, err := Run(ctx, Options{})
 		require.Error(t, err)
+		require.ErrorAs(t, err, &expectedErr)
 		require.Nil(t, results)
 	})
 
@@ -37,7 +42,7 @@ func Test_Run(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := Options{}
 
-		results, err := Run(ctx, &opts)
+		results, err := Run(ctx, opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -47,7 +52,7 @@ func Test_Run(t *testing.T) {
 		t.Chdir(tempDir)
 		opts := Options{}
 
-		results, err := Run(ctx, &opts)
+		results, err := Run(ctx, opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -59,7 +64,7 @@ func Test_Run(t *testing.T) {
 
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, &opts)
+		results, err := Run(ctx, opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
@@ -299,14 +304,14 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := Options{}
 
-		results, err := p.runAndParseGitDiff(ctx, &opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
 		assert.NotNil(t, results)
 		assert.NotEmpty(t, results.Command)
 	})
 
-	t.Run("should return no output error for valid git diff command with no changes", func(t *testing.T) {
-		opts := &Options{
+	t.Run("should return ErrNoOutput for valid git diff command with no changes", func(t *testing.T) {
+		opts := Options{
 			TargetRef: testgit.MainBranchName,
 		}
 
@@ -314,6 +319,7 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 
 		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNoOutput)
 		assert.NotNil(t, results)
 		assert.NotEmpty(t, results.Command)
 	})
@@ -322,7 +328,7 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, &opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
@@ -331,9 +337,49 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, &opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
+	})
+
+	t.Run("should only report feature lines for divergent histories", func(t *testing.T) {
+		tempDir, _ := testrepo.Init(ctx, t)
+		sharedFile := filepath.Join(tempDir, "shared.go")
+		featureFile := filepath.Join(tempDir, "feature_only.go")
+
+		runGit := func(args ...string) {
+			t.Helper()
+
+			cmd := exec.CommandContext(ctx, "git", args...)
+			cmd.Dir = tempDir
+			output, err := cmd.CombinedOutput()
+			require.NoError(t, err, "failed to run git %v: %s", args, string(output))
+		}
+
+		require.NoError(t, os.WriteFile(sharedFile, []byte("package fixture\nvar Shared = 1\n"), 0o644))
+		testgit.AddCommit(ctx, t, "Add shared file")
+
+		testgit.CreateBranch(ctx, t, "feature")
+
+		runGit("checkout", testgit.MainBranchName)
+		runGit("checkout", "-b", "target-side")
+
+		require.NoError(t, os.WriteFile(sharedFile, []byte("package fixture\nvar Shared = 2\n"), 0o644))
+		testgit.AddCommit(ctx, t, "Target-only change")
+
+		runGit("checkout", testgit.MainBranchName)
+		runGit("merge", "--no-ff", "target-side", "-m", "Merge target-only change")
+		runGit("checkout", "feature")
+
+		require.NoError(t, os.WriteFile(featureFile, []byte("package fixture\nvar FeatureOnly = 99\n"), 0o644))
+		testgit.AddCommit(ctx, t, "Feature-only change")
+
+		results, err := p.runAndParseGitDiff(ctx, Options{TargetRef: testgit.MainBranchName})
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		assert.Equal(t, []string{"feature_only.go"}, results.Files())
+		assert.Equal(t, map[int]bool{1: true, 2: true}, results.NewLines["feature_only.go"])
+		assert.NotContains(t, results.NewLines, "shared.go")
 	})
 }
 

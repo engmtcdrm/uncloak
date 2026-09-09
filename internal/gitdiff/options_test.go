@@ -13,24 +13,37 @@ import (
 func Test_optionsToArgs(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("should return empty args for nil options", func(t *testing.T) {
-		args := optionsToArgs(nil)
-		require.Empty(t, args)
-	})
+	t.Run("should return default args if options is empty", func(t *testing.T) {
+		expectedArgs := []string{
+			mergeBaseFlag,
+			unifiedFlag,
+			headRef,
+			pathSpecSeparator,
+		}
+		expectedArgs = append(expectedArgs, goFileFilters...)
 
-	t.Run("should return empty args for empty options", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		args := optionsToArgs(&Options{})
-		require.Len(t, args, 4)
-		require.Equal(t, "main -- . --unified=0", strings.Join(args, " "))
+		args := optionsToArgs(Options{})
+
+		require.Len(t, args, len(expectedArgs))
+		require.Equal(t, strings.Join(expectedArgs, " "), strings.Join(args, " "))
 	})
 
 	t.Run("should return args with specified target-ref value", func(t *testing.T) {
-		opts := &Options{
+		expectedArgs := []string{
+			mergeBaseFlag,
+			unifiedFlag,
+			OriginMain,
+			pathSpecSeparator,
+		}
+
+		opts := Options{
 			TargetRef: OriginMain,
 		}
 		args := optionsToArgs(opts)
-		require.Len(t, args, 4)
-		require.Equal(t, OriginMain+" -- . --unified=0", strings.Join(args, " "))
+
+		expectedArgs = append(expectedArgs, goFileFilters...)
+		require.Len(t, args, len(expectedArgs))
+		require.Equal(t, strings.Join(expectedArgs, " "), strings.Join(args, " "))
 	})
 }

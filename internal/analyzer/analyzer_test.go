@@ -297,8 +297,8 @@ func Test_processFiles(t *testing.T) {
 		assert.Contains(t, output, "✓", "Captured output:\n%s", output)
 		assert.Contains(t, output, "✗", "Captured output:\n%s", output)
 		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
-		assert.Contains(t, output, "Git diff analysis command ran:", "Captured output:\n%s", output)
-		assert.NotContains(t, output, "Go test coverage analysis command ran:", "Captured output:\n%s", output)
+		assert.Contains(t, output, "Git diff analysis command that ran:", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "Go test coverage analysis command that ran:", "Captured output:\n%s", output)
 	})
 }
 
@@ -317,7 +317,7 @@ func Test_runTaskGitDiff(t *testing.T) {
 		tm.Out = stdoutFile
 		tm.Start()
 
-		diffResults, err := runTaskGitDiff(ctx, tm, &defaultConfig.GitDiffOptions)
+		diffResults, err := runTaskGitDiff(ctx, tm, defaultConfig.GitDiffOptions)
 		require.NotEmpty(t, tm.Tasks)
 		assert.Len(t, tm.Tasks, 1)
 
