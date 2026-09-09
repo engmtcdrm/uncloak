@@ -23,7 +23,7 @@ type parser struct {
 }
 
 // Run executes the 'git diff' command with the provided options and parses its
-// output into a [Results] struct. If opts is nil, it uses [DefaultOptions].
+// output into a [Results] struct.
 func Run(ctx context.Context, opts Options) (*Results, error) {
 	if !isGitDir(ctx) {
 		return nil, ErrNotAGitRepo
