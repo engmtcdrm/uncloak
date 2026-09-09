@@ -21,15 +21,18 @@ func Test_Run(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, &opts)
+		results, err := Run(ctx, opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
 
-	t.Run("should return error when opts is nil", func(t *testing.T) {
+	t.Run("should return error when opts has no target ref set", func(t *testing.T) {
+		expectedErr := NewInvalidRefError("", true)
+
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		results, err := Run(ctx, nil)
+		results, err := Run(ctx, Options{})
 		require.Error(t, err)
+		require.ErrorAs(t, err, &expectedErr)
 		require.Nil(t, results)
 	})
 
@@ -37,7 +40,7 @@ func Test_Run(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := Options{}
 
-		results, err := Run(ctx, &opts)
+		results, err := Run(ctx, opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -47,7 +50,7 @@ func Test_Run(t *testing.T) {
 		t.Chdir(tempDir)
 		opts := Options{}
 
-		results, err := Run(ctx, &opts)
+		results, err := Run(ctx, opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -59,7 +62,7 @@ func Test_Run(t *testing.T) {
 
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, &opts)
+		results, err := Run(ctx, opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
@@ -299,14 +302,14 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := Options{}
 
-		results, err := p.runAndParseGitDiff(ctx, &opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
 		assert.NotNil(t, results)
 		assert.NotEmpty(t, results.Command)
 	})
 
-	t.Run("should return no output error for valid git diff command with no changes", func(t *testing.T) {
-		opts := &Options{
+	t.Run("should return ErrNoOutput for valid git diff command with no changes", func(t *testing.T) {
+		opts := Options{
 			TargetRef: testgit.MainBranchName,
 		}
 
@@ -314,6 +317,7 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 
 		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNoOutput)
 		assert.NotNil(t, results)
 		assert.NotEmpty(t, results.Command)
 	})
@@ -322,7 +326,7 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, &opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
@@ -331,7 +335,7 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(ctx, t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, &opts)
+		results, err := p.runAndParseGitDiff(ctx, opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})

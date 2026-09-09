@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -22,11 +24,7 @@ type parser struct {
 
 // Run executes the 'git diff' command with the provided options and parses its
 // output into a [Results] struct. If opts is nil, it uses [DefaultOptions].
-func Run(ctx context.Context, opts *Options) (*Results, error) {
-	if opts == nil {
-		opts = &DefaultOptions
-	}
-
+func Run(ctx context.Context, opts Options) (*Results, error) {
 	if !isGitDir(ctx) {
 		return nil, ErrNotAGitRepo
 	}
@@ -39,6 +37,22 @@ func Run(ctx context.Context, opts *Options) (*Results, error) {
 	p := &parser{}
 
 	return p.runAndParseGitDiff(ctx, opts)
+}
+
+// cmdArgsToString converts a slice of command-line arguments into a single
+// string, quoting any arguments that match entries in the [goFileFilters].
+func cmdArgsToString(cmdArgs []string) string {
+	quotedCmdArgs := make([]string, len(cmdArgs))
+	for i, arg := range cmdArgs {
+		if slices.Contains(goFileFilters, arg) {
+			quotedCmdArgs[i] = fmt.Sprintf("'%s'", arg)
+			continue
+		}
+
+		quotedCmdArgs[i] = arg
+	}
+
+	return strings.Join(quotedCmdArgs, " ")
 }
 
 // parseHunkHeader checks if the line is a hunk header and if so, it updates the
@@ -125,14 +139,13 @@ func (p *parser) parseLines(ctx context.Context, lines []string) (*Results, erro
 
 // runAndParseGitDiff executes the git diff command with the provided options,
 // captures its output, and parses it into a [Results] struct.
-func (p *parser) runAndParseGitDiff(ctx context.Context, opts *Options) (*Results, error) {
-	cmd := exec.CommandContext(ctx, "git", "diff")
-
+func (p *parser) runAndParseGitDiff(ctx context.Context, opts Options) (*Results, error) {
 	args := optionsToArgs(opts)
 
+	cmd := exec.CommandContext(ctx, "git", "diff")
 	cmd.Args = append(cmd.Args, args...)
 
-	p.Command = strings.Join(cmd.Args, " ")
+	p.Command = cmdArgsToString(cmd.Args)
 
 	output, err := cmd.Output()
 	if err != nil {
