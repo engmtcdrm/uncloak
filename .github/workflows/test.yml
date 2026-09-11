@@ -56,9 +56,6 @@ jobs:
 
       - name: Run uncloak against '${{ github.BASE_REF }}'
         run: |
-          echo "Who am I? $(whoami)"
-          echo '${{ toJSON(github) }}'
-          echo "Target ref: ${{ github.BASE_REF }}"
           git fetch origin ${{ github.BASE_REF}}
           git branch -vv
-          uncloak -t ${{ github.BASE_REF }} -d -v
+          uncloak -t origin/${{ github.BASE_REF }} -d -v
