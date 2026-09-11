@@ -3,7 +3,6 @@ package gocover
 import (
 	"bytes"
 	"context"
-	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -13,6 +12,8 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
 	"github.com/stretchr/testify/require"
 )
+
+const doesNotExist = "does-not-exist"
 
 // Tests for [Run] function.
 func Test_Run(t *testing.T) {
@@ -48,17 +49,18 @@ func Test_Run(t *testing.T) {
 		require.NotNil(t, profile)
 	})
 
-	t.Run("should return error if temp directory cannot be written to", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
-		}
+	t.Run("should return error if temp directory does not exist", func(t *testing.T) {
+		tempDir := t.TempDir() + doesNotExist
 
-		tempDir := t.TempDir()
-		// On linux TMPDIR is used over /tmp, so we set TMPDIR to a directory
-		// with no write permissions
-		t.Setenv("TMPDIR", tempDir)
-		err := os.Chmod(tempDir, 0000)
-		require.NoError(t, err)
+		// On Linux and other Unix-like systems, TMPDIR is used over /tmp, so we
+		// set it to a directory that does not exist. On Windows we set TMP to a
+		// directory that does not exist.
+		switch runtime.GOOS {
+		case "windows":
+			t.Setenv("TMP", tempDir)
+		default:
+			t.Setenv("TMPDIR", tempDir)
+		}
 
 		profile, err := Run(ctx, "", opts)
 		require.Error(t, err)
@@ -196,17 +198,18 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		},
 	}
 
-	t.Run("should return error if temp directory cannot be written to", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
-		}
+	t.Run("should return error if temp directory does not exist", func(t *testing.T) {
+		tempDir := t.TempDir() + doesNotExist
 
-		tempDir := t.TempDir()
-		// On linux TMPDIR is used over /tmp, so we set TMPDIR to a directory
-		// with no write permissions
-		t.Setenv("TMPDIR", tempDir)
-		err := os.Chmod(tempDir, 0000)
-		require.NoError(t, err)
+		// On Linux and other Unix-like systems, TMPDIR is used over /tmp, so we
+		// set it to a directory that does not exist. On Windows we set TMP to a
+		// directory that does not exist.
+		switch runtime.GOOS {
+		case "windows":
+			t.Setenv("TMP", tempDir)
+		default:
+			t.Setenv("TMPDIR", tempDir)
+		}
 
 		filePath, err := p.runTestCoverage(ctx)
 		require.Error(t, err)
