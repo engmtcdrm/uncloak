@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -58,4 +60,5 @@ jobs:
           echo '${{ toJSON(github) }}'
           echo "Target ref: ${{ github.BASE_REF }}"
           git fetch origin ${{ github.BASE_REF}}
+          git branch -vv
           uncloak -t ${{ github.BASE_REF }} -d -v
