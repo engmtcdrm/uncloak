@@ -52,4 +52,8 @@ jobs:
           echo "Installed $(uncloak --version)"
 
       - name: Run uncloak against '${{ github.BASE_REF }}'
-        run: uncloak -t ${{ github.BASE_REF }} -d -v
+        run: |
+          echo "Who am I? $(whoami)"
+          echo '${{ toJSON(github) }}'
+          echo "Target ref: ${{ github.BASE_REF }}"
+          uncloak -t ${{ github.BASE_REF }} -d -v
