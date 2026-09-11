@@ -58,5 +58,6 @@ jobs:
         run: |
           # Explicitly fetch the base branch so it's available for comparisons
           git fetch origin ${{ github.BASE_REF }}:${{ github.BASE_REF }}
+          git fetch origin ${{ github.HEAD_REF }}:${{ github.HEAD_REF }}
           git branch -vv
           uncloak -t ${{ github.BASE_REF }} -d -v
