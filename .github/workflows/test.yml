@@ -57,4 +57,6 @@ jobs:
       - name: Run uncloak against '${{ github.BASE_REF }}'
         run: |
           git branch -vv
+          git checkout ${{ github.BASE_REF }}
+          git checkout ${{ github.HEAD_REF }}
           uncloak -t ${{ github.BASE_REF }} -d -v
