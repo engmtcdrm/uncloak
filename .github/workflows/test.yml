@@ -41,8 +41,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+        # with:
+        #   fetch-depth: 0
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -56,7 +56,7 @@ jobs:
 
       - name: Run uncloak against '${{ github.BASE_REF }}'
         run: |
+          # Explicitly fetch the base branch so it's available for comparisons
+          git fetch origin ${{ github.BASE_REF }}:${{ github.BASE_REF }}
           git branch -vv
-          git checkout ${{ github.BASE_REF }}
-          git checkout ${{ github.HEAD_REF }}
           uncloak -t ${{ github.BASE_REF }} -d -v
