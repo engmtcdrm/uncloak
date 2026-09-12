@@ -1,0 +1,43 @@
+name: Uncloak Action
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      go_version:
+        required: true
+        type: string
+      base_ref:
+        required: true
+        type: string
+      head_ref:
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.go_version }}
+
+      - name: Install latest version of uncloak
+        run: |
+          go install github.com/engmtcdrm/uncloak@latest
+          echo "Installed $(uncloak --version)"
+
+      - name: Run uncloak against '${{ inputs.base_ref }}'
+        run: |
+          git checkout ${{ inputs.base_ref }}
+          git checkout ${{ inputs.head_ref }}
+          git branch -vv
+          uncloak -t ${{ inputs.base_ref }} -d -v

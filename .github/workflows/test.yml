@@ -11,10 +11,6 @@ on:
     tags-ignore:
       - "*" # Ignore all tags
 
-# This is really only here due to being pretty rapid with updating Go releases.
-env:
-  GO_VERSION: 1.26.8
-
 jobs:
   linter:
     runs-on: ubuntu-latest
@@ -25,7 +21,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version: 1.26.8
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
@@ -36,26 +32,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Install latest version of uncloak
-        run: |
-          go install github.com/engmtcdrm/uncloak@latest
-          echo "Installed $(uncloak --version)"
-
-      - name: Run uncloak against '${{ github.BASE_REF }}'
-        run: |
-          git checkout ${{ github.BASE_REF }}
-          git checkout ${{ github.HEAD_REF }}
-          git branch -vv
-          uncloak -t ${{ github.BASE_REF }} -d -v
+    uses: ./.github/workflows/uncloak-action.yml
+    with:
+      os: ${{ matrix.os }}
+      go_version: 1.26.8
+      base_ref: ${{ github.base_ref }}
+      head_ref: ${{ github.head_ref }}
+      # base_ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+      # head_ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
