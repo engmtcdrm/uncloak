@@ -31,13 +31,10 @@ jobs:
     needs: linter
     strategy:
       matrix:
-        # os: [ubuntu-latest, windows-latest, macos-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     uses: ./.github/workflows/uncloak-action.yml
     with:
       os: ${{ matrix.os }}
       go_version: 1.26.8
       base_ref: ${{ github.base_ref }}
       head_ref: ${{ github.head_ref }}
-      # base_ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
-      # head_ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
