@@ -99,6 +99,10 @@ func Test_Load(t *testing.T) {
 			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
 		}
 
+		if os.Getuid() == 0 {
+			t.Skip("Skipping test because user is root and permission changes are ignored by root")
+		}
+
 		tempDir := t.TempDir()
 		configFilePath := testconfig.CreateConfigFile(t, tempDir, testconfig.ValidYaml)
 

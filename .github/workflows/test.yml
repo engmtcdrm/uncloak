@@ -1,7 +1,7 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Test
+name: Run Linter and Tests
 
 on:
   pull_request:
@@ -23,9 +23,6 @@ jobs:
         with:
           go-version: 1.26.8
 
-      - name: Install dependencies
-        run: go mod download
-
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
@@ -34,20 +31,10 @@ jobs:
     needs: linter
     strategy:
       matrix:
-        go-version: [1.26.8]
         os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Install dependencies
-        run: go mod download
-
-      - name: Run Tests
-        run: go test -timeout 1m -v ./...
+    uses: ./.github/workflows/uncloak-action.yml
+    with:
+      os: ${{ matrix.os }}
+      go_version: 1.26.8
+      base_ref: ${{ github.base_ref }}
+      head_ref: ${{ github.head_ref }}
