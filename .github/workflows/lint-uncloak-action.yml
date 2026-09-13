@@ -3,10 +3,6 @@ name: Lint and Uncloak Action
 on:
   workflow_call:
     inputs:
-      os:
-        required: true
-        type: string
-        description: The operating system to run the tests on
       go_version:
         required: true
         type: string

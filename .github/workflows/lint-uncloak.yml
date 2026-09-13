@@ -14,12 +14,8 @@ on:
 jobs:
   lint-and-test:
     name: Run Linting and Tests
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    uses: ./.github/workflows/linter-uncloak-action.yml
+    uses: ./.github/workflows/lint-uncloak-action.yml
     with:
-      os: ${{ matrix.os }}
       go_version: 1.26.8
       base_ref: ${{ github.event.pull_request.base.sha || github.event.before }}
       head_ref: ${{ github.event.pull_request.head.sha || github.sha }}
