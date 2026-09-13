@@ -132,7 +132,6 @@ func Test_analyzeCoverage(t *testing.T) {
 		require.NotNil(t, report)
 
 		report = analyzeCoverage(report, &cfg)
-		require.NoError(t, err)
 		require.NotNil(t, report)
 		require.NotEmpty(t, report.GitDiffResults.Files())
 	})
