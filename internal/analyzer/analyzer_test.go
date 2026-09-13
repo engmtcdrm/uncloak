@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const doesNotExist = "does-not-exist"
+
 // Tests for [NewCodeCoverage] function.
 func Test_NewCodeCoverage(t *testing.T) {
 	ctx := context.Background()
@@ -279,9 +281,8 @@ func Test_processFiles(t *testing.T) {
 
 		_, stdoutFile := testrepo.InitWithFileCopy(ctx, t)
 
-		tmpDir := t.TempDir()
-		t.Setenv("TMPDIR", tmpDir)
-		require.NoError(t, os.Chmod(tmpDir, 0o000))
+		tempDir := t.TempDir() + doesNotExist
+		t.Setenv("TMPDIR", tempDir)
 
 		cfg := config.DefaultConfig
 		cfg.Debug = true
