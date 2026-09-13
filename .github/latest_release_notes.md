@@ -1,3 +1,7 @@
 ### Changed
 
-- feat: changed the flag `-t/--target-ref` to be required instead of optional (#18)
+- perf: added filtering to `git diff` command to filter only for `*.go` files and excluding `*_test.go` files (#22)
+
+### Fixed
+
+- fix: bug with `git diff` sometimes misrepresenting changes (#22)
