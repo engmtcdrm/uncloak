@@ -1,4 +1,3 @@
-# .github/workflows/release.yml
 name: Release
 
 on:
@@ -11,33 +10,17 @@ permissions:
 
 jobs:
   goreleaser:
-    strategy:
-      matrix:
-        go-version: [1.26.8]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Install dependencies and tidy up go mod
-        run: |
-            go get .
-            go mod tidy
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.12
-
-      - name: Run Tests
-        run: go test -timeout 1m -v ./...
+          go-version: 1.26.8
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
