@@ -12,10 +12,20 @@ on:
       - "*" # Ignore all tags
 
 jobs:
-  lint-and-test:
-    name: Run Linting and Tests
-    uses: ./.github/workflows/lint-uncloak-action.yml
+  lint:
+    name: Run Linter
+    uses: ./.github/workflows/lint-action.yml
     with:
+      go_version: 1.26.8
+  test:
+    name: Run Tests/Check Code Coverage
+    needs: lint
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    uses: ./.github/workflows/uncloak-action.yml
+    with:
+      os: ${{ matrix.os }}
       go_version: 1.26.8
       base_ref: ${{ github.event.pull_request.base.sha || github.event.before }}
       head_ref: ${{ github.event.pull_request.head.sha || github.sha }}
