@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"os/user"
 	"runtime"
 	"testing"
 	"time"
@@ -99,14 +100,17 @@ func Test_Load(t *testing.T) {
 			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
 		}
 
-		if os.Getuid() == 0 {
+		user, err := user.Current()
+		require.NoError(t, err)
+
+		if user.Uid == "0" {
 			t.Skip("Skipping test because user is root and permission changes are ignored by root")
 		}
 
 		tempDir := t.TempDir()
 		configFilePath := testconfig.CreateConfigFile(t, tempDir, testconfig.ValidYaml)
 
-		err := os.Chmod(configFilePath, 0000)
+		err = os.Chmod(configFilePath, 0000)
 		require.NoError(t, err, "Failed to change file permissions")
 
 		t.Chdir(tempDir)
