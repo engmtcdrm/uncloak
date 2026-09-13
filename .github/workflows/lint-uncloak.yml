@@ -12,29 +12,12 @@ on:
       - "*" # Ignore all tags
 
 jobs:
-  linter:
-    name: Run Linter
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: 1.26.8
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.12
-  test:
-    name: Run Tests/Check Code Coverage
-    needs: linter
+  lint-and-test:
+    name: Run Linting and Tests
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-    uses: ./.github/workflows/uncloak-action.yml
+    uses: ./.github/workflows/linter-uncloak-action.yml
     with:
       os: ${{ matrix.os }}
       go_version: 1.26.8
