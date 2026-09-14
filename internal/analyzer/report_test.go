@@ -1,10 +1,13 @@
 package analyzer
 
 import (
+	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/gocover"
+	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/stretchr/testify/require"
 )
 
@@ -58,6 +61,10 @@ func Test_Report_CoveragePercent(t *testing.T) {
 
 // Tests for [Report.GroupCoveredLines] function.
 func Test_Report_GroupCoveredLines(t *testing.T) {
+	ctx := context.Background()
+	rootDir := testgit.RootDir(ctx, t)
+	filePath := filepath.Join(rootDir, "test-repo-covered", "magic.go")
+
 	t.Run("empty report should produce empty CoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
@@ -71,7 +78,7 @@ func Test_Report_GroupCoveredLines(t *testing.T) {
 	t.Run("populated file CoveredNewLines should produce CoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
-		reportFile, err := NewFileReport("test.go")
+		reportFile, err := NewFileReport(filePath)
 		require.NoError(t, err)
 		reportFile.CoveredNewLines = []int{1, 2, 3, 5, 6, 8}
 
@@ -88,6 +95,10 @@ func Test_Report_GroupCoveredLines(t *testing.T) {
 
 // Tests for [Report.GroupUncoveredLines] function.
 func Test_Report_GroupUncoveredLines(t *testing.T) {
+	ctx := context.Background()
+	rootDir := testgit.RootDir(ctx, t)
+	filePath := filepath.Join(rootDir, "test-repo-covered", "magic.go")
+
 	t.Run("empty report should produce empty UncoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
@@ -101,7 +112,7 @@ func Test_Report_GroupUncoveredLines(t *testing.T) {
 	t.Run("populated file UncoveredNewLines should produce UncoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
-		reportFile, err := NewFileReport("test.go")
+		reportFile, err := NewFileReport(filePath)
 		require.NoError(t, err)
 		reportFile.UncoveredNewLines = []int{1, 2, 3, 5, 6, 8}
 
