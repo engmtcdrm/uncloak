@@ -107,7 +107,6 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 		for funcName, lineRange := range file.NewUncoveredNewLinesGroups {
 			_ = lineRange
 			// outputUncoveredLineToStdout(file.Path, lineRange)
-			// outputUncoveredLineToStdout2(file.Path, funcName, lineRange)
 			outputUncoveredLineToStdout3(file, funcName)
 			// outputUncoveredLinetoFile(outputFile, file.Path, lineRange)
 		}
@@ -132,34 +131,6 @@ func outputUncoveredLineToStdout(filePath string, lineRange analyzer.LineRange) 
 
 // outputUncoveredLineToStdout writes the uncovered line range for a given file
 // to the [os.Stdout].
-func outputUncoveredLineToStdout2(filePath string, funcName string, lineRange []analyzer.LineRange) {
-	var buf bytes.Buffer
-
-	fmt.Fprintf(&buf, "  Function: %s\n", pp.Red(funcName))
-
-	for _, lr := range lineRange {
-		fmt.Fprintf(&buf, "    %s:%s:%s\n",
-			pp.Bold(filePath),
-			pp.Redf("%d", lr.Start),
-			pp.Redf("%d", lr.End),
-		)
-		// fmt.Fprintf(&buf, "%s    %s:%s:%s\n",
-		// 	pp.RedBgf(" %-3d ", lr.Start),
-		// 	pp.Bold(filePath),
-		// 	pp.Redf("%d", lr.Start),
-		// 	pp.Redf("%d", lr.End),
-		// )
-		// fmt.Fprintf(&buf, "%s\n", pp.Bg8Bit(239, "─────"))
-		// fmt.Fprintf(&buf, "%s", pp.Dimf(" %-3d     covered code already\n", lr.End))
-	}
-
-	if len(lineRange) > 0 {
-		fmt.Fprintln(&buf)
-	}
-
-	fmt.Print(buf.String())
-}
-
 func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
 	f, ok := file.ASTFile.FuncDecls[funcName]
 	if !ok {
@@ -207,7 +178,7 @@ func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
 		if !uncovered {
 			fmt.Fprintf(&buf, "  %s %s\n", pp.Dimf("%*d ▐", maxLineDigits, lineNbr), pp.Dim(file.ASTFile.Lines[lineNbr-1]))
 		} else {
-			fmt.Fprintf(&buf, "  %*d%s %s\n", maxLineDigits, lineNbr, pp.Red(" ▐"), pp.Red(file.ASTFile.Lines[lineNbr-1]))
+			fmt.Fprintf(&buf, "  %s%s %s\n", pp.Boldf("%*d", maxLineDigits, lineNbr), pp.Red(" ▐"), pp.Red(file.ASTFile.Lines[lineNbr-1]))
 		}
 
 		if i < len(paddedUncoveredNewLines)-1 {
