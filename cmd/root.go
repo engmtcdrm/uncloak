@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	floatFormat = "%.2f%%"
+	floatFormat   = "%.2f%%"
+	lineSeparator = "▐"
 
 	coverageFileFlagName = "coverage-file"
 	coverageFileUsage    = "(optional) path to the Go coverage file. If not specified, the default is to use the go tool to generate the coverage file"
@@ -137,29 +138,29 @@ func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
 		return
 	}
 
-	codeBodyLineStart := f.StartLine + 1
-	if codeBodyLineStart < 1 {
-		codeBodyLineStart = 1
+	funcBodyLineStart := f.StartLine + 1
+	if funcBodyLineStart < 1 {
+		funcBodyLineStart = 1
 	}
 
-	codeBodyLineEnd := f.EndLine - 1
-	if codeBodyLineEnd > len(file.ASTFile.Lines) {
-		codeBodyLineEnd = len(file.ASTFile.Lines)
+	funcBodyLineEnd := f.EndLine - 1
+	if funcBodyLineEnd > len(file.ASTFile.Lines) {
+		funcBodyLineEnd = len(file.ASTFile.Lines)
 	}
 
-	var buf bytes.Buffer
+	paddedUncoveredNewLines := padLines(file.UncoveredNewLines, funcBodyLineStart, funcBodyLineEnd)
 
-	paddedUncoveredNewLines := padLines(file.UncoveredNewLines, codeBodyLineStart, codeBodyLineEnd)
-
-	slices.Sort(paddedUncoveredNewLines)
-	paddedUncoveredNewLines = slices.Compact(paddedUncoveredNewLines)
 	minLine := slices.Min(paddedUncoveredNewLines)
 	maxLine := slices.Max(paddedUncoveredNewLines)
 	maxLineDigits := max(len(strconv.Itoa(f.EndLine)), 3)
 
+	var buf bytes.Buffer
+
 	fmt.Fprintf(&buf, "%s\n\n", pp.Boldf("%s:%d:%d", file.Path, f.StartLine, f.EndLine))
 	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, f.StartLine, file.ASTFile.Lines[f.StartLine-1]))
 
+	// If the first uncovered line is not immediately after the function start,
+	// add an ellipsis line.
 	if minLine > f.StartLine+1 {
 		fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
 	}
@@ -173,6 +174,8 @@ func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
 			fmt.Fprint(&buf, formatUncoveredLine(maxLineDigits, lineNbr, file.ASTFile.Lines[lineNbr-1]))
 		}
 
+		// If there is a gap between the current line and the next line, add an
+		// ellipsis line.
 		if i < len(paddedUncoveredNewLines)-1 {
 			nextLineNbr := paddedUncoveredNewLines[i+1]
 			if nextLineNbr > lineNbr+1 {
@@ -181,6 +184,8 @@ func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
 		}
 	}
 
+	// If the last uncovered line is not immediately before the function end,
+	// add an ellipsis line.
 	if maxLine+1 < f.EndLine {
 		fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
 	}
@@ -201,10 +206,10 @@ func padLines(lines []int, funcBodyLineStart, funcBodyLineEnd int) []int {
 		}
 	}
 
-	return paddedUncoveredNewLines
-}
+	slices.Sort(paddedUncoveredNewLines)
 
-const lineSeparator = "▐"
+	return slices.Compact(paddedUncoveredNewLines)
+}
 
 func formatDimmedLine(maxLineDigits int, lineNbr int, lineContent string) string {
 	return fmt.Sprintf("  %s %s\n", pp.Dimf("%*d %s", maxLineDigits, lineNbr, lineSeparator), pp.Dim(lineContent))
