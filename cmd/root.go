@@ -149,53 +149,73 @@ func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
 
 	var buf bytes.Buffer
 
-	paddedUncoveredNewLines := make([]int, 0)
-	for _, line := range file.UncoveredNewLines {
-		for i := line - 3; i <= line+3; i++ {
-			if i >= codeBodyLineStart && i <= codeBodyLineEnd {
-				paddedUncoveredNewLines = append(paddedUncoveredNewLines, i)
-			}
-		}
-	}
+	paddedUncoveredNewLines := padLines(file.UncoveredNewLines, codeBodyLineStart, codeBodyLineEnd)
 
 	slices.Sort(paddedUncoveredNewLines)
 	paddedUncoveredNewLines = slices.Compact(paddedUncoveredNewLines)
 	minLine := slices.Min(paddedUncoveredNewLines)
 	maxLine := slices.Max(paddedUncoveredNewLines)
-
 	maxLineDigits := max(len(strconv.Itoa(f.EndLine)), 3)
 
 	fmt.Fprintf(&buf, "%s\n\n", pp.Boldf("%s:%d:%d", file.Path, f.StartLine, f.EndLine))
-	fmt.Fprintf(&buf, "  %s %s\n", pp.Dimf("%*d ▐", maxLineDigits, f.StartLine), pp.Dim(file.ASTFile.Lines[f.StartLine-1]))
+	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, f.StartLine, file.ASTFile.Lines[f.StartLine-1]))
 
 	if minLine > f.StartLine+1 {
-		fmt.Fprintf(&buf, "  %*s\n", maxLineDigits, pp.Dim("∙∙∙ ▐"))
+		fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
 	}
 
 	for i, lineNbr := range paddedUncoveredNewLines {
 		uncovered := slices.Contains(file.UncoveredNewLines, lineNbr)
 
 		if !uncovered {
-			fmt.Fprintf(&buf, "  %s %s\n", pp.Dimf("%*d ▐", maxLineDigits, lineNbr), pp.Dim(file.ASTFile.Lines[lineNbr-1]))
+			fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, lineNbr, file.ASTFile.Lines[lineNbr-1]))
 		} else {
-			fmt.Fprintf(&buf, "  %s%s %s\n", pp.Boldf("%*d", maxLineDigits, lineNbr), pp.Red(" ▐"), pp.Red(file.ASTFile.Lines[lineNbr-1]))
+			fmt.Fprint(&buf, formatUncoveredLine(maxLineDigits, lineNbr, file.ASTFile.Lines[lineNbr-1]))
 		}
 
 		if i < len(paddedUncoveredNewLines)-1 {
 			nextLineNbr := paddedUncoveredNewLines[i+1]
 			if nextLineNbr > lineNbr+1 {
-				fmt.Fprintf(&buf, "  %*s\n", maxLineDigits, pp.Dim("∙∙∙ ▐"))
+				fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
 			}
 		}
 	}
 
 	if maxLine+1 < f.EndLine {
-		fmt.Fprintf(&buf, "  %*s\n", maxLineDigits, pp.Dim("∙∙∙ ▐"))
+		fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
 	}
 
-	fmt.Fprintf(&buf, "  %s %s\n\n", pp.Dimf("%*d ▐", maxLineDigits, f.EndLine), pp.Dim(file.ASTFile.Lines[f.EndLine-1]))
+	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, f.EndLine, file.ASTFile.Lines[f.EndLine-1]))
+	fmt.Fprintln(&buf)
 
 	fmt.Print(buf.String())
+}
+
+func padLines(lines []int, funcBodyLineStart, funcBodyLineEnd int) []int {
+	paddedUncoveredNewLines := make([]int, 0)
+	for _, line := range lines {
+		for i := line - 3; i <= line+3; i++ {
+			if i >= funcBodyLineStart && i <= funcBodyLineEnd {
+				paddedUncoveredNewLines = append(paddedUncoveredNewLines, i)
+			}
+		}
+	}
+
+	return paddedUncoveredNewLines
+}
+
+const lineSeparator = "▐"
+
+func formatDimmedLine(maxLineDigits int, lineNbr int, lineContent string) string {
+	return fmt.Sprintf("  %s %s\n", pp.Dimf("%*d %s", maxLineDigits, lineNbr, lineSeparator), pp.Dim(lineContent))
+}
+
+func formatElipsisLine(maxLineDigits int) string {
+	return fmt.Sprintf("  %*s\n", maxLineDigits, pp.Dimf("∙∙∙ %s", lineSeparator))
+}
+
+func formatUncoveredLine(maxLineDigits int, lineNbr int, lineContent string) string {
+	return fmt.Sprintf("  %s%s %s\n", pp.Boldf("%*d", maxLineDigits, lineNbr), pp.Redf(" %s", lineSeparator), pp.Red(lineContent))
 }
 
 // outputUncoveredLinetoFile writes the uncovered line range for a given file to
