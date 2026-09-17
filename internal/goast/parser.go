@@ -33,14 +33,38 @@ func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []str
 			end = fileSet.Position(funcDecl.Body.List[len(funcDecl.Body.List)-1].End()).Line + 1
 		}
 
-		funcDecls[funcDecl.Name.Name] = newFuncDecl(
-			funcDecl.Name.Name,
+		name := funcDecl.Name.Name
+		if recv := receiverTypeName(funcDecl); recv != "" {
+			name = recv + "." + name
+		}
+
+		funcDecls[name] = newFuncDecl(
+			name,
 			start,
 			end,
 		)
 
-		funcOrder = append(funcOrder, funcDecl.Name.Name)
+		funcOrder = append(funcOrder, name)
 	}
 
 	return funcDecls, funcOrder
+}
+
+// receiverTypeName returns the type name of the receiver for the given function
+// declaration.
+func receiverTypeName(fn *ast.FuncDecl) string {
+	if fn.Recv == nil || len(fn.Recv.List) == 0 {
+		return ""
+	}
+
+	switch t := fn.Recv.List[0].Type.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.StarExpr:
+		if ident, ok := t.X.(*ast.Ident); ok {
+			return ident.Name
+		}
+	}
+
+	return ""
 }

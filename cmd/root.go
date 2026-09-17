@@ -105,12 +105,24 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 
 		// fmt.Println(pp.Bold(file.Path))
 
-		for funcName, lineRange := range file.NewUncoveredNewLinesGroups {
-			_ = lineRange
-			// outputUncoveredLineToStdout(file.Path, lineRange)
+		for _, funcName := range file.ASTFile.FuncOrder {
+			_, ok := file.NewUncoveredNewLinesGroups[funcName]
+			if !ok {
+				continue
+			}
+
 			outputUncoveredLineToStdout3(file, funcName)
-			// outputUncoveredLinetoFile(outputFile, file.Path, lineRange)
+			// funcIt := file.ASTFile.FuncDecls[funcName]
+			// fmt.Printf("func: %s, start: %d, end: %d\n", funcName, funcIt.StartLine, funcIt.EndLine)
 		}
+
+		// for funcName, lineRange := range file.NewUncoveredNewLinesGroups {
+		// 	_ = funcName
+		// 	_ = lineRange
+		// outputUncoveredLineToStdout(file.Path, lineRange)
+		// outputUncoveredLineToStdout3(file, funcName)
+		// outputUncoveredLinetoFile(outputFile, file.Path, lineRange)
+		// }
 
 		// if len(file.NewUncoveredNewLinesGroups) > 0 {
 		// 	fmt.Println()
