@@ -13,7 +13,7 @@ import (
 func Test_NewFileReport(t *testing.T) {
 	ctx := context.Background()
 	rootDir := testgit.RootDir(ctx, t)
-	filePath := filepath.Join(rootDir, "test-repo-covered", "magic.go")
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
 
 	t.Run("should create a new ReportFile instance with the provided path", func(t *testing.T) {
 		reportFile, err := NewFileReport(filePath)
@@ -30,7 +30,7 @@ func Test_NewFileReport(t *testing.T) {
 func Test_FileReport_GroupCoveredLines(t *testing.T) {
 	ctx := context.Background()
 	rootDir := testgit.RootDir(ctx, t)
-	filePath := filepath.Join(rootDir, "test-repo-covered", "magic.go")
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
 
 	t.Run("should group covered new lines into ranges", func(t *testing.T) {
 		reportFile, err := NewFileReport(filePath)
@@ -52,7 +52,7 @@ func Test_FileReport_GroupCoveredLines(t *testing.T) {
 func Test_FileReport_GroupUncoveredLines(t *testing.T) {
 	ctx := context.Background()
 	rootDir := testgit.RootDir(ctx, t)
-	filePath := filepath.Join(rootDir, "test-repo-covered", "magic.go")
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
 
 	t.Run("should group uncovered new lines into ranges", func(t *testing.T) {
 		reportFile, err := NewFileReport(filePath)
@@ -74,7 +74,7 @@ func Test_FileReport_GroupUncoveredLines(t *testing.T) {
 func Test_FileReport_TotalNewLines(t *testing.T) {
 	ctx := context.Background()
 	rootDir := testgit.RootDir(ctx, t)
-	filePath := filepath.Join(rootDir, "test-repo-covered", "magic.go")
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
 
 	t.Run("should return 0 when there are no new lines", func(t *testing.T) {
 		reportFile, err := NewFileReport(filePath)
