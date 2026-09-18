@@ -60,10 +60,12 @@ func Test_Report_CoveragePercent(t *testing.T) {
 }
 
 // Tests for [Report.GroupCoveredLines] function.
+//
+//nolint:dupl // Not a duplicate of Test_Report_GroupUncoveredLines.
 func Test_Report_GroupCoveredLines(t *testing.T) {
 	ctx := context.Background()
 	rootDir := testgit.RootDir(ctx, t)
-	filePath := filepath.Join(rootDir, "test-repo-covered", "magic.go")
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
 
 	t.Run("empty report should produce empty CoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
@@ -94,10 +96,12 @@ func Test_Report_GroupCoveredLines(t *testing.T) {
 }
 
 // Tests for [Report.GroupUncoveredLines] function.
+//
+//nolint:dupl // Not a duplicate of Test_Report_GroupCoveredLines.
 func Test_Report_GroupUncoveredLines(t *testing.T) {
 	ctx := context.Background()
 	rootDir := testgit.RootDir(ctx, t)
-	filePath := filepath.Join(rootDir, "test-repo-covered", "magic.go")
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
 
 	t.Run("empty report should produce empty UncoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)

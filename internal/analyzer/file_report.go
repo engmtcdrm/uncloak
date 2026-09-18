@@ -24,15 +24,18 @@ type FileReport struct {
 	ASTFile *goast.File
 }
 
+// CodeLines represents a collection of [CodeLine].
 type CodeLines []CodeLine
 
+// CodeLine represents a single line of code in a file, including its line
+// number, content, associated function, and coverage status.
 type CodeLine struct {
-	Number       int
-	Content      string
-	FunctionName string
-	IsInFunction bool
-	IsNew        bool
-	IsCovered    bool
+	Number       int    // Line number of the code line
+	Content      string // Content of the code line
+	FunctionName string // Name of the function the code line belongs to
+	IsInFunction bool   // Indicates if the code line is inside a function
+	IsNew        bool   // Indicates if the code line is new
+	IsCovered    bool   // Indicates if the code line is covered
 }
 
 // LineRange represents a continuous range of lines in a file, with a start and

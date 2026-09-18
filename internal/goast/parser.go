@@ -17,9 +17,6 @@ func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []str
 	funcDecls := make(FuncDecls, len(astFile.Decls))
 	funcOrder := make([]string, 0)
 
-	const nl = "\n"
-	const cr = "\r\n"
-
 	for _, decl := range astFile.Decls {
 		funcDecl, ok := decl.(*ast.FuncDecl)
 		if !ok {

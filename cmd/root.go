@@ -150,15 +150,8 @@ func outputUncoveredLineToStdout3(file *analyzer.FileReport, funcName string) {
 		return
 	}
 
-	funcBodyLineStart := f.StartLine + 1
-	if funcBodyLineStart < 1 {
-		funcBodyLineStart = 1
-	}
-
-	funcBodyLineEnd := f.EndLine - 1
-	if funcBodyLineEnd > len(file.ASTFile.Lines) {
-		funcBodyLineEnd = len(file.ASTFile.Lines)
-	}
+	funcBodyLineStart := max(f.StartLine+1, 1)
+	funcBodyLineEnd := min(f.EndLine-1, len(file.ASTFile.Lines))
 
 	paddedUncoveredNewLines := padLines(file.UncoveredNewLines, funcBodyLineStart, funcBodyLineEnd)
 

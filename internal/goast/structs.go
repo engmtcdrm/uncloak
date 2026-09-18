@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+// File represents a Go source file, including its path, lines of code, and
+// function declarations.
 type File struct {
 	Path      string
 	Lines     []string
@@ -15,6 +17,9 @@ type File struct {
 	FuncOrder []string
 }
 
+// newFile creates a new [*File] instance for the given file path, parsing its
+// content and extracting function declarations. It returns an error if the file
+// cannot be read or parsed.
 func newFile(path string) (*File, error) {
 	if !strings.HasSuffix(path, ".go") {
 		return nil, nil
@@ -50,6 +55,8 @@ func newFile(path string) (*File, error) {
 	}, nil
 }
 
+// LineFunctionName returns the name of the function that covers the given line
+// in the file.
 func (f File) LineFunctionName(line int) string {
 	for _, decl := range f.FuncDecls {
 		if name := decl.LineFunctionName(line); name != "" {
@@ -60,6 +67,8 @@ func (f File) LineFunctionName(line int) string {
 	return ""
 }
 
+// LineContent returns the content of the given line in the file. If the line
+// number is out of range, it returns an empty string.
 func (f File) LineContent(line int) string {
 	if line > 0 && line <= len(f.Lines) {
 		return f.Lines[line-1]
@@ -68,6 +77,8 @@ func (f File) LineContent(line int) string {
 	return ""
 }
 
+// FuncDecl represents a function declaration within a Go source file, including
+// its name, the lines it covers, and its start and end lines.
 type FuncDecl struct {
 	Name      string // Name of the function.
 	Lines     []int  // Lines covered by the function.
@@ -102,8 +113,10 @@ func (fd FuncDecl) LineFunctionName(line int) string {
 	return ""
 }
 
+// FuncDecls represents a collection of [FuncDecl], mapped by their names.
 type FuncDecls map[string]*FuncDecl
 
+// Names returns a slice of all function names in the collection.
 func (f FuncDecls) Names() []string {
 	names := make([]string, 0, len(f))
 
