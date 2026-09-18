@@ -60,35 +60,13 @@ func analyzeCoverage(report *Report, cfg *config.Config) (*Report, error) {
 	filteredFiles := filterFiles(cfg, report.GitDiffResults.Files())
 
 	for _, file := range filteredFiles {
-		newLines := report.GitDiffResults.NewLines[file]
-
-		if report.CoverageProfile.CoveredLines[file] == nil {
-			continue
-		}
-
-		reportFile, err := NewFileReport(file)
+		reportFile, err := analyzeFileCoverage(report, file)
 		if err != nil {
-			return report, err
+			return nil, err
 		}
 
-		for line := range newLines {
-			if !report.CoverageProfile.IsInTestCoverage(file, line) {
-				continue
-			}
-
-			funcName := reportFile.ASTFile.LineFunctionName(line)
-			if funcName == "" {
-				continue
-			}
-
-			if report.CoverageProfile.CoveredLines[file][line] {
-				reportFile.NewCoveredNewLines[funcName] = append(reportFile.NewCoveredNewLines[funcName], line)
-				reportFile.CoveredNewLines = append(reportFile.CoveredNewLines, line)
-				continue
-			}
-
-			reportFile.NewUncoveredNewLines[funcName] = append(reportFile.NewUncoveredNewLines[funcName], line)
-			reportFile.UncoveredNewLines = append(reportFile.UncoveredNewLines, line)
+		if reportFile == nil {
+			continue
 		}
 
 		report.Files = append(report.Files, reportFile)
@@ -132,6 +110,45 @@ func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Result
 	}
 
 	fmt.Print(buf.String())
+}
+
+// analyzeFileCoverage analyzes the coverage of new lines in the specified file
+// within the given report. It returns a FileReport containing the coverage
+// details for the file, or nil if the file has no coverage information or there
+// is an error.
+func analyzeFileCoverage(report *Report, file string) (*FileReport, error) {
+	newLines := report.GitDiffResults.NewLines[file]
+
+	if report.CoverageProfile.CoveredLines[file] == nil {
+		return nil, nil
+	}
+
+	reportFile, err := NewFileReport(file)
+	if err != nil {
+		return nil, err
+	}
+
+	for line := range newLines {
+		if !report.CoverageProfile.IsInTestCoverage(file, line) {
+			continue
+		}
+
+		funcName := reportFile.ASTFile.LineFunctionName(line)
+		if funcName == "" {
+			continue
+		}
+
+		if report.CoverageProfile.CoveredLines[file][line] {
+			reportFile.NewCoveredNewLines[funcName] = append(reportFile.NewCoveredNewLines[funcName], line)
+			reportFile.CoveredNewLines = append(reportFile.CoveredNewLines, line)
+			continue
+		}
+
+		reportFile.NewUncoveredNewLines[funcName] = append(reportFile.NewUncoveredNewLines[funcName], line)
+		reportFile.UncoveredNewLines = append(reportFile.UncoveredNewLines, line)
+	}
+
+	return reportFile, nil
 }
 
 // processFiles reads and parses the Go coverage profile and the git diff file
