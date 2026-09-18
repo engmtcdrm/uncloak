@@ -55,6 +55,16 @@ func newFile(path string) (*File, error) {
 	}, nil
 }
 
+// LineContent returns the content of the given line in the file. If the line
+// number is out of range, it returns an empty string.
+func (f File) LineContent(line int) string {
+	if line > 0 && line <= len(f.Lines) {
+		return f.Lines[line-1]
+	}
+
+	return ""
+}
+
 // LineFunctionName returns the name of the function that covers the given line
 // in the file.
 func (f File) LineFunctionName(line int) string {
@@ -62,16 +72,6 @@ func (f File) LineFunctionName(line int) string {
 		if name := decl.LineFunctionName(line); name != "" {
 			return name
 		}
-	}
-
-	return ""
-}
-
-// LineContent returns the content of the given line in the file. If the line
-// number is out of range, it returns an empty string.
-func (f File) LineContent(line int) string {
-	if line > 0 && line <= len(f.Lines) {
-		return f.Lines[line-1]
 	}
 
 	return ""
