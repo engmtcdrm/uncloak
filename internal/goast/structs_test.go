@@ -6,6 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Tests for [newFile] function.
+func Test_newFile(t *testing.T) {
+	t.Skip("Need to implement tests for newFile. Must finish parser.go tests first")
+}
+
 // Tests for [File.LineContent] function.
 func Test_File_LineContent(t *testing.T) {
 	const lineOutOfRange = 8
