@@ -49,7 +49,7 @@ func Test_formatDimmedLine(t *testing.T) {
 				expectedPadding := strings.Repeat(" ", paddingLen)
 
 				result := formatDimmedLine(tt.maxLineDigits, tt.lineNbr, tt.lineContent)
-				resultNoANSI := strings.Replace(ansi.Strip(result), "\n", "", -1)
+				resultNoANSI := strings.ReplaceAll(ansi.Strip(result), "\n", "")
 
 				contentStartIdx := lineNbrIndentBy + tt.maxLineDigits + len(lineSeparator) + 2
 
@@ -140,12 +140,12 @@ func Test_outputUncoveredLines(t *testing.T) {
 	})
 }
 
-// Tests for [outputUncoveredLineToStdout] function.
-func Test_outputUncoveredLineToStdout(t *testing.T) {
+// Tests for [displayUncoveredLines] function.
+func Test_displayUncoveredLines(t *testing.T) {
 	t.Run("should output uncovered line to stdout", func(t *testing.T) {
 		stdoutFile := testutils.SetStdout(t)
 
-		outputUncoveredLineToStdout("file.go", analyzer.LineRange{Start: 1, End: 2})
+		displayUncoveredLines("file.go", analyzer.LineRange{Start: 1, End: 2})
 
 		contents, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
@@ -154,10 +154,10 @@ func Test_outputUncoveredLineToStdout(t *testing.T) {
 	})
 }
 
-// Tests for [outputUncoveredLinetoFile] function.
-func Test_outputUncoveredLinetoFile(t *testing.T) {
+// Tests for [outputUncoveredLineToFile] function.
+func Test_outputUncoveredLineToFile(t *testing.T) {
 	t.Run("should return early if file is nil", func(_ *testing.T) {
-		outputUncoveredLinetoFile(nil, "file.go", analyzer.LineRange{Start: 1, End: 2})
+		outputUncoveredLineToFile(nil, "file.go", analyzer.LineRange{Start: 1, End: 2})
 	})
 
 	t.Run("should write uncovered lines to file if valid", func(t *testing.T) {
@@ -170,10 +170,14 @@ func Test_outputUncoveredLinetoFile(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		outputUncoveredLinetoFile(file, "file.go", analyzer.LineRange{Start: 1, End: 2})
+		outputUncoveredLineToFile(file, "file.go", analyzer.LineRange{Start: 1, End: 2})
 		contents, err := os.ReadFile(tempFile)
 		require.NoError(t, err)
 		require.NotEmpty(t, contents)
 		t.Logf("Uncovered lines written to file:\n%s", string(contents))
 	})
+}
+
+// Tests for [outputUncoveredLinesToFile] function.
+func Test_outputUncoveredLinesToFile(t *testing.T) {
 }
