@@ -8,7 +8,6 @@ import (
 
 // Tests for [newFile] function.
 func Test_newFile(t *testing.T) {
-	t.Skip("Need to implement tests for newFile. Must finish parser.go tests first")
 }
 
 // Tests for [File.LineContent] function.
