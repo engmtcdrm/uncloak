@@ -21,14 +21,22 @@ const (
 
 var lineNbrIndent = strings.Repeat(" ", lineNbrIndentBy)
 
-// displayUncoveredLines displays the uncovered line range for a given file to
+// displayUncoveredLine displays the uncovered line range for a given file to
 // [os.Stdout].
-func displayUncoveredLines(filePath string, lineRange analyzer.LineRange) {
+func displayUncoveredLine(filePath string, lineRange analyzer.LineRange) {
 	fmt.Printf("%s:%s:%s\n",
 		pp.Bold(filePath),
 		pp.Redf("%d", lineRange.Start),
 		pp.Redf("%d", lineRange.End),
 	)
+}
+
+// displayUncoveredLines displays the uncovered line ranges for a given file to
+// [os.Stdout].
+func displayUncoveredLines(filePath string, lineRanges []analyzer.LineRange) {
+	for _, lineRange := range lineRanges {
+		displayUncoveredLine(filePath, lineRange)
+	}
 }
 
 // displayUncoveredFunctionLines displays the uncovered lines for a given
@@ -145,6 +153,7 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 			}
 
 			displayUncoveredFunctionLines(file, funcName)
+			// displayUncoveredLines(file.Path, lineRanges)
 			outputUncoveredLinesToFile(outputFile, file.Path, lineRanges)
 		}
 	}
@@ -181,9 +190,11 @@ func padLines(lines []int, funcBodyLineStart, funcBodyLineEnd int) []int {
 	paddedUncoveredNewLines := make([]int, 0)
 	for _, line := range lines {
 		for i := line - padLinesBy; i <= line+padLinesBy; i++ {
-			if i >= funcBodyLineStart && i <= funcBodyLineEnd {
-				paddedUncoveredNewLines = append(paddedUncoveredNewLines, i)
+			if i < funcBodyLineStart || i > funcBodyLineEnd {
+				continue
 			}
+
+			paddedUncoveredNewLines = append(paddedUncoveredNewLines, i)
 		}
 	}
 
