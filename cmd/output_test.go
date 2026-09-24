@@ -18,6 +18,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Tests for [displayUncoveredLine] function.
+func Test_displayUncoveredLine(t *testing.T) {
+	t.Run("should output uncovered line to stdout", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		displayUncoveredLine("file.go", analyzer.LineRange{Start: 1, End: 2})
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		require.NotEmpty(t, contents)
+		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
+	})
+}
+
+// Tests for [displayUncoveredLines] function.
+func Test_displayUncoveredLines(t *testing.T) {
+}
+
+// Tests for [displayUncoveredFunctionLines] function.
+func Test_displayUncoveredFunctionLines(t *testing.T) {
+}
+
 // Tests for [formatDimmedLine] function.
 func Test_formatDimmedLine(t *testing.T) {
 	const content = "test content"
@@ -140,20 +162,6 @@ func Test_outputUncoveredLines(t *testing.T) {
 	})
 }
 
-// Tests for [displayUncoveredLines] function.
-func Test_displayUncoveredLines(t *testing.T) {
-	t.Run("should output uncovered line to stdout", func(t *testing.T) {
-		stdoutFile := testutils.SetStdout(t)
-
-		displayUncoveredLines("file.go", analyzer.LineRange{Start: 1, End: 2})
-
-		contents, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
-		require.NotEmpty(t, contents)
-		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
-	})
-}
-
 // Tests for [outputUncoveredLineToFile] function.
 func Test_outputUncoveredLineToFile(t *testing.T) {
 	t.Run("should return early if file is nil", func(_ *testing.T) {
@@ -180,4 +188,25 @@ func Test_outputUncoveredLineToFile(t *testing.T) {
 
 // Tests for [outputUncoveredLinesToFile] function.
 func Test_outputUncoveredLinesToFile(t *testing.T) {
+}
+
+// Tests for [padLines] function.
+func Test_padLines(t *testing.T) {
+	t.Run("should pad lines within function body range", func(t *testing.T) {
+		lines := []int{3, 5}
+		funcBodyLineStart := 1
+		funcBodyLineEnd := 7
+
+		padded := padLines(lines, funcBodyLineStart, funcBodyLineEnd)
+		require.Equal(t, []int{1, 2, 3, 4, 5, 6, 7}, padded)
+	})
+
+	t.Run("should not pad lines outside function body range", func(t *testing.T) {
+		lines := []int{1, 7}
+		funcBodyLineStart := 2
+		funcBodyLineEnd := 6
+
+		padded := padLines(lines, funcBodyLineStart, funcBodyLineEnd)
+		require.Equal(t, []int{2, 3, 4, 5, 6}, padded)
+	})
 }
