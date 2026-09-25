@@ -75,43 +75,6 @@ func analyzeCoverage(report *Report, cfg *config.Config) (*Report, error) {
 	return report, nil
 }
 
-// filterFiles filters the given list of files based on the exclusions specified
-// in the configuration. It returns a new list of files that are not excluded.
-func filterFiles(cfg *config.Config, files []string) []string {
-	if len(cfg.Exclusions) == 0 {
-		return files
-	}
-
-	var filteredFiles []string
-
-	for _, file := range files {
-		if !cfg.IsExclusionFile(file) {
-			filteredFiles = append(filteredFiles, file)
-		}
-	}
-
-	return filteredFiles
-}
-
-// printCommands prints the commands used for Git diff and Go coverage analysis.
-func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
-	var buf bytes.Buffer
-
-	if diffResults != nil && diffResults.Command != "" {
-		fmt.Fprintf(&buf, "Git diff analysis command that ran: %s\n", pp.Cyan(diffResults.Command))
-	}
-
-	if coverageProfile != nil && coverageProfile.Command != "" {
-		fmt.Fprintf(&buf, "Go test coverage analysis command that ran: %s\n", pp.Cyan(coverageProfile.Command))
-	}
-
-	if buf.Len() > 0 {
-		fmt.Fprintln(&buf)
-	}
-
-	fmt.Print(buf.String())
-}
-
 // analyzeFileCoverage analyzes the coverage of new lines in the specified file
 // within the given report. It returns a FileReport containing the coverage
 // details for the file, or nil if the file has no coverage information or there
@@ -149,6 +112,43 @@ func analyzeFileCoverage(report *Report, file string) (*FileReport, error) {
 	}
 
 	return reportFile, nil
+}
+
+// filterFiles filters the given list of files based on the exclusions specified
+// in the configuration. It returns a new list of files that are not excluded.
+func filterFiles(cfg *config.Config, files []string) []string {
+	if len(cfg.Exclusions) == 0 {
+		return files
+	}
+
+	var filteredFiles []string
+
+	for _, file := range files {
+		if !cfg.IsExclusionFile(file) {
+			filteredFiles = append(filteredFiles, file)
+		}
+	}
+
+	return filteredFiles
+}
+
+// printCommands prints the commands used for Git diff and Go coverage analysis.
+func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
+	var buf bytes.Buffer
+
+	if diffResults != nil && diffResults.Command != "" {
+		fmt.Fprintf(&buf, "Git diff analysis command that ran: %s\n", pp.Cyan(diffResults.Command))
+	}
+
+	if coverageProfile != nil && coverageProfile.Command != "" {
+		fmt.Fprintf(&buf, "Go test coverage analysis command that ran: %s\n", pp.Cyan(coverageProfile.Command))
+	}
+
+	if buf.Len() > 0 {
+		fmt.Fprintln(&buf)
+	}
+
+	fmt.Print(buf.String())
 }
 
 // processFiles reads and parses the Go coverage profile and the git diff file
