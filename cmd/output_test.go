@@ -12,6 +12,7 @@ import (
 	"github.com/engmtcdrm/go-ansi"
 	"github.com/engmtcdrm/uncloak/internal/analyzer"
 	"github.com/engmtcdrm/uncloak/internal/config"
+	"github.com/engmtcdrm/uncloak/internal/goast"
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
@@ -61,6 +62,87 @@ func Test_displayUncoveredLines(t *testing.T) {
 
 // Tests for [displayUncoveredFunctionLines] function.
 func Test_displayUncoveredFunctionLines(t *testing.T) {
+	const funcName = "testFunc"
+
+	// newDisplayTestFile builds a [*analyzer.FileReport] with a single function
+	// declaration spanning startLine to endLine and the given uncovered lines.
+	newDisplayTestFile := func(startLine, endLine int, uncoveredLines []int) *analyzer.FileReport {
+		lines := make([]string, endLine+5)
+		for i := range lines {
+			lines[i] = fmt.Sprintf("line %d content", i+1)
+		}
+
+		return &analyzer.FileReport{
+			Path:              "file.go",
+			UncoveredNewLines: uncoveredLines,
+			ASTFile: &goast.File{
+				Lines: lines,
+				FuncDecls: goast.FuncDecls{
+					funcName: {
+						Name:      funcName,
+						StartLine: startLine,
+						EndLine:   endLine,
+					},
+				},
+				FuncOrder: []string{funcName},
+			},
+		}
+	}
+
+	t.Run("should return early if the function is not found in the file", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		file := newDisplayTestFile(1, 10, []int{5})
+		displayUncoveredFunctionLines(file, "missingFunc")
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		require.Empty(t, contents)
+	})
+
+	t.Run("should not add ellipsis lines when uncovered lines are contiguous with the function boundaries", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		file := newDisplayTestFile(1, 10, []int{2, 9})
+		displayUncoveredFunctionLines(file, funcName)
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		contentsNoANSI := ansi.Strip(string(contents))
+
+		require.Contains(t, contentsNoANSI, "file.go:1:10")
+		require.Zero(t, strings.Count(contentsNoANSI, "∙∙∙"))
+	})
+
+	t.Run("should add ellipsis lines around the function boundaries and dim lines that are not uncovered", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		file := newDisplayTestFile(1, 20, []int{10})
+		displayUncoveredFunctionLines(file, funcName)
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		contentsNoANSI := ansi.Strip(string(contents))
+
+		require.Contains(t, contentsNoANSI, "line 7 content")
+		require.Contains(t, contentsNoANSI, "line 10 content")
+		require.Equal(t, 2, strings.Count(contentsNoANSI, "∙∙∙"))
+	})
+
+	t.Run("should add an ellipsis line between groups of uncovered lines when there is a gap", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		file := newDisplayTestFile(1, 22, []int{5, 21})
+		displayUncoveredFunctionLines(file, funcName)
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		contentsNoANSI := ansi.Strip(string(contents))
+
+		require.Contains(t, contentsNoANSI, "line 5 content")
+		require.Contains(t, contentsNoANSI, "line 21 content")
+		require.Equal(t, 1, strings.Count(contentsNoANSI, "∙∙∙"))
+	})
 }
 
 // Tests for [formatDimmedLine] function.
@@ -182,6 +264,15 @@ func Test_outputUncoveredLines(t *testing.T) {
 		outputFile := filepath.Join(tempDir, "non_existent_dir", "uncovered_lines.txt")
 		err := outputUncoveredLines(report, outputFile)
 		require.Error(t, err)
+	})
+
+	t.Run("should ignore if file has no uncovered lines", func(t *testing.T) {
+		_, _, report := initReport(t)
+
+		require.Greater(t, len(report.Files), 0)
+		report.Files[0].FuncUncoveredNewLinesGroups = nil
+		err := outputUncoveredLines(report, "")
+		require.NoError(t, err)
 	})
 }
 

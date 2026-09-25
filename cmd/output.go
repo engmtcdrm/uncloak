@@ -140,14 +140,12 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 	fmt.Printf("%s\n\n", colors.LightGreen("Missing coverage:"))
 
 	for _, file := range report.Files {
-		if len(file.NewUncoveredNewLinesGroups) == 0 {
+		if len(file.FuncUncoveredNewLinesGroups) == 0 {
 			continue
 		}
 
-		// fmt.Println(pp.Bold(file.Path))
-
 		for _, funcName := range file.ASTFile.FuncOrder {
-			lineRanges, ok := file.NewUncoveredNewLinesGroups[funcName]
+			lineRanges, ok := file.FuncUncoveredNewLinesGroups[funcName]
 			if !ok {
 				continue
 			}
@@ -156,6 +154,8 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 			// displayUncoveredLines(file.Path, lineRanges)
 			outputUncoveredLinesToFile(outputFile, file.Path, lineRanges)
 		}
+
+		fmt.Println()
 	}
 
 	return nil
