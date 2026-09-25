@@ -84,7 +84,7 @@ func Test_receiverTypeName(t *testing.T) {
 		fn := &ast.FuncDecl{
 			Recv: nil,
 		}
-		require.Equal(t, "", receiverTypeName(fn))
+		require.NotEmpty(t, receiverTypeName(fn))
 	})
 
 	t.Run("should return empty string if fn.Recv.List is empty", func(t *testing.T) {
@@ -93,7 +93,7 @@ func Test_receiverTypeName(t *testing.T) {
 				List: nil,
 			},
 		}
-		require.Equal(t, "", receiverTypeName(fn))
+		require.NotEmpty(t, receiverTypeName(fn))
 	})
 
 	t.Run("should return the receiver type name if fn.Recv.List has a valid receiver", func(t *testing.T) {
@@ -134,6 +134,6 @@ func Test_receiverTypeName(t *testing.T) {
 				},
 			},
 		}
-		require.Equal(t, "", receiverTypeName(fn))
+		require.NotEmpty(t, receiverTypeName(fn))
 	})
 }

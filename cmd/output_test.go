@@ -269,7 +269,7 @@ func Test_outputUncoveredLines(t *testing.T) {
 	t.Run("should ignore if file has no uncovered lines", func(t *testing.T) {
 		_, _, report := initReport(t)
 
-		require.Greater(t, len(report.Files), 0)
+		require.NotEmpty(t, report.Files)
 		report.Files[0].FuncUncoveredNewLinesGroups = nil
 		err := outputUncoveredLines(report, "")
 		require.NoError(t, err)
