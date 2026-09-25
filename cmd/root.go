@@ -27,9 +27,7 @@ const (
 	verboseUsage    = "(optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output"
 )
 
-var (
-	rootCmd *cobra.Command
-)
+var rootCmd *cobra.Command
 
 func init() {
 	rootCmd = newRootCmd()
