@@ -15,15 +15,6 @@ func Parse(filePath string) (*File, error) {
 		return nil, nil
 	}
 
-	info, err := os.Stat(filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	if info.IsDir() {
-		return nil, nil
-	}
-
 	src, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
