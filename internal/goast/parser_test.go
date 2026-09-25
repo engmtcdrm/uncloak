@@ -2,6 +2,7 @@ package goast
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -22,6 +23,51 @@ func Test_Parse(t *testing.T) {
 
 	t.Run("should return an error for an invalid Go source file", func(t *testing.T) {
 		parsedFile, err := Parse("invalid.go")
+		require.Error(t, err)
+		require.Nil(t, parsedFile)
+	})
+
+	t.Run("should return nil for a non-Go source file", func(t *testing.T) {
+		parsedFile, err := Parse("file.txt")
+		require.NoError(t, err)
+		require.Nil(t, parsedFile)
+	})
+
+	t.Run("should return nil for a directory", func(t *testing.T) {
+		tempDir := t.TempDir()
+		goDir := filepath.Join(tempDir, ".go")
+		err := os.Mkdir(goDir, 0755)
+		require.NoError(t, err)
+
+		parsedFile, err := Parse(goDir)
+		require.Error(t, err)
+		require.Nil(t, parsedFile)
+	})
+
+	t.Run("should return an error if file is unreadable", func(t *testing.T) {
+		t.Skip("Skipping test on Windows due to permission issues with temp directories.")
+
+		tempDir := t.TempDir()
+		file := filepath.Join(tempDir, "file.go")
+		err := os.WriteFile(file, []byte("package main\nfunc main() {}"), 0644)
+		require.NoError(t, err)
+
+		// Make the file unreadable
+		err = os.Chmod(file, 0000)
+		require.NoError(t, err)
+
+		parsedFile, err := Parse(file)
+		require.Error(t, err)
+		require.Nil(t, parsedFile)
+	})
+
+	t.Run("should return an error if file is not a go source file despite having .go extension", func(t *testing.T) {
+		testfiles := t.TempDir()
+		file := filepath.Join(testfiles, "file.go")
+		err := os.WriteFile(file, []byte("content"), 0644)
+		require.NoError(t, err)
+
+		parsedFile, err := Parse(file)
 		require.Error(t, err)
 		require.Nil(t, parsedFile)
 	})
