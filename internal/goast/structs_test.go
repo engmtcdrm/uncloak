@@ -6,10 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Tests for [newFile] function.
-func Test_newFile(t *testing.T) {
-}
-
 // Tests for [File.LineContent] function.
 func Test_File_LineContent(t *testing.T) {
 	const lineOutOfRange = 8
