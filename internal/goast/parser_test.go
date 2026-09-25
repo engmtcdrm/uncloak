@@ -2,6 +2,7 @@ package goast
 
 import (
 	"context"
+	"go/ast"
 	"os"
 	"path/filepath"
 	"testing"
@@ -79,4 +80,60 @@ func Test_parseFuncDecls(t *testing.T) {
 
 // Tests for [receiverTypeName] function.
 func Test_receiverTypeName(t *testing.T) {
+	t.Run("should return empty string if fn.Recv is nil", func(t *testing.T) {
+		fn := &ast.FuncDecl{
+			Recv: nil,
+		}
+		require.Equal(t, "", receiverTypeName(fn))
+	})
+
+	t.Run("should return empty string if fn.Recv.List is empty", func(t *testing.T) {
+		fn := &ast.FuncDecl{
+			Recv: &ast.FieldList{
+				List: nil,
+			},
+		}
+		require.Equal(t, "", receiverTypeName(fn))
+	})
+
+	t.Run("should return the receiver type name if fn.Recv.List has a valid receiver", func(t *testing.T) {
+		fn := &ast.FuncDecl{
+			Recv: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: &ast.Ident{Name: "MyType"},
+					},
+				},
+			},
+		}
+		require.Equal(t, "MyType", receiverTypeName(fn))
+	})
+
+	t.Run("should return the receiver type name if fn.Recv.List has a pointer receiver", func(t *testing.T) {
+		fn := &ast.FuncDecl{
+			Recv: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: &ast.StarExpr{
+							X: &ast.Ident{Name: "MyType"},
+						},
+					},
+				},
+			},
+		}
+		require.Equal(t, "MyType", receiverTypeName(fn))
+	})
+
+	t.Run("should return empty string if fn.Recv.List has an unsupported receiver type", func(t *testing.T) {
+		fn := &ast.FuncDecl{
+			Recv: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: &ast.ArrayType{},
+					},
+				},
+			},
+		}
+		require.Equal(t, "", receiverTypeName(fn))
+	})
 }
