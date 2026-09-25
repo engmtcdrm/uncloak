@@ -24,6 +24,11 @@ func Test_NewFileReport(t *testing.T) {
 		require.Empty(t, reportFile.UncoveredNewLines)
 		require.Empty(t, reportFile.UncoveredNewLineGroups)
 	})
+
+	t.Run("should return an error if no file exists", func(t *testing.T) {
+		_, err := NewFileReport("nonexistent.go")
+		require.Error(t, err)
+	})
 }
 
 // Tests for [FileReport.GroupCoveredLines] function.
