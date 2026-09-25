@@ -9,17 +9,17 @@ import (
 // FileReport represents the coverage report for a single file, including
 // covered and uncovered new lines and their respective ranges.
 type FileReport struct {
-	Path                   string
-	CodeLines              CodeLines
-	CoveredNewLines        []int       // TODO: Need to add function name association to line
-	CoveredNewLineGroups   []LineRange // TODO: Need to add function name association to line ranges
-	UncoveredNewLines      []int       // TODO: Need to add function name association to line
-	UncoveredNewLineGroups []LineRange // TODO: Need to add function name association to line ranges
+	Path                   string      // Path to the file.
+	CodeLines              CodeLines   // All code lines in the file.
+	CoveredNewLines        []int       // Covered new lines in the file.
+	CoveredNewLineGroups   []LineRange // Groups of consecutive covered new lines.
+	UncoveredNewLines      []int       // Uncovered new lines in the file.
+	UncoveredNewLineGroups []LineRange // Groups of consecutive uncovered new lines.
 
-	NewCoveredNewLines         map[string][]int
-	NewCoveredNewLinesGroups   map[string][]LineRange
-	NewUncoveredNewLines       map[string][]int
-	NewUncoveredNewLinesGroups map[string][]LineRange
+	FuncCoveredNewLines         map[string][]int       // Covered new lines per function.
+	FuncCoveredNewLinesGroups   map[string][]LineRange // Groups of consecutive covered new lines per function.
+	FuncUncoveredNewLines       map[string][]int       // Uncovered new lines per function.
+	FuncUncoveredNewLinesGroups map[string][]LineRange // Groups of consecutive uncovered new lines per function.
 
 	ASTFile *goast.File
 }
@@ -59,11 +59,11 @@ func NewFileReport(path string) (*FileReport, error) {
 		UncoveredNewLines:      make([]int, 0),
 		UncoveredNewLineGroups: make([]LineRange, 0),
 
-		NewCoveredNewLines:         make(map[string][]int),
-		NewCoveredNewLinesGroups:   make(map[string][]LineRange),
-		NewUncoveredNewLines:       make(map[string][]int),
-		NewUncoveredNewLinesGroups: make(map[string][]LineRange),
-		ASTFile:                    astFile,
+		FuncCoveredNewLines:         make(map[string][]int),
+		FuncCoveredNewLinesGroups:   make(map[string][]LineRange),
+		FuncUncoveredNewLines:       make(map[string][]int),
+		FuncUncoveredNewLinesGroups: make(map[string][]LineRange),
+		ASTFile:                     astFile,
 	}, nil
 }
 
@@ -72,12 +72,13 @@ func NewFileReport(path string) (*FileReport, error) {
 func (fr *FileReport) GroupCoveredLines() {
 	fr.CoveredNewLineGroups = linesToLineRange(fr.CoveredNewLines)
 
-	g := make(map[string][]LineRange)
+	lineRanges := make(map[string][]LineRange, len(fr.FuncCoveredNewLines))
 
-	for file, lines := range fr.NewCoveredNewLines {
-		g[file] = linesToLineRange(lines)
+	for file, lines := range fr.FuncCoveredNewLines {
+		lineRanges[file] = linesToLineRange(lines)
 	}
-	fr.NewCoveredNewLinesGroups = g
+
+	fr.FuncCoveredNewLinesGroups = lineRanges
 }
 
 // GroupUncoveredLines groups the uncovered new lines in the file into ranges of
@@ -85,12 +86,13 @@ func (fr *FileReport) GroupCoveredLines() {
 func (fr *FileReport) GroupUncoveredLines() {
 	fr.UncoveredNewLineGroups = linesToLineRange(fr.UncoveredNewLines)
 
-	g := make(map[string][]LineRange)
+	lineRanges := make(map[string][]LineRange, len(fr.FuncUncoveredNewLines))
 
-	for file, lines := range fr.NewUncoveredNewLines {
-		g[file] = linesToLineRange(lines)
+	for file, lines := range fr.FuncUncoveredNewLines {
+		lineRanges[file] = linesToLineRange(lines)
 	}
-	fr.NewUncoveredNewLinesGroups = g
+
+	fr.FuncUncoveredNewLinesGroups = lineRanges
 }
 
 // TotalNewLines returns the total number of new lines in the file report, which

@@ -70,7 +70,7 @@ func (r *Report) GroupUncoveredLines() {
 // HasUncoveredLines checks if there are any uncovered new lines in the report.
 func (r *Report) HasUncoveredLines() bool {
 	for _, file := range r.Files {
-		if len(file.NewUncoveredNewLines) > 0 {
+		if len(file.FuncUncoveredNewLines) > 0 {
 			return true
 		}
 	}

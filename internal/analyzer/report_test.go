@@ -148,7 +148,7 @@ func Test_Report_HasUncoveredLines(t *testing.T) {
 	t.Run("should return true if any file has uncovered new lines", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{}})
-		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{1}, NewUncoveredNewLines: map[string][]int{
+		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{1}, FuncUncoveredNewLines: map[string][]int{
 			"test.go": {1},
 		}})
 		require.True(t, report.HasUncoveredLines())
