@@ -58,11 +58,11 @@ func newFile(path string) (*File, error) {
 // LineContent returns the content of the given line in the file. If the line
 // number is out of range, it returns an empty string.
 func (f File) LineContent(line int) string {
-	if line > 0 && line <= len(f.Lines) {
-		return f.Lines[line-1]
+	if line <= 0 || line > len(f.Lines) {
+		return ""
 	}
 
-	return ""
+	return f.Lines[line-1]
 }
 
 // LineFunctionName returns the name of the function that covers the given line
@@ -106,11 +106,11 @@ func newFuncDecl(name string, startLine, endLine int) *FuncDecl {
 // LineFunctionName returns the name of the function that covers the given line.
 // If the line is not covered by the function, it returns an empty string.
 func (fd FuncDecl) LineFunctionName(line int) string {
-	if fd.StartLine <= line && line <= fd.EndLine {
-		return fd.Name
+	if fd.StartLine > line || fd.EndLine < line {
+		return ""
 	}
 
-	return ""
+	return fd.Name
 }
 
 // FuncDecls represents a collection of [FuncDecl], mapped by their names.
@@ -120,9 +120,7 @@ type FuncDecls map[string]*FuncDecl
 func (f FuncDecls) Names() []string {
 	names := make([]string, 0, len(f))
 
-	k := maps.Keys(f)
-
-	for name := range k {
+	for name := range maps.Keys(f) {
 		names = append(names, name)
 	}
 
