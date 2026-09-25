@@ -21,24 +21,6 @@ const (
 
 var lineNbrIndent = strings.Repeat(" ", lineNbrIndentBy)
 
-// displayUncoveredLine displays the uncovered line range for a given file to
-// [os.Stdout].
-func displayUncoveredLine(filePath string, lineRange analyzer.LineRange) {
-	fmt.Printf("%s:%s:%s\n",
-		pp.Bold(filePath),
-		pp.Redf("%d", lineRange.Start),
-		pp.Redf("%d", lineRange.End),
-	)
-}
-
-// displayUncoveredLines displays the uncovered line ranges for a given file to
-// [os.Stdout].
-func displayUncoveredLines(filePath string, lineRanges []analyzer.LineRange) {
-	for _, lineRange := range lineRanges {
-		displayUncoveredLine(filePath, lineRange)
-	}
-}
-
 // displayUncoveredFunctionLines displays the uncovered lines for a given
 // function within a file to [os.Stdout].
 func displayUncoveredFunctionLines(file *analyzer.FileReport, funcName string) {
@@ -96,6 +78,24 @@ func displayUncoveredFunctionLines(file *analyzer.FileReport, funcName string) {
 	fmt.Fprintln(&buf)
 
 	fmt.Print(buf.String())
+}
+
+// displayUncoveredLine displays the uncovered line range for a given file to
+// [os.Stdout].
+func displayUncoveredLine(filePath string, lineRange analyzer.LineRange) {
+	fmt.Printf("%s:%s:%s\n",
+		pp.Bold(filePath),
+		pp.Redf("%d", lineRange.Start),
+		pp.Redf("%d", lineRange.End),
+	)
+}
+
+// displayUncoveredLines displays the uncovered line ranges for a given file to
+// [os.Stdout].
+func displayUncoveredLines(filePath string, lineRanges []analyzer.LineRange) {
+	for _, lineRange := range lineRanges {
+		displayUncoveredLine(filePath, lineRange)
+	}
 }
 
 // formatDimmedLine formats a line with dimmed text for the line number and

@@ -19,47 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Tests for [displayUncoveredLine] function.
-func Test_displayUncoveredLine(t *testing.T) {
-	t.Run("should output uncovered line to stdout", func(t *testing.T) {
-		stdoutFile := testutils.SetStdout(t)
-
-		displayUncoveredLine("file.go", analyzer.LineRange{Start: 1, End: 2})
-
-		contents, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
-		require.NotEmpty(t, contents)
-
-		contentsNoANSI := ansi.Strip(string(contents))
-
-		require.Contains(t, contentsNoANSI, "file.go:1:2")
-
-		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
-	})
-}
-
-// Tests for [displayUncoveredLines] function.
-func Test_displayUncoveredLines(t *testing.T) {
-	t.Run("should output uncovered lines to stdout", func(t *testing.T) {
-		stdoutFile := testutils.SetStdout(t)
-
-		displayUncoveredLines("file.go", []analyzer.LineRange{
-			{Start: 1, End: 2},
-			{Start: 3, End: 4},
-		})
-
-		contents, err := os.ReadFile(stdoutFile.Name())
-		require.NoError(t, err)
-		require.NotEmpty(t, contents)
-
-		contentsNoANSI := ansi.Strip(string(contents))
-
-		require.Contains(t, contentsNoANSI, "file.go:1:2")
-		require.Contains(t, contentsNoANSI, "file.go:3:4")
-		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
-	})
-}
-
 // Tests for [displayUncoveredFunctionLines] function.
 func Test_displayUncoveredFunctionLines(t *testing.T) {
 	const funcName = "testFunc"
@@ -142,6 +101,47 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 		require.Contains(t, contentsNoANSI, "line 5 content")
 		require.Contains(t, contentsNoANSI, "line 21 content")
 		require.Equal(t, 1, strings.Count(contentsNoANSI, "∙∙∙"))
+	})
+}
+
+// Tests for [displayUncoveredLine] function.
+func Test_displayUncoveredLine(t *testing.T) {
+	t.Run("should output uncovered line to stdout", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		displayUncoveredLine("file.go", analyzer.LineRange{Start: 1, End: 2})
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		require.NotEmpty(t, contents)
+
+		contentsNoANSI := ansi.Strip(string(contents))
+
+		require.Contains(t, contentsNoANSI, "file.go:1:2")
+
+		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
+	})
+}
+
+// Tests for [displayUncoveredLines] function.
+func Test_displayUncoveredLines(t *testing.T) {
+	t.Run("should output uncovered lines to stdout", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		displayUncoveredLines("file.go", []analyzer.LineRange{
+			{Start: 1, End: 2},
+			{Start: 3, End: 4},
+		})
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		require.NotEmpty(t, contents)
+
+		contentsNoANSI := ansi.Strip(string(contents))
+
+		require.Contains(t, contentsNoANSI, "file.go:1:2")
+		require.Contains(t, contentsNoANSI, "file.go:3:4")
+		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
 	})
 }
 
