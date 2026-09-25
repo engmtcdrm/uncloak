@@ -2,13 +2,47 @@ package goast
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
+	"os"
+	"strings"
 )
 
 // Parse parses the specified Go source file and returns a [*File] containing
 // the lines of code and function declarations found in the file.
 func Parse(filePath string) (*File, error) {
-	return newFile(filePath)
+	if !strings.HasSuffix(filePath, ".go") {
+		return nil, nil
+	}
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	if info.IsDir() {
+		return nil, nil
+	}
+
+	src, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	fileSet := token.NewFileSet()
+	astFile, err := parser.ParseFile(fileSet, filePath, src, 4)
+	if err != nil {
+		return nil, err
+	}
+
+	funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
+
+	return &File{
+		Path:      filePath,
+		Lines:     strings.Split(string(src), "\n"),
+		FuncDecls: funcDecls,
+		FuncOrder: funcOrder,
+	}, nil
 }
 
 // parseFuncDecls extracts all function declarations from the given AST file and

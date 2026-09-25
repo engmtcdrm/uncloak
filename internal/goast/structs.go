@@ -1,11 +1,7 @@
 package goast
 
 import (
-	"go/parser"
-	"go/token"
 	"maps"
-	"os"
-	"strings"
 )
 
 // File represents a Go source file, including its path, lines of code, and
@@ -15,44 +11,6 @@ type File struct {
 	Lines     []string
 	FuncDecls FuncDecls
 	FuncOrder []string
-}
-
-// newFile creates a new [*File] instance for the given file path, parsing its
-// content and extracting function declarations. It returns an error if the file
-// cannot be read or parsed.
-func newFile(path string) (*File, error) {
-	if !strings.HasSuffix(path, ".go") {
-		return nil, nil
-	}
-
-	info, err := os.Stat(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if info.IsDir() {
-		return nil, nil
-	}
-
-	src, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	fileSet := token.NewFileSet()
-	astFile, err := parser.ParseFile(fileSet, path, src, 4)
-	if err != nil {
-		return nil, err
-	}
-
-	funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
-
-	return &File{
-		Path:      path,
-		Lines:     strings.Split(string(src), "\n"),
-		FuncDecls: funcDecls,
-		FuncOrder: funcOrder,
-	}, nil
 }
 
 // LineContent returns the content of the given line in the file. If the line
