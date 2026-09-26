@@ -3,6 +3,8 @@ package goast
 import (
 	"context"
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"testing"
@@ -76,6 +78,49 @@ func Test_Parse(t *testing.T) {
 
 // Tests for [parseFuncDecls] function.
 func Test_parseFuncDecls(t *testing.T) {
+	t.Run("should return empty funcDecls and funcOrder if astFile has empty Decls", func(t *testing.T) {
+		astFile := &ast.File{
+			Decls: nil,
+		}
+		fileSet := token.NewFileSet()
+		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
+		require.Empty(t, funcDecls)
+		require.Empty(t, funcOrder)
+	})
+
+	t.Run("should return funcDecls and funcOrder for a file with one function", func(t *testing.T) {
+		src := `
+package main
+
+func Foo() {}
+`
+		fileSet := token.NewFileSet()
+		astFile, err := parser.ParseFile(fileSet, "file.go", src, parser.ParseComments)
+		require.NoError(t, err)
+
+		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
+		require.Len(t, funcDecls, 1)
+		require.Contains(t, funcDecls, "Foo")
+		require.Equal(t, []string{"Foo"}, funcOrder)
+	})
+
+	t.Run("should return funcDecls and funcOrder with a receiver prepended to function name", func(t *testing.T) {
+		src := `
+package main
+
+type MyType struct{}
+
+func (m MyType) Foo() {}
+`
+		fileSet := token.NewFileSet()
+		astFile, err := parser.ParseFile(fileSet, "file.go", src, parser.ParseComments)
+		require.NoError(t, err)
+
+		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
+		require.Len(t, funcDecls, 1)
+		require.Contains(t, funcDecls, "MyType.Foo")
+		require.Equal(t, []string{"MyType.Foo"}, funcOrder)
+	})
 }
 
 // Tests for [receiverTypeName] function.
