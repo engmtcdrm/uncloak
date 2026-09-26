@@ -53,12 +53,11 @@ func NewFileReport(path string) (*FileReport, error) {
 	}
 
 	return &FileReport{
-		Path:                   path,
-		CoveredNewLines:        make([]int, 0),
-		CoveredNewLineGroups:   make([]LineRange, 0),
-		UncoveredNewLines:      make([]int, 0),
-		UncoveredNewLineGroups: make([]LineRange, 0),
-
+		Path:                        path,
+		CoveredNewLines:             make([]int, 0),
+		CoveredNewLineGroups:        make([]LineRange, 0),
+		UncoveredNewLines:           make([]int, 0),
+		UncoveredNewLineGroups:      make([]LineRange, 0),
 		FuncCoveredNewLines:         make(map[string][]int),
 		FuncCoveredNewLinesGroups:   make(map[string][]LineRange),
 		FuncUncoveredNewLines:       make(map[string][]int),
