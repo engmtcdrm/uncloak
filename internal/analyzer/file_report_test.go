@@ -41,15 +41,27 @@ func Test_FileReport_GroupCoveredLines(t *testing.T) {
 		reportFile, err := NewFileReport(filePath)
 		require.NoError(t, err)
 		reportFile.CoveredNewLines = []int{10, 11, 12, 14, 15, 17}
+		reportFile.FuncCoveredNewLines = map[string][]int{
+			"Foo": {10, 11, 12},
+			"Bar": {14, 15},
+			"Baz": {17},
+		}
 
 		reportFile.GroupCoveredLines()
 
-		expected := []LineRange{
+		expectedCoveredNewLines := []LineRange{
 			{Start: 10, End: 12},
 			{Start: 14, End: 15},
 			{Start: 17, End: 17},
 		}
-		require.Equal(t, expected, reportFile.CoveredNewLineGroups)
+		require.Equal(t, expectedCoveredNewLines, reportFile.CoveredNewLineGroups)
+
+		expectedFuncCoveredNewLines := map[string][]LineRange{
+			"Foo": {{Start: 10, End: 12}},
+			"Bar": {{Start: 14, End: 15}},
+			"Baz": {{Start: 17, End: 17}},
+		}
+		require.Equal(t, expectedFuncCoveredNewLines, reportFile.FuncCoveredNewLinesGroups)
 	})
 }
 
