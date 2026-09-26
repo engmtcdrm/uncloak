@@ -21,7 +21,7 @@ func Parse(filePath string) (*File, error) {
 	}
 
 	fileSet := token.NewFileSet()
-	astFile, err := parser.ParseFile(fileSet, filePath, src, 4)
+	astFile, err := parser.ParseFile(fileSet, filePath, src, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
