@@ -139,6 +139,32 @@ func Test_analyzeCoverage(t *testing.T) {
 	})
 }
 
+// Tests for [analyzeFileCoverage] function.
+func Test_analyzeFileCoverage(t *testing.T) {
+	ctx := context.Background()
+	cfg := config.DefaultConfig
+	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+	testutils.SetStdout(t)
+
+	t.Run("should return a file report without error", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+
+		profile, diff, err := processFiles(&cfg)
+		require.NoError(t, err)
+
+		report := NewReport(cfg.CoverageThreshold, profile, diff)
+		require.NotNil(t, report)
+
+		files := report.GitDiffResults.Files()
+		require.NotEmpty(t, files)
+		fileReport, err := analyzeFileCoverage(report, files[0])
+		require.NoError(t, err)
+		require.NotNil(t, fileReport)
+		require.NotEmpty(t, fileReport.CoveredNewLines)
+		require.Empty(t, fileReport.UncoveredNewLines)
+	})
+}
+
 // Tests for [filterFiles] function.
 func Test_filterFiles(t *testing.T) {
 	files := []string{"file1.go", "file2.go", "file3.go"}
