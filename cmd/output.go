@@ -34,8 +34,14 @@ func displayUncoveredFunctionLines(file *analyzer.FileReport, funcName string) {
 
 	paddedUncoveredNewLines := padLines(file.UncoveredNewLines, funcBodyLineStart, funcBodyLineEnd)
 
-	minLine := slices.Min(paddedUncoveredNewLines)
-	maxLine := slices.Max(paddedUncoveredNewLines)
+	minLine := 0
+	maxLine := 0
+
+	if len(paddedUncoveredNewLines) > 0 {
+		minLine = slices.Min(paddedUncoveredNewLines)
+		maxLine = slices.Max(paddedUncoveredNewLines)
+	}
+
 	maxLineDigits := max(len(strconv.Itoa(f.EndLine)), 3)
 
 	var buf bytes.Buffer
@@ -200,7 +206,11 @@ func outputUncoveredLinesToFile(file *os.File, filepath string, lineRanges []ana
 // before and after each uncovered line within the function body range. It
 // returns a sorted and compacted list of line numbers.
 func padLines(lines []int, funcBodyLineStart, funcBodyLineEnd int) []int {
-	paddedUncoveredNewLines := make([]int, 0)
+	if len(lines) == 0 {
+		return nil
+	}
+
+	var paddedUncoveredNewLines []int
 	for _, line := range lines {
 		for i := line - padLinesBy; i <= line+padLinesBy; i++ {
 			if i < funcBodyLineStart || i > funcBodyLineEnd {

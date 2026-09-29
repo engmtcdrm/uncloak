@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -407,5 +408,41 @@ func Test_padLines(t *testing.T) {
 
 		padded := padLines(lines, funcBodyLineStart, funcBodyLineEnd)
 		require.Equal(t, []int{2, 3, 4, 5, 6}, padded)
+	})
+
+	t.Run("should panic if lines is empty", func(t *testing.T) {
+		lines := []int{}
+		funcBodyLineStart := 1
+		funcBodyLineEnd := 1
+
+		padded := padLines(lines, funcBodyLineStart, funcBodyLineEnd)
+
+		require.Panics(t, func() {
+			_ = slices.Min(padded)
+		})
+
+		require.NotPanics(t, func() {
+			if len(padded) > 0 {
+				_ = slices.Min(padded)
+			}
+		})
+	})
+
+	t.Run("should panic if lines has values not between function body range", func(t *testing.T) {
+		lines := []int{0, 8}
+		funcBodyLineStart := 15
+		funcBodyLineEnd := 20
+
+		padded := padLines(lines, funcBodyLineStart, funcBodyLineEnd)
+
+		require.Panics(t, func() {
+			_ = slices.Min(padded)
+		})
+
+		require.NotPanics(t, func() {
+			if len(padded) > 0 {
+				_ = slices.Min(padded)
+			}
+		})
 	})
 }
