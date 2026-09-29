@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
@@ -48,7 +49,9 @@ func Test_Parse(t *testing.T) {
 	})
 
 	t.Run("should return an error if file is unreadable", func(t *testing.T) {
-		t.Skip("Skipping test on Windows due to permission issues with temp directories.")
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
+		}
 
 		tempDir := t.TempDir()
 		file := filepath.Join(tempDir, "file.go")
