@@ -19,6 +19,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const content = "test content"
+
+// maxDigitsTestStruct is used for various format functions.
+type maxDigitsTestStruct struct {
+	maxLineDigits      int
+	lineNbr            int
+	lineContent        string
+	expectedPaddingLen int
+}
+
 // Tests for [displayUncoveredFunctionLines] function.
 func Test_displayUncoveredFunctionLines(t *testing.T) {
 	const funcName = "testFunc"
@@ -146,16 +156,9 @@ func Test_displayUncoveredLines(t *testing.T) {
 }
 
 // Tests for [formatDimmedLine] function.
+//
+//nolint:dupl
 func Test_formatDimmedLine(t *testing.T) {
-	const content = "test content"
-
-	type maxDigitsTestStruct struct {
-		maxLineDigits      int
-		lineNbr            int
-		lineContent        string
-		expectedPaddingLen int
-	}
-
 	t.Run("should pad the line correctly", func(t *testing.T) {
 		maxLineDigitsTests := []maxDigitsTestStruct{
 			{3, 1, content, 4},
@@ -190,18 +193,70 @@ func Test_formatDimmedLine(t *testing.T) {
 
 // Tests for [formatElipsisLine] function.
 func Test_formatElipsisLine(t *testing.T) {
-	t.Run("ss", func(t *testing.T) {
-		result := formatElipsisLine(3)
-		result += formatElipsisLine(4)
-		result += formatDimmedLine(5, 1001, "some more content")
-		result += formatElipsisLine(5)
-		result += formatDimmedLine(5, 10001, "some more content")
-		require.NotEmpty(t, result)
+	t.Run("should pad the line correctly", func(t *testing.T) {
+		maxLineDigitsTests := []struct {
+			maxLineDigits      int
+			expectedPaddingLen int
+		}{
+			{1, 2},
+			{2, 2},
+			{3, 2},
+			{4, 3},
+			{5, 4},
+		}
+
+		for _, tt := range maxLineDigitsTests {
+			t.Run(fmt.Sprintf("maxLineDigits=%d", tt.maxLineDigits), func(t *testing.T) {
+				paddingLen := lineNbrIndentBy + max(tt.maxLineDigits-3, 0)
+				require.Equal(t, tt.expectedPaddingLen, paddingLen)
+
+				expectedPadding := strings.Repeat(" ", paddingLen)
+
+				result := formatElipsisLine(tt.maxLineDigits)
+				resultNoANSI := strings.ReplaceAll(ansi.Strip(result), "\n", "")
+
+				require.NotEmpty(t, result)
+				require.Equal(t, expectedPadding, resultNoANSI[:paddingLen])
+				require.Equal(t, fmt.Sprintf("∙∙∙ %s", lineSeparator), resultNoANSI[paddingLen:])
+			})
+		}
 	})
 }
 
 // Tests for [formatUncoveredLine] function.
+//
+//nolint:dupl
 func Test_formatUncoveredLine(t *testing.T) {
+	t.Run("should pad the line correctly", func(t *testing.T) {
+		maxLineDigitsTests := []maxDigitsTestStruct{
+			{3, 1, content, 4},
+			{3, 10, content, 3},
+			{3, 100, content, 2},
+			{4, 1, content, 5},
+			{4, 10, content, 4},
+			{4, 100, content, 3},
+			{4, 1000, content, 2},
+		}
+
+		for _, tt := range maxLineDigitsTests {
+			t.Run(fmt.Sprintf("maxLineDigits=%d,lineNbr=%d", tt.maxLineDigits, tt.lineNbr), func(t *testing.T) {
+				lineNbrLen := len(strconv.Itoa(tt.lineNbr))
+				paddingLen := lineNbrIndentBy + tt.maxLineDigits - lineNbrLen
+				require.Equal(t, tt.expectedPaddingLen, paddingLen)
+
+				expectedPadding := strings.Repeat(" ", paddingLen)
+
+				result := formatUncoveredLine(tt.maxLineDigits, tt.lineNbr, tt.lineContent)
+				resultNoANSI := strings.ReplaceAll(ansi.Strip(result), "\n", "")
+
+				contentStartIdx := lineNbrIndentBy + tt.maxLineDigits + len(lineSeparator) + 2
+
+				require.NotEmpty(t, result)
+				require.Equal(t, expectedPadding, resultNoANSI[:paddingLen])
+				require.Equal(t, tt.lineContent, resultNoANSI[contentStartIdx:])
+			})
+		}
+	})
 }
 
 // Tests for [outputUncoveredLines] function.
