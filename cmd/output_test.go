@@ -302,6 +302,36 @@ func Test_outputUncoveredLineToFile(t *testing.T) {
 
 // Tests for [outputUncoveredLinesToFile] function.
 func Test_outputUncoveredLinesToFile(t *testing.T) {
+	t.Run("should return early if file is nil", func(_ *testing.T) {
+		outputUncoveredLinesToFile(nil, "file.go", []analyzer.LineRange{{Start: 1, End: 2}})
+	})
+
+	t.Run("should write uncovered lines to file if valid", func(t *testing.T) {
+		tempDir := t.TempDir()
+		tempFile := filepath.Join(tempDir, "uncovered_lines.txt")
+
+		file, err := os.Create(tempFile)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err = file.Close()
+			require.NoError(t, err)
+		})
+
+		uncoveredLines := []analyzer.LineRange{
+			{Start: 1, End: 2},
+			{Start: 5, End: 10},
+		}
+
+		outputUncoveredLinesToFile(file, "file.go", uncoveredLines)
+		contents, err := os.ReadFile(tempFile)
+		require.NoError(t, err)
+		require.NotEmpty(t, contents)
+		t.Logf("Uncovered lines written to file:\n%s", string(contents))
+
+		for _, lineRange := range uncoveredLines {
+			require.Contains(t, string(contents), fmt.Sprintf("file.go:%d:%d", lineRange.Start, lineRange.End))
+		}
+	})
 }
 
 // Tests for [padLines] function.
