@@ -101,21 +101,34 @@ func displayUncoveredLines(filePath string, lineRanges []analyzer.LineRange) {
 // formatDimmedLine formats a line with dimmed text for the line number and
 // content.
 func formatDimmedLine(maxLineDigits int, lineNbr int, lineContent string) string {
-	return pp.Dimf("%s%*d %s %s\n", lineNbrIndent, maxLineDigits, lineNbr, lineSeparator, lineContent)
+	return pp.Dimf("%s%*d %s %s\n",
+		lineNbrIndent,
+		maxLineDigits,
+		lineNbr,
+		lineSeparator,
+		lineContent,
+	)
 }
 
 // formatElipsisLine formats an ellipsis line with dimmed text for the line
 // number column.
 func formatElipsisLine(maxLineDigits int) string {
-	return pp.Dimf("%s%*s %s\n", lineNbrIndent, maxLineDigits, "∙∙∙", lineSeparator)
+	return pp.Dimf("%s%*s %s\n",
+		lineNbrIndent,
+		maxLineDigits,
+		"∙∙∙",
+		lineSeparator,
+	)
 }
 
 // formatUncoveredLine formats a line with the line number in bold and the
 // content in red to indicate it is uncovered.
 func formatUncoveredLine(maxLineDigits int, lineNbr int, lineContent string) string {
-	boldLineNbr := pp.Boldf("%*d", maxLineDigits, lineNbr)
-
-	return fmt.Sprintf("%s%s%s\n", lineNbrIndent, boldLineNbr, pp.Redf(" %s %s", lineSeparator, lineContent))
+	return fmt.Sprintf("%s%s%s\n",
+		lineNbrIndent,
+		pp.Boldf("%*d", maxLineDigits, lineNbr),
+		pp.Redf(" %s %s", lineSeparator, lineContent),
+	)
 }
 
 // outputUncoveredLines writes the uncovered lines from the report to
