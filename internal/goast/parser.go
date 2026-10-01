@@ -73,20 +73,33 @@ func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []str
 }
 
 // receiverTypeName returns the type name of the receiver for the given function
-// declaration.
+// declaration. If the function has no receiver, an empty string is returned.
 func receiverTypeName(fn *ast.FuncDecl) string {
 	if fn.Recv == nil || len(fn.Recv.List) == 0 {
 		return ""
 	}
 
-	switch t := fn.Recv.List[0].Type.(type) {
+	return receiverBaseTypeName(fn.Recv.List[0].Type)
+}
+
+// receiverBaseTypeName returns the base type name of the given receiver
+// expression. It handles pointer receivers, indexed types, and generic types
+// recursively.
+func receiverBaseTypeName(expr ast.Expr) string {
+	switch t := expr.(type) {
 	case *ast.Ident:
 		return t.Name
 	case *ast.StarExpr:
 		if ident, ok := t.X.(*ast.Ident); ok {
 			return ident.Name
 		}
-	}
 
-	return ""
+		return receiverBaseTypeName(t.X)
+	case *ast.IndexExpr:
+		return receiverBaseTypeName(t.X)
+	case *ast.IndexListExpr:
+		return receiverBaseTypeName(t.X)
+	default:
+		return ""
+	}
 }
