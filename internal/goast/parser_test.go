@@ -186,3 +186,44 @@ func Test_receiverTypeName(t *testing.T) {
 		require.Empty(t, receiverTypeName(fn))
 	})
 }
+
+// Tests for [receiverBaseTypeName] function.
+func Test_receiverBaseTypeName(t *testing.T) {
+	t.Run("should return the name for an ident expression", func(t *testing.T) {
+		expr := &ast.Ident{Name: "MyType"}
+		require.Equal(t, "MyType", receiverBaseTypeName(expr))
+	})
+
+	t.Run("should return the name for a pointer receiver with an ident expression", func(t *testing.T) {
+		expr := &ast.StarExpr{X: &ast.Ident{Name: "MyType"}}
+		require.Equal(t, "MyType", receiverBaseTypeName(expr))
+	})
+
+	t.Run("should recurse for a pointer receiver with a non-ident expression", func(t *testing.T) {
+		expr := &ast.StarExpr{
+			X: &ast.IndexExpr{
+				X: &ast.Ident{Name: "MyType"},
+			},
+		}
+		require.Equal(t, "MyType", receiverBaseTypeName(expr))
+	})
+
+	t.Run("should recurse for an indexed (generic) type expression", func(t *testing.T) {
+		expr := &ast.IndexExpr{
+			X: &ast.Ident{Name: "MyType"},
+		}
+		require.Equal(t, "MyType", receiverBaseTypeName(expr))
+	})
+
+	t.Run("should recurse for a generic type with multiple type parameters", func(t *testing.T) {
+		expr := &ast.IndexListExpr{
+			X: &ast.Ident{Name: "MyType"},
+		}
+		require.Equal(t, "MyType", receiverBaseTypeName(expr))
+	})
+
+	t.Run("should return empty string for an unsupported expression type", func(t *testing.T) {
+		expr := &ast.ArrayType{}
+		require.Empty(t, receiverBaseTypeName(expr))
+	})
+}
