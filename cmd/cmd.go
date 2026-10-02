@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const floatFormat = "%.2f%%"
+
 type cmd struct {
 	coverageThreshold float64
 	coverageFile      string

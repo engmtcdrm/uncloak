@@ -1,44 +1,79 @@
 package analyzer
 
 import (
+	"context"
+	"path/filepath"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/stretchr/testify/require"
 )
 
 // Tests for [NewFileReport] function.
 func Test_NewFileReport(t *testing.T) {
+	ctx := context.Background()
+	rootDir := testgit.RootDir(ctx, t)
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
+
 	t.Run("should create a new ReportFile instance with the provided path", func(t *testing.T) {
-		reportFile := NewFileReport("path/to/file.go")
-		require.Equal(t, "path/to/file.go", reportFile.Path)
+		reportFile, err := NewFileReport(filePath)
+		require.NoError(t, err)
+		require.Equal(t, filePath, reportFile.Path)
 		require.Equal(t, 0, reportFile.TotalNewLines())
 		require.Empty(t, reportFile.CoveredNewLines)
 		require.Empty(t, reportFile.UncoveredNewLines)
 		require.Empty(t, reportFile.UncoveredNewLineGroups)
 	})
+
+	t.Run("should return an error if no file exists", func(t *testing.T) {
+		_, err := NewFileReport("nonexistent.go")
+		require.Error(t, err)
+	})
 }
 
 // Tests for [FileReport.GroupCoveredLines] function.
 func Test_FileReport_GroupCoveredLines(t *testing.T) {
+	ctx := context.Background()
+	rootDir := testgit.RootDir(ctx, t)
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
+
 	t.Run("should group covered new lines into ranges", func(t *testing.T) {
-		reportFile := NewFileReport("path/to/file.go")
+		reportFile, err := NewFileReport(filePath)
+		require.NoError(t, err)
 		reportFile.CoveredNewLines = []int{10, 11, 12, 14, 15, 17}
+		reportFile.FuncCoveredNewLines = map[string][]int{
+			"Foo": {10, 11, 12},
+			"Bar": {14, 15},
+			"Baz": {17},
+		}
 
 		reportFile.GroupCoveredLines()
 
-		expected := []LineRange{
+		expectedCoveredNewLines := []LineRange{
 			{Start: 10, End: 12},
 			{Start: 14, End: 15},
 			{Start: 17, End: 17},
 		}
-		require.Equal(t, expected, reportFile.CoveredNewLineGroups)
+		require.Equal(t, expectedCoveredNewLines, reportFile.CoveredNewLineGroups)
+
+		expectedFuncCoveredNewLines := map[string][]LineRange{
+			"Foo": {{Start: 10, End: 12}},
+			"Bar": {{Start: 14, End: 15}},
+			"Baz": {{Start: 17, End: 17}},
+		}
+		require.Equal(t, expectedFuncCoveredNewLines, reportFile.FuncCoveredNewLinesGroups)
 	})
 }
 
 // Tests for [FileReport.GroupUncoveredLines] function.
 func Test_FileReport_GroupUncoveredLines(t *testing.T) {
+	ctx := context.Background()
+	rootDir := testgit.RootDir(ctx, t)
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
+
 	t.Run("should group uncovered new lines into ranges", func(t *testing.T) {
-		reportFile := NewFileReport("path/to/file.go")
+		reportFile, err := NewFileReport(filePath)
+		require.NoError(t, err)
 		reportFile.UncoveredNewLines = []int{1, 2, 3, 5, 6, 8}
 
 		reportFile.GroupUncoveredLines()
@@ -54,13 +89,19 @@ func Test_FileReport_GroupUncoveredLines(t *testing.T) {
 
 // Tests for [FileReport.TotalNewLines] function.
 func Test_FileReport_TotalNewLines(t *testing.T) {
+	ctx := context.Background()
+	rootDir := testgit.RootDir(ctx, t)
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
+
 	t.Run("should return 0 when there are no new lines", func(t *testing.T) {
-		reportFile := NewFileReport("path/to/file.go")
+		reportFile, err := NewFileReport(filePath)
+		require.NoError(t, err)
 		require.Equal(t, 0, reportFile.TotalNewLines())
 	})
 
 	t.Run("should return the correct total of new lines", func(t *testing.T) {
-		reportFile := NewFileReport("path/to/file.go")
+		reportFile, err := NewFileReport(filePath)
+		require.NoError(t, err)
 		reportFile.CoveredNewLines = []int{1, 2, 3}
 		reportFile.UncoveredNewLines = []int{4, 5}
 		require.Equal(t, 5, reportFile.TotalNewLines())
