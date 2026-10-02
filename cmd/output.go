@@ -24,15 +24,20 @@ var lineNbrIndent = strings.Repeat(" ", lineNbrIndentBy)
 // displayUncoveredFunctionLines displays the uncovered lines for a given
 // function within a file to [os.Stdout].
 func displayUncoveredFunctionLines(file *analyzer.FileReport, funcName string) {
-	f, ok := file.ASTFile.FuncDecls[funcName]
+	funcDecl, ok := file.ASTFile.FuncDecls[funcName]
 	if !ok {
 		return
 	}
 
-	funcBodyLineStart := max(f.StartLine+1, 1)
-	funcBodyLineEnd := min(f.EndLine-1, len(file.ASTFile.Lines))
+	funcUncoveredNewLines, ok := file.FuncUncoveredNewLines[funcName]
+	if !ok {
+		return
+	}
 
-	paddedUncoveredNewLines := padLines(file.UncoveredNewLines, funcBodyLineStart, funcBodyLineEnd)
+	funcBodyLineStart := max(funcDecl.StartLine+1, 1)
+	funcBodyLineEnd := min(funcDecl.EndLine-1, len(file.ASTFile.Lines))
+
+	paddedUncoveredNewLines := padLines(funcUncoveredNewLines, funcBodyLineStart, funcBodyLineEnd)
 
 	minLine := 0
 	maxLine := 0
@@ -42,16 +47,16 @@ func displayUncoveredFunctionLines(file *analyzer.FileReport, funcName string) {
 		maxLine = slices.Max(paddedUncoveredNewLines)
 	}
 
-	maxLineDigits := max(len(strconv.Itoa(f.EndLine)), 3)
+	maxLineDigits := max(len(strconv.Itoa(funcDecl.EndLine)), 3)
 
 	var buf bytes.Buffer
 
-	fmt.Fprintf(&buf, "%s\n\n", pp.Boldf("%s:%d:%d", file.Path, f.StartLine, f.EndLine))
-	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, f.StartLine, file.ASTFile.Lines[f.StartLine-1]))
+	fmt.Fprintf(&buf, "%s\n\n", pp.Boldf("%s:%d:%d", file.Path, funcDecl.StartLine, funcDecl.EndLine))
+	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, funcDecl.StartLine, file.ASTFile.Lines[funcDecl.StartLine-1]))
 
 	// If the first uncovered line is not immediately after the function start,
 	// add an ellipsis line.
-	if minLine > f.StartLine+1 {
+	if minLine > funcDecl.StartLine+1 {
 		fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
 	}
 
@@ -76,11 +81,11 @@ func displayUncoveredFunctionLines(file *analyzer.FileReport, funcName string) {
 
 	// If the last uncovered line is not immediately before the function end,
 	// add an ellipsis line.
-	if maxLine+1 < f.EndLine {
+	if maxLine+1 < funcDecl.EndLine {
 		fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
 	}
 
-	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, f.EndLine, file.ASTFile.Lines[f.EndLine-1]))
+	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, funcDecl.EndLine, file.ASTFile.Lines[funcDecl.EndLine-1]))
 	fmt.Fprintln(&buf)
 
 	fmt.Print(buf.String())

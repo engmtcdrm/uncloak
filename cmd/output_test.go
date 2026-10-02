@@ -45,6 +45,9 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 		return &analyzer.FileReport{
 			Path:              "file.go",
 			UncoveredNewLines: uncoveredLines,
+			FuncUncoveredNewLines: map[string][]int{
+				funcName: uncoveredLines,
+			},
 			ASTFile: &goast.File{
 				Lines: lines,
 				FuncDecls: goast.FuncDecls{
@@ -64,6 +67,18 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 
 		file := newDisplayTestFile(1, 10, []int{5})
 		displayUncoveredFunctionLines(file, "missingFunc")
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		require.Empty(t, contents)
+	})
+
+	t.Run("should return early if the function has no uncovered lines entry", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		file := newDisplayTestFile(1, 10, []int{5})
+		file.FuncUncoveredNewLines = map[string][]int{}
+		displayUncoveredFunctionLines(file, funcName)
 
 		contents, err := os.ReadFile(stdoutFile.Name())
 		require.NoError(t, err)
