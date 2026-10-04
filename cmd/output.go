@@ -7,37 +7,61 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
 	"github.com/engmtcdrm/uncloak/internal/analyzer"
 	"github.com/engmtcdrm/uncloak/internal/colors"
+	"github.com/engmtcdrm/uncloak/internal/goast"
 )
 
 const (
-	lineNbrIndentBy = 2   // Number of spaces to indent the line number column
-	lineSeparator   = "▐" // Separator between the line number and the content
-	padLinesBy      = 3   // Number of lines to pad before and after each uncovered line
+	ellipsis        = "∙∙∙" // Ellipsis used to indicate skipped lines
+	lineNbrIndentBy = 2     // Number of spaces to indent the line number column
+	lineSeparator   = "▐"   // Separator between the line number and the content
+	padLinesBy      = 3     // Number of lines to pad before and after each uncovered line
 )
 
-var lineNbrIndent = strings.Repeat(" ", lineNbrIndentBy)
+var (
+	ellipsisLen   = utf8.RuneCountInString(ellipsis)     // Length of the ellipsis string
+	lineNbrIndent = strings.Repeat(" ", lineNbrIndentBy) // String of spaces used to indent the line number column
+)
 
 // displayUncoveredFunctionLines displays the uncovered lines for a given
 // function within a file to [os.Stdout].
-func displayUncoveredFunctionLines(file *analyzer.FileReport, funcName string) {
-	funcDecl, ok := file.ASTFile.FuncDecls[funcName]
+func displayUncoveredFunctionLines(fileReport *analyzer.FileReport, funcName string) {
+	funcDecl, ok := fileReport.ASTFile.FuncDecls[funcName]
 	if !ok {
 		return
 	}
 
-	funcUncoveredNewLines, ok := file.FuncUncoveredNewLines[funcName]
+	funcUncoveredNewLines, ok := fileReport.FuncUncoveredNewLines[funcName]
 	if !ok {
 		return
 	}
 
-	funcBodyLineStart := max(funcDecl.StartLine+1, 1)
-	funcBodyLineEnd := min(funcDecl.EndLine-1, len(file.ASTFile.Lines))
+	var buf bytes.Buffer
 
-	paddedUncoveredNewLines := padLines(funcUncoveredNewLines, funcBodyLineStart, funcBodyLineEnd)
+	fmt.Fprintf(&buf, "%s\n\n", pp.Boldf("%s:%d:%d", fileReport.Path, funcDecl.Start, funcDecl.End))
+
+	bodyStart := max(funcDecl.Body.Start, 1)
+	bodyEnd := min(funcDecl.Body.End, len(fileReport.ASTFile.Lines))
+	maxLineDigits := max(len(strconv.Itoa(funcDecl.End)), ellipsisLen)
+
+	// If the function body is a single line, display it and return immediately.
+	if bodyStart == bodyEnd {
+		paddedUncoveredNewLines := padLines(funcUncoveredNewLines, bodyStart, bodyEnd)
+
+		fmt.Fprintln(&buf, formatLines(fileReport, bodyStart, maxLineDigits, paddedUncoveredNewLines, 0))
+
+		fmt.Print(buf.String())
+
+		return
+	}
+
+	// Remove first and last lines from the uncovered lines as they are part
+	// of the function signature and end.
+	paddedUncoveredNewLines := padLines(funcUncoveredNewLines, bodyStart+1, bodyEnd-1)
 
 	minLine := 0
 	maxLine := 0
@@ -47,45 +71,30 @@ func displayUncoveredFunctionLines(file *analyzer.FileReport, funcName string) {
 		maxLine = slices.Max(paddedUncoveredNewLines)
 	}
 
-	maxLineDigits := max(len(strconv.Itoa(funcDecl.EndLine)), 3)
+	// Always display the function signature line(s).
+	fmt.Fprint(&buf, formatFuncSignature(maxLineDigits, fileReport, funcDecl))
 
-	var buf bytes.Buffer
-
-	fmt.Fprintf(&buf, "%s\n\n", pp.Boldf("%s:%d:%d", file.Path, funcDecl.StartLine, funcDecl.EndLine))
-	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, funcDecl.StartLine, file.ASTFile.Lines[funcDecl.StartLine-1]))
-
-	// If the first uncovered line is not immediately after the function start,
-	// add an ellipsis line.
-	if minLine > funcDecl.StartLine+1 {
-		fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
+	// If the first uncovered line is not immediately after the function
+	// signature, add an ellipsis line.
+	if minLine > funcDecl.Body.Start+1 {
+		fmt.Fprint(&buf, formatEllipsisLine(maxLineDigits))
 	}
 
 	for i, lineNbr := range paddedUncoveredNewLines {
-		uncovered := slices.Contains(file.UncoveredNewLines, lineNbr)
-
-		if !uncovered {
-			fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, lineNbr, file.ASTFile.Lines[lineNbr-1]))
-		} else {
-			fmt.Fprint(&buf, formatUncoveredLine(maxLineDigits, lineNbr, file.ASTFile.Lines[lineNbr-1]))
-		}
-
-		// If there is a gap between the current line and the next line, add an
-		// ellipsis line.
-		if i < len(paddedUncoveredNewLines)-1 {
-			nextLineNbr := paddedUncoveredNewLines[i+1]
-			if nextLineNbr > lineNbr+1 {
-				fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
-			}
-		}
+		fmt.Fprint(&buf, formatLines(fileReport, lineNbr, maxLineDigits, paddedUncoveredNewLines, i))
 	}
 
 	// If the last uncovered line is not immediately before the function end,
 	// add an ellipsis line.
-	if maxLine+1 < funcDecl.EndLine {
-		fmt.Fprint(&buf, formatElipsisLine(maxLineDigits))
+	if maxLine+1 < funcDecl.End {
+		fmt.Fprint(&buf, formatEllipsisLine(maxLineDigits))
 	}
 
-	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, funcDecl.EndLine, file.ASTFile.Lines[funcDecl.EndLine-1]))
+	// Always display the last line of the function as dimmed.
+	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, funcDecl.End, fileReport.ASTFile.Lines[funcDecl.End-1]))
+
+	buf2 := buf.String()
+	_ = buf2
 	fmt.Fprintln(&buf)
 
 	fmt.Print(buf.String())
@@ -121,15 +130,56 @@ func formatDimmedLine(maxLineDigits int, lineNbr int, lineContent string) string
 	)
 }
 
-// formatElipsisLine formats an ellipsis line with dimmed text for the line
+// formatEllipsisLine formats an ellipsis line with dimmed text for the line
 // number column.
-func formatElipsisLine(maxLineDigits int) string {
+func formatEllipsisLine(maxLineDigits int) string {
 	return pp.Dimf("%s%*s %s\n",
 		lineNbrIndent,
 		maxLineDigits,
-		"∙∙∙",
+		ellipsis,
 		lineSeparator,
 	)
+}
+
+// formatFuncSignature formats the function signature lines with dimmed text.
+func formatFuncSignature(maxLineDigits int, fileReport *analyzer.FileReport, funcDecl *goast.FuncDecl) string {
+	var buf bytes.Buffer
+
+	signatureLen := funcDecl.Body.Start - funcDecl.Start + 1
+
+	for line := range signatureLen {
+		fmt.Fprint(&buf, formatDimmedLine(
+			maxLineDigits,
+			funcDecl.Start+line,
+			fileReport.ASTFile.Lines[funcDecl.Start+line-1]),
+		)
+	}
+
+	return buf.String()
+}
+
+// formatLines formats the lines of a file, highlighting uncovered lines and
+// adding ellipsis for skipped lines.
+func formatLines(fileReport *analyzer.FileReport, lineNbr int, maxLineDigits int, paddedUncoveredNewLines []int, idx int) string {
+	var buf bytes.Buffer
+	uncovered := slices.Contains(fileReport.UncoveredNewLines, lineNbr)
+
+	if !uncovered {
+		fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, lineNbr, fileReport.ASTFile.Lines[lineNbr-1]))
+	} else {
+		fmt.Fprint(&buf, formatUncoveredLine(maxLineDigits, lineNbr, fileReport.ASTFile.Lines[lineNbr-1]))
+	}
+
+	// If there is a gap between the current line and the next line, add an
+	// ellipsis line.
+	if idx < len(paddedUncoveredNewLines)-1 {
+		nextLineNbr := paddedUncoveredNewLines[idx+1]
+		if nextLineNbr > lineNbr+1 {
+			fmt.Fprint(&buf, formatEllipsisLine(maxLineDigits))
+		}
+	}
+
+	return buf.String()
 }
 
 // formatUncoveredLine formats a line with the line number in bold and the
@@ -178,8 +228,6 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 			// displayUncoveredLines(file.Path, lineRanges)
 			outputUncoveredLinesToFile(outputFile, file.Path, lineRanges)
 		}
-
-		fmt.Println()
 	}
 
 	return nil
