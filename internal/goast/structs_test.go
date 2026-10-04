@@ -38,7 +38,7 @@ func Test_File_LineFunctionName(t *testing.T) {
 
 	file := &File{
 		FuncDecls: FuncDecls{
-			funcName: newFuncDecl(funcName, 5, 8),
+			funcName: newFuncDecl(funcName, 5, 8, newFuncBody(5, 8)),
 		},
 	}
 
@@ -53,17 +53,47 @@ func Test_File_LineFunctionName(t *testing.T) {
 	})
 }
 
+// Tests for [newFuncBody] function.
+func Test_newFuncBody(t *testing.T) {
+	t.Run("should return a valid FuncBody with correct start and end lines", func(t *testing.T) {
+		const lineStart = 5
+		const lineEnd = 8
+
+		fb := newFuncBody(lineStart, lineEnd)
+		require.Equal(t, lineStart, fb.Start)
+		require.Equal(t, lineEnd, fb.End)
+		require.Equal(t, []int{lineStart, lineStart + 1, lineStart + 2, lineEnd}, fb.Lines)
+	})
+
+	t.Run("should panic if Start is greater than End", func(t *testing.T) {
+		const lineStart = 10
+		const lineEnd = 5
+
+		require.Panics(t, func() { newFuncBody(lineStart, lineEnd) })
+	})
+
+	t.Run("should return a valid FuncBody with Start equal to End", func(t *testing.T) {
+		const lineStart = 5
+		const lineEnd = lineStart
+
+		fb := newFuncBody(lineStart, lineEnd)
+		require.Equal(t, lineStart, fb.Start)
+		require.Equal(t, lineStart, fb.End)
+		require.Equal(t, []int{lineStart}, fb.Lines)
+	})
+}
+
 // Tests for [newFuncDecl] function.
 func Test_newFuncDecl(t *testing.T) {
 	t.Run("should panic if StartLine is greater than EndLine", func(t *testing.T) {
-		require.Panics(t, func() { newFuncDecl("myFunc", 10, 5) })
+		require.Panics(t, func() { newFuncDecl("myFunc", 10, 5, newFuncBody(10, 5)) })
 	})
 
 	t.Run("should return a valid FuncDecl when StartLine is less than or equal to EndLine", func(t *testing.T) {
-		fd := newFuncDecl("myFunc", 5, 10)
+		fd := newFuncDecl("myFunc", 5, 10, newFuncBody(5, 10))
 		require.Equal(t, "myFunc", fd.Name)
-		require.Equal(t, 5, fd.StartLine)
-		require.Equal(t, 10, fd.EndLine)
+		require.Equal(t, 5, fd.Start)
+		require.Equal(t, 10, fd.End)
 		require.Equal(t, []int{5, 6, 7, 8, 9, 10}, fd.Lines)
 	})
 }
@@ -74,7 +104,7 @@ func Test_FuncDecl_LineFunctionName(t *testing.T) {
 	const lineOutOfRange = 10
 	const lineInRange = 6
 
-	fd := newFuncDecl(funcName, 5, 8)
+	fd := newFuncDecl(funcName, 5, 8, newFuncBody(5, 8))
 
 	t.Run("should return empty string if the line is not part of the function", func(t *testing.T) {
 		result := fd.LineFunctionName(lineOutOfRange)
