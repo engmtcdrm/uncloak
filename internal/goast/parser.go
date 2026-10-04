@@ -37,7 +37,8 @@ func Parse(filePath string) (*File, error) {
 }
 
 // parseFuncDecls extracts all function declarations from the given AST file and
-// returns a slice of FuncDecl representing all functions found in the AST file.
+// returns a slice of [FuncDecl] representing all functions found in the AST
+// file.
 func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []string) {
 	funcDecls := make(FuncDecls, len(astFile.Decls))
 	funcOrder := make([]string, 0)
@@ -49,10 +50,14 @@ func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []str
 		}
 
 		start := fileSet.Position(funcDecl.Pos()).Line
+		bodyStart := start
+		bodyEnd := start
 		end := start
 
 		if funcDecl.Body != nil {
-			end = fileSet.Position(funcDecl.Body.End()).Line
+			bodyStart = fileSet.Position(funcDecl.Body.Pos()).Line
+			bodyEnd = fileSet.Position(funcDecl.Body.End()).Line
+			end = fileSet.Position(funcDecl.End()).Line
 		}
 
 		name := funcDecl.Name.Name
@@ -64,6 +69,7 @@ func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []str
 			name,
 			start,
 			end,
+			newFuncBody(bodyStart, bodyEnd),
 		)
 
 		funcOrder = append(funcOrder, name)
