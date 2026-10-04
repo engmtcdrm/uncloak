@@ -35,36 +35,61 @@ func (f File) LineFunctionName(line int) string {
 	return ""
 }
 
+// FuncBody represents the body of a function, including the lines it covers and
+// its start and end lines.
+type FuncBody struct {
+	Lines []int // Lines covered by the function body.
+	Start int   // Starting line of the function body.
+	End   int   // Ending line of the function body.
+}
+
+// newFuncBody creates a new [FuncBody] with the given start and end lines, and
+// generates the list of lines covered by the function body.
+func newFuncBody(start, end int) FuncBody {
+	lines := make([]int, 0, end-start+1)
+	for line := start; line <= end; line++ {
+		lines = append(lines, line)
+	}
+
+	return FuncBody{
+		Lines: lines,
+		Start: start,
+		End:   end,
+	}
+}
+
 // FuncDecl represents a function declaration within a Go source file, including
 // its name, the lines it covers, and its start and end lines.
 type FuncDecl struct {
-	Name      string // Name of the function.
-	Lines     []int  // Lines covered by the function.
-	StartLine int    // Starting line of the function.
-	EndLine   int    // Ending line of the function.
+	Name  string   // Name of the function.
+	Lines []int    // Lines covered by the function.
+	Start int      // Starting line of the function.
+	End   int      // Ending line of the function.
+	Body  FuncBody // The body of the function.
 }
 
 // newFuncDecl creates a new [*FuncDecl] with the given name, start line, and
-// end line. It automatically generates the list of lines covered by the
-// function.
-func newFuncDecl(name string, startLine, endLine int) *FuncDecl {
-	lines := make([]int, 0, endLine-startLine+1)
-	for line := startLine; line <= endLine; line++ {
+// end line, and the function body. It automatically generates the list of lines
+// covered by the function.
+func newFuncDecl(name string, start, end int, body FuncBody) *FuncDecl {
+	lines := make([]int, 0, end-start+1)
+	for line := start; line <= end; line++ {
 		lines = append(lines, line)
 	}
 
 	return &FuncDecl{
-		Name:      name,
-		Lines:     lines,
-		StartLine: startLine,
-		EndLine:   endLine,
+		Name:  name,
+		Lines: lines,
+		Start: start,
+		End:   end,
+		Body:  body,
 	}
 }
 
 // LineFunctionName returns the name of the function that covers the given line.
 // If the line is not covered by the function, it returns an empty string.
 func (fd FuncDecl) LineFunctionName(line int) string {
-	if fd.StartLine > line || fd.EndLine < line {
+	if fd.Start > line || fd.End < line {
 		return ""
 	}
 
