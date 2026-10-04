@@ -35,9 +35,11 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 	const funcName = "testFunc"
 
 	// newDisplayTestFile builds a [*analyzer.FileReport] with a single function
-	// declaration spanning startLine to endLine and the given uncovered lines.
-	newDisplayTestFile := func(startLine, endLine int, uncoveredLines []int) *analyzer.FileReport {
-		lines := make([]string, endLine+5)
+	// declaration spanning start to end lines and the given uncovered lines.
+	newDisplayTestFile := func(t *testing.T, start, end int, uncoveredLines []int) *analyzer.FileReport {
+		t.Helper()
+
+		lines := make([]string, end+5)
 		for i := range lines {
 			lines[i] = fmt.Sprintf("line %d content", i+1)
 		}
@@ -52,9 +54,13 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 				Lines: lines,
 				FuncDecls: goast.FuncDecls{
 					funcName: {
-						Name:      funcName,
-						StartLine: startLine,
-						EndLine:   endLine,
+						Name:  funcName,
+						Start: start,
+						End:   end,
+						Body: goast.FuncBody{
+							Start: start,
+							End:   end,
+						},
 					},
 				},
 				FuncOrder: []string{funcName},
@@ -65,7 +71,7 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 	t.Run("should return early if the function is not found in the file", func(t *testing.T) {
 		stdoutFile := testutils.SetStdout(t)
 
-		file := newDisplayTestFile(1, 10, []int{5})
+		file := newDisplayTestFile(t, 1, 10, []int{5})
 		displayUncoveredFunctionLines(file, "missingFunc")
 
 		contents, err := os.ReadFile(stdoutFile.Name())
@@ -76,7 +82,7 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 	t.Run("should return early if the function has no uncovered lines entry", func(t *testing.T) {
 		stdoutFile := testutils.SetStdout(t)
 
-		file := newDisplayTestFile(1, 10, []int{5})
+		file := newDisplayTestFile(t, 1, 10, []int{5})
 		file.FuncUncoveredNewLines = map[string][]int{}
 		displayUncoveredFunctionLines(file, funcName)
 
@@ -88,7 +94,7 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 	t.Run("should not add ellipsis lines when uncovered lines are contiguous with the function boundaries", func(t *testing.T) {
 		stdoutFile := testutils.SetStdout(t)
 
-		file := newDisplayTestFile(1, 10, []int{2, 9})
+		file := newDisplayTestFile(t, 1, 10, []int{2, 9})
 		displayUncoveredFunctionLines(file, funcName)
 
 		contents, err := os.ReadFile(stdoutFile.Name())
@@ -96,13 +102,13 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 		contentsNoANSI := ansi.Strip(string(contents))
 
 		require.Contains(t, contentsNoANSI, "file.go:1:10")
-		require.Zero(t, strings.Count(contentsNoANSI, "∙∙∙"))
+		require.Zero(t, strings.Count(contentsNoANSI, ellipsis))
 	})
 
 	t.Run("should add ellipsis lines around the function boundaries and dim lines that are not uncovered", func(t *testing.T) {
 		stdoutFile := testutils.SetStdout(t)
 
-		file := newDisplayTestFile(1, 20, []int{10})
+		file := newDisplayTestFile(t, 1, 20, []int{10})
 		displayUncoveredFunctionLines(file, funcName)
 
 		contents, err := os.ReadFile(stdoutFile.Name())
@@ -111,13 +117,13 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 
 		require.Contains(t, contentsNoANSI, "line 7 content")
 		require.Contains(t, contentsNoANSI, "line 10 content")
-		require.Equal(t, 2, strings.Count(contentsNoANSI, "∙∙∙"))
+		require.Equal(t, 2, strings.Count(contentsNoANSI, ellipsis))
 	})
 
 	t.Run("should add an ellipsis line between groups of uncovered lines when there is a gap", func(t *testing.T) {
 		stdoutFile := testutils.SetStdout(t)
 
-		file := newDisplayTestFile(1, 22, []int{5, 21})
+		file := newDisplayTestFile(t, 1, 22, []int{5, 21})
 		displayUncoveredFunctionLines(file, funcName)
 
 		contents, err := os.ReadFile(stdoutFile.Name())
@@ -126,7 +132,21 @@ func Test_displayUncoveredFunctionLines(t *testing.T) {
 
 		require.Contains(t, contentsNoANSI, "line 5 content")
 		require.Contains(t, contentsNoANSI, "line 21 content")
-		require.Equal(t, 1, strings.Count(contentsNoANSI, "∙∙∙"))
+		require.Equal(t, 1, strings.Count(contentsNoANSI, ellipsis))
+	})
+
+	t.Run("should output single uncovered line when function is single line", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		file := newDisplayTestFile(t, 1, 1, []int{1})
+		displayUncoveredFunctionLines(file, funcName)
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		contentsNoANSI := ansi.Strip(string(contents))
+
+		require.Contains(t, contentsNoANSI, "line 1 content")
+		require.Zero(t, strings.Count(contentsNoANSI, ellipsis))
 	})
 }
 
@@ -207,8 +227,8 @@ func Test_formatDimmedLine(t *testing.T) {
 	})
 }
 
-// Tests for [formatElipsisLine] function.
-func Test_formatElipsisLine(t *testing.T) {
+// Tests for [formatEllipsisLine] function.
+func Test_formatEllipsisLine(t *testing.T) {
 	t.Run("should pad the line correctly", func(t *testing.T) {
 		maxLineDigitsTests := []struct {
 			maxLineDigits      int
@@ -223,20 +243,145 @@ func Test_formatElipsisLine(t *testing.T) {
 
 		for _, tt := range maxLineDigitsTests {
 			t.Run(fmt.Sprintf("maxLineDigits=%d", tt.maxLineDigits), func(t *testing.T) {
-				paddingLen := lineNbrIndentBy + max(tt.maxLineDigits-3, 0)
+				paddingLen := lineNbrIndentBy + max(tt.maxLineDigits-ellipsisLen, 0)
 				require.Equal(t, tt.expectedPaddingLen, paddingLen)
 
 				expectedPadding := strings.Repeat(" ", paddingLen)
 
-				result := formatElipsisLine(tt.maxLineDigits)
+				result := formatEllipsisLine(tt.maxLineDigits)
 				resultNoANSI := strings.ReplaceAll(ansi.Strip(result), "\n", "")
 
 				require.NotEmpty(t, result)
 				require.Equal(t, expectedPadding, resultNoANSI[:paddingLen])
-				require.Equal(t, fmt.Sprintf("∙∙∙ %s", lineSeparator), resultNoANSI[paddingLen:])
+				require.Equal(t, fmt.Sprintf("%s %s", ellipsis, lineSeparator), resultNoANSI[paddingLen:])
 			})
 		}
 	})
+}
+
+// Tests for [formatFuncSignature] function.
+func Test_formatFuncSignature(t *testing.T) {
+	tests := []struct {
+		name          string
+		maxLineDigits int
+		start         int
+		bodyStart     int
+		lines         []string
+		expected      []string
+	}{
+		{
+			name:          "single-line signature",
+			maxLineDigits: 1,
+			start:         2,
+			bodyStart:     2,
+			lines:         []string{"package example", "func test() {", "}", ""},
+			expected:      []string{"  2 ▐ func test() {"},
+		},
+		{
+			name:          "multiline signature",
+			maxLineDigits: 3,
+			start:         3,
+			bodyStart:     5,
+			lines: []string{
+				"package example",
+				"",
+				"func test(",
+				"\tvalue int,",
+				") {",
+				"}",
+			},
+			expected: []string{
+				"    3 ▐ func test(",
+				"    4 ▐ \tvalue int,",
+				"    5 ▐ ) {",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fileReport := &analyzer.FileReport{
+				ASTFile: &goast.File{Lines: tt.lines},
+			}
+			funcDecl := &goast.FuncDecl{
+				Start: tt.start,
+				Body:  goast.FuncBody{Start: tt.bodyStart},
+			}
+
+			result := formatFuncSignature(tt.maxLineDigits, fileReport, funcDecl)
+			formattedLines := strings.Split(strings.TrimSuffix(ansi.Strip(result), "\n"), "\n")
+
+			require.Equal(t, tt.expected, formattedLines)
+		})
+	}
+}
+
+// Tests for [formatLines] function.
+func Test_formatLines(t *testing.T) {
+	tests := []struct {
+		name                    string
+		lineNbr                 int
+		uncoveredLines          []int
+		paddedUncoveredNewLines []int
+		idx                     int
+		expected                string
+	}{
+		{
+			name:                    "covered line without a gap",
+			lineNbr:                 4,
+			uncoveredLines:          []int{5},
+			paddedUncoveredNewLines: []int{4, 5},
+			idx:                     0,
+			expected:                "   4 ▐ line 4 content\n",
+		},
+		{
+			name:                    "uncovered line without a gap",
+			lineNbr:                 4,
+			uncoveredLines:          []int{4, 5},
+			paddedUncoveredNewLines: []int{4, 5},
+			idx:                     0,
+			expected:                "   4 ▐ line 4 content\n",
+		},
+		{
+			name:                    "gap before the next line",
+			lineNbr:                 4,
+			uncoveredLines:          []int{4, 7},
+			paddedUncoveredNewLines: []int{4, 7},
+			idx:                     0,
+			expected:                "   4 ▐ line 4 content\n  ∙∙∙ ▐\n",
+		},
+		{
+			name:                    "last line does not add an ellipsis",
+			lineNbr:                 7,
+			uncoveredLines:          []int{4, 7},
+			paddedUncoveredNewLines: []int{4, 7},
+			idx:                     1,
+			expected:                "   7 ▐ line 7 content\n",
+		},
+	}
+
+	lines := []string{
+		"line 1 content",
+		"line 2 content",
+		"line 3 content",
+		"line 4 content",
+		"line 5 content",
+		"line 6 content",
+		"line 7 content",
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fileReport := &analyzer.FileReport{
+				UncoveredNewLines: tt.uncoveredLines,
+				ASTFile:           &goast.File{Lines: lines},
+			}
+
+			result := formatLines(fileReport, tt.lineNbr, 2, tt.paddedUncoveredNewLines, tt.idx)
+
+			require.Equal(t, tt.expected, ansi.Strip(result))
+		})
+	}
 }
 
 // Tests for [formatUncoveredLine] function.
