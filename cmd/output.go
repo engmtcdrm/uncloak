@@ -50,9 +50,11 @@ func displayUncoveredFunctionLines(fileReport *analyzer.FileReport, funcName str
 
 	// If the function body is a single line, display it and return immediately.
 	if bodyStart == bodyEnd {
-		paddedUncoveredNewLines := padLines(funcUncoveredNewLines, bodyStart, bodyEnd)
+		for lineNbr := funcDecl.Start; lineNbr <= bodyEnd; lineNbr++ {
+			fmt.Fprint(&buf, formatLines(fileReport, lineNbr, maxLineDigits, nil, 0))
+		}
 
-		fmt.Fprintln(&buf, formatLines(fileReport, bodyStart, maxLineDigits, paddedUncoveredNewLines, 0))
+		fmt.Fprintln(&buf)
 
 		fmt.Print(buf.String())
 
@@ -92,9 +94,6 @@ func displayUncoveredFunctionLines(fileReport *analyzer.FileReport, funcName str
 
 	// Always display the last line of the function as dimmed.
 	fmt.Fprint(&buf, formatDimmedLine(maxLineDigits, funcDecl.End, fileReport.ASTFile.Lines[funcDecl.End-1]))
-
-	buf2 := buf.String()
-	_ = buf2
 	fmt.Fprintln(&buf)
 
 	fmt.Print(buf.String())
