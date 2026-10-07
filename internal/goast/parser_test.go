@@ -114,15 +114,20 @@ package main
 type MyType struct{}
 
 func (m MyType) Foo() {}
+
+type MyType2 struct {}
+
+func (m *MyType2) Foo() {}
 `
 		fileSet := token.NewFileSet()
 		astFile, err := parser.ParseFile(fileSet, "file.go", src, parser.ParseComments)
 		require.NoError(t, err)
 
 		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
-		require.Len(t, funcDecls, 1)
+		require.Len(t, funcDecls, 2)
 		require.Contains(t, funcDecls, "MyType.Foo")
-		require.Equal(t, []string{"MyType.Foo"}, funcOrder)
+		require.Contains(t, funcDecls, "MyType2.Foo")
+		require.Equal(t, []string{"MyType.Foo", "MyType2.Foo"}, funcOrder)
 	})
 
 	t.Run("should use physical line numbers when the file has a line directive", func(t *testing.T) {
@@ -131,14 +136,7 @@ func (m MyType) Foo() {}
 func Foo() {
 }
 `
-		fileSet := token.NewFileSet()
-		astFile, err := parser.ParseFile(fileSet, "file.go", src, parser.ParseComments)
-		require.NoError(t, err)
-		require.Equal(t, 100, fileSet.Position(astFile.Decls[0].Pos()).Line)
-
-		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
-		require.Equal(t, []string{"Foo"}, funcOrder)
-		require.Equal(t, &FuncDecl{
+		expectedFuncDecl := &FuncDecl{
 			Name:  "Foo",
 			Lines: []int{3, 4},
 			Start: 3,
@@ -148,7 +146,35 @@ func Foo() {
 				Start: 3,
 				End:   4,
 			},
-		}, funcDecls["Foo"])
+		}
+
+		fileSet := token.NewFileSet()
+		astFile, err := parser.ParseFile(fileSet, "file.go", src, parser.ParseComments)
+		require.NoError(t, err)
+		require.NotEmpty(t, astFile.Decls)
+		require.Equal(t, 100, fileSet.Position(astFile.Decls[0].Pos()).Line)
+
+		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
+		require.Equal(t, []string{"Foo"}, funcOrder)
+		require.Equal(t, expectedFuncDecl, funcDecls["Foo"])
+	})
+
+	t.Run("should handle init functions with unique names", func(t *testing.T) {
+		src := `
+package main
+
+func init() {}
+func init() {}
+`
+		fileSet := token.NewFileSet()
+		astFile, err := parser.ParseFile(fileSet, "file.go", src, parser.ParseComments)
+		require.NoError(t, err)
+
+		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
+		require.Len(t, funcDecls, 2)
+		require.Equal(t, 2, len(funcOrder))
+		require.Contains(t, funcOrder[0], "init@")
+		require.Contains(t, funcOrder[1], "init@")
 	})
 }
 
