@@ -1,10 +1,13 @@
 package analyzer
 
 import (
+	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/gocover"
+	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,7 +60,13 @@ func Test_Report_CoveragePercent(t *testing.T) {
 }
 
 // Tests for [Report.GroupCoveredLines] function.
+//
+//nolint:dupl // Not a duplicate of Test_Report_GroupUncoveredLines.
 func Test_Report_GroupCoveredLines(t *testing.T) {
+	ctx := context.Background()
+	rootDir := testgit.RootDir(ctx, t)
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
+
 	t.Run("empty report should produce empty CoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
@@ -71,7 +80,8 @@ func Test_Report_GroupCoveredLines(t *testing.T) {
 	t.Run("populated file CoveredNewLines should produce CoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
-		reportFile := NewFileReport("test.go")
+		reportFile, err := NewFileReport(filePath)
+		require.NoError(t, err)
 		reportFile.CoveredNewLines = []int{1, 2, 3, 5, 6, 8}
 
 		report.Files = append(report.Files, reportFile)
@@ -86,7 +96,13 @@ func Test_Report_GroupCoveredLines(t *testing.T) {
 }
 
 // Tests for [Report.GroupUncoveredLines] function.
+//
+//nolint:dupl // Not a duplicate of Test_Report_GroupCoveredLines.
 func Test_Report_GroupUncoveredLines(t *testing.T) {
+	ctx := context.Background()
+	rootDir := testgit.RootDir(ctx, t)
+	filePath := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
+
 	t.Run("empty report should produce empty UncoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
@@ -100,7 +116,8 @@ func Test_Report_GroupUncoveredLines(t *testing.T) {
 	t.Run("populated file UncoveredNewLines should produce UncoveredNewLineGroups", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 
-		reportFile := NewFileReport("test.go")
+		reportFile, err := NewFileReport(filePath)
+		require.NoError(t, err)
 		reportFile.UncoveredNewLines = []int{1, 2, 3, 5, 6, 8}
 
 		report.Files = append(report.Files, reportFile)
@@ -131,7 +148,9 @@ func Test_Report_HasUncoveredLines(t *testing.T) {
 	t.Run("should return true if any file has uncovered new lines", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{}})
-		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{1}})
+		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{1}, FuncUncoveredNewLines: map[string][]int{
+			"test.go": {1},
+		}})
 		require.True(t, report.HasUncoveredLines())
 	})
 }

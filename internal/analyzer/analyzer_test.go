@@ -113,7 +113,8 @@ func Test_analyzeCoverage(t *testing.T) {
 		report := NewReport(cfg.CoverageThreshold, profile, diff)
 		require.NotNil(t, report)
 
-		report = analyzeCoverage(report, &cfg)
+		report, err = analyzeCoverage(report, &cfg)
+		require.NoError(t, err)
 		require.NotNil(t, report)
 		require.NotEmpty(t, report.GitDiffResults.Files())
 	})
@@ -131,9 +132,109 @@ func Test_analyzeCoverage(t *testing.T) {
 		report := NewReport(cfg.CoverageThreshold, profile, diff)
 		require.NotNil(t, report)
 
-		report = analyzeCoverage(report, &cfg)
+		report, err = analyzeCoverage(report, &cfg)
+		require.NoError(t, err)
 		require.NotNil(t, report)
 		require.NotEmpty(t, report.GitDiffResults.Files())
+	})
+
+	t.Run("should return an error from analyzeFileCoverage when file permissions are restricted", func(t *testing.T) {
+		if goos := runtime.GOOS; goos == "windows" {
+			t.Skip("Skipping test on Windows due to file permission limitations")
+		}
+
+		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
+
+		profile, diff, err := processFiles(&cfg)
+		require.NoError(t, err)
+
+		report := NewReport(cfg.CoverageThreshold, profile, diff)
+		require.NotNil(t, report)
+
+		err = os.Chmod(tempDir, 0000)
+		require.NoError(t, err, "Failed to change file permissions")
+		t.Cleanup(func() {
+			_ = os.Chmod(tempDir, 0755)
+		})
+
+		_, err = analyzeCoverage(report, &cfg)
+		require.Error(t, err)
+	})
+}
+
+// Tests for [analyzeFileCoverage] function.
+func Test_analyzeFileCoverage(t *testing.T) {
+	ctx := context.Background()
+	cfg := config.DefaultConfig
+	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+	testutils.SetStdout(t)
+
+	t.Run("should return a file report without error", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+
+		profile, diff, err := processFiles(&cfg)
+		require.NoError(t, err)
+
+		report := NewReport(cfg.CoverageThreshold, profile, diff)
+		require.NotNil(t, report)
+
+		files := report.GitDiffResults.Files()
+		require.NotEmpty(t, files)
+
+		fileReport, err := analyzeFileCoverage(report, files[0])
+		require.NoError(t, err)
+		require.NotNil(t, fileReport)
+		require.NotEmpty(t, fileReport.CoveredNewLines)
+		require.Empty(t, fileReport.UncoveredNewLines)
+	})
+
+	t.Run("should return an error if NewFileReport fails", func(t *testing.T) {
+		if goos := runtime.GOOS; goos == "windows" {
+			t.Skip("Skipping test on Windows due to file permission limitations")
+		}
+
+		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
+
+		profile, diff, err := processFiles(&cfg)
+		require.NoError(t, err)
+
+		report := NewReport(cfg.CoverageThreshold, profile, diff)
+		require.NotNil(t, report)
+
+		err = os.Chmod(tempDir, 0000)
+		require.NoError(t, err, "Failed to change file permissions")
+		t.Cleanup(func() {
+			_ = os.Chmod(tempDir, 0755)
+		})
+
+		files := report.GitDiffResults.Files()
+		require.NotEmpty(t, files)
+
+		// Passing an invalid file path to trigger an error in NewFileReport
+		_, err = analyzeFileCoverage(report, files[0])
+		require.Error(t, err)
+	})
+
+	t.Run("should continue processing if func name is not found", func(t *testing.T) {
+		_, _ = testrepo.InitWithFileCopy(ctx, t)
+
+		profile, diff, err := processFiles(&cfg)
+		require.NoError(t, err)
+
+		report := NewReport(cfg.CoverageThreshold, profile, diff)
+		require.NotNil(t, report)
+
+		files := report.GitDiffResults.Files()
+		require.NotEmpty(t, files)
+
+		// Add some dummy lines that do not belong to any function
+		report.GitDiffResults.NewLines[files[0]][999] = true
+		report.CoverageProfile.CoveredLines[files[0]][999] = true
+
+		// Simulate a scenario where the function name is not found
+		fileReport, err := analyzeFileCoverage(report, files[0])
+		require.NoError(t, err)
+		require.NotNil(t, fileReport)
 	})
 }
 

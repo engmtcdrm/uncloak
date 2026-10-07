@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
 
@@ -32,7 +33,10 @@ func NewCodeCoverage(cfg *config.Config) (*Report, error) {
 	}
 
 	report := NewReport(cfg.CoverageThreshold, profile, diff)
-	report = analyzeCoverage(report, cfg)
+	report, err = analyzeCoverage(report, cfg)
+	if err != nil {
+		return report, err
+	}
 
 	// If there are no new lines, changes must have been outside of test
 	// coverage lines.
@@ -53,35 +57,66 @@ func NewCodeCoverage(cfg *config.Config) (*Report, error) {
 // analyzeCoverage analyzes the coverage of new lines in the given report based
 // on the configuration. It returns the updated report with the analyzed
 // coverage.
-func analyzeCoverage(report *Report, cfg *config.Config) *Report {
+func analyzeCoverage(report *Report, cfg *config.Config) (*Report, error) {
 	filteredFiles := filterFiles(cfg, report.GitDiffResults.Files())
 
 	for _, file := range filteredFiles {
-		newLines := report.GitDiffResults.NewLines[file]
-
-		if report.CoverageProfile.CoveredLines[file] == nil {
-			continue
+		reportFile, err := analyzeFileCoverage(report, file)
+		if err != nil {
+			return nil, err
 		}
 
-		reportFile := NewFileReport(file)
-
-		for line := range newLines {
-			if !report.CoverageProfile.IsInTestCoverage(file, line) {
-				continue
-			}
-
-			if report.CoverageProfile.CoveredLines[file][line] {
-				reportFile.CoveredNewLines = append(reportFile.CoveredNewLines, line)
-				continue
-			}
-
-			reportFile.UncoveredNewLines = append(reportFile.UncoveredNewLines, line)
+		if reportFile == nil {
+			continue
 		}
 
 		report.Files = append(report.Files, reportFile)
 	}
 
-	return report
+	return report, nil
+}
+
+// analyzeFileCoverage analyzes the coverage of new lines in the specified file
+// within the given report. It returns a FileReport containing the coverage
+// details for the file, or nil if the file has no coverage information or there
+// is an error.
+func analyzeFileCoverage(report *Report, file string) (*FileReport, error) {
+	newLines := report.GitDiffResults.NewLines[file]
+
+	if report.CoverageProfile.CoveredLines[file] == nil {
+		return nil, nil
+	}
+
+	fileReportPath := filepath.Join(report.GitDiffResults.RootDir, file)
+
+	reportFile, err := NewFileReport(fileReportPath)
+	if err != nil {
+		return nil, err
+	}
+
+	reportFile.Path = file
+
+	for line := range newLines {
+		if !report.CoverageProfile.IsInTestCoverage(file, line) {
+			continue
+		}
+
+		funcName := reportFile.ASTFile.LineFunctionName(line)
+		if funcName == "" {
+			continue
+		}
+
+		if report.CoverageProfile.CoveredLines[file][line] {
+			reportFile.FuncCoveredNewLines[funcName] = append(reportFile.FuncCoveredNewLines[funcName], line)
+			reportFile.CoveredNewLines = append(reportFile.CoveredNewLines, line)
+			continue
+		}
+
+		reportFile.FuncUncoveredNewLines[funcName] = append(reportFile.FuncUncoveredNewLines[funcName], line)
+		reportFile.UncoveredNewLines = append(reportFile.UncoveredNewLines, line)
+	}
+
+	return reportFile, nil
 }
 
 // filterFiles filters the given list of files based on the exclusions specified

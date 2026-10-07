@@ -116,7 +116,7 @@ func Test_rootDir(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Chdir(subDir)
-		result := rootDir(ctx, t)
+		result := RootDir(ctx, t)
 		expectedRootPath, err := filepath.EvalSymlinks(tempDir)
 		require.NoError(t, err)
 
