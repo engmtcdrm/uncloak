@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
 
@@ -86,10 +87,14 @@ func analyzeFileCoverage(report *Report, file string) (*FileReport, error) {
 		return nil, nil
 	}
 
-	reportFile, err := NewFileReport(file)
+	fileReportPath := filepath.Join(report.GitDiffResults.RootDir, file)
+
+	reportFile, err := NewFileReport(fileReportPath)
 	if err != nil {
 		return nil, err
 	}
+
+	reportFile.Path = file
 
 	for line := range newLines {
 		if !report.CoverageProfile.IsInTestCoverage(file, line) {
