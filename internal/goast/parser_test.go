@@ -124,6 +124,32 @@ func (m MyType) Foo() {}
 		require.Contains(t, funcDecls, "MyType.Foo")
 		require.Equal(t, []string{"MyType.Foo"}, funcOrder)
 	})
+
+	t.Run("should use physical line numbers when the file has a line directive", func(t *testing.T) {
+		src := `package main
+//line mapped.go:100
+func Foo() {
+}
+`
+		fileSet := token.NewFileSet()
+		astFile, err := parser.ParseFile(fileSet, "file.go", src, parser.ParseComments)
+		require.NoError(t, err)
+		require.Equal(t, 100, fileSet.Position(astFile.Decls[0].Pos()).Line)
+
+		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
+		require.Equal(t, []string{"Foo"}, funcOrder)
+		require.Equal(t, &FuncDecl{
+			Name:  "Foo",
+			Lines: []int{3, 4},
+			Start: 3,
+			End:   4,
+			Body: FuncBody{
+				Lines: []int{3, 4},
+				Start: 3,
+				End:   4,
+			},
+		}, funcDecls["Foo"])
+	})
 }
 
 // Tests for [receiverTypeName] function.
