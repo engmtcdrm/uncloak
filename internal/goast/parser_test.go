@@ -172,7 +172,7 @@ func init() {}
 
 		funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
 		require.Len(t, funcDecls, 2)
-		require.Equal(t, 2, len(funcOrder))
+		require.Len(t, funcOrder, 2)
 		require.Contains(t, funcOrder[0], "init@")
 		require.Contains(t, funcOrder[1], "init@")
 	})
