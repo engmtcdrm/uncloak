@@ -49,15 +49,15 @@ func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []str
 			continue
 		}
 
-		start := fileSet.Position(funcDecl.Pos()).Line
+		start := fileSet.PositionFor(funcDecl.Pos(), false).Line
 		bodyStart := start
 		bodyEnd := start
 		end := start
 
 		if funcDecl.Body != nil {
-			bodyStart = fileSet.Position(funcDecl.Body.Pos()).Line
-			bodyEnd = fileSet.Position(funcDecl.Body.End()).Line
-			end = fileSet.Position(funcDecl.End()).Line
+			bodyStart = fileSet.PositionFor(funcDecl.Body.Pos(), false).Line
+			bodyEnd = fileSet.PositionFor(funcDecl.Body.End(), false).Line
+			end = fileSet.PositionFor(funcDecl.End(), false).Line
 		}
 
 		name := funcDecl.Name.Name
