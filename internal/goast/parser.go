@@ -61,6 +61,10 @@ func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []str
 		}
 
 		name := funcDecl.Name.Name
+		if name == "init" && funcDecl.Recv == nil {
+			name += "@" + fileSet.PositionFor(funcDecl.Pos(), false).String()
+		}
+
 		if recv := receiverTypeName(funcDecl); recv != "" {
 			name = recv + "." + name
 		}
