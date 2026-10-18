@@ -191,10 +191,50 @@ func formatUncoveredLine(maxLineDigits int, lineNbr int, lineContent string) str
 	)
 }
 
+// outputUncoveredLine writes the uncovered lines for a single file to
+// [os.Stdout]. If outputFile is not nil, the uncovered lines will also be
+// written to that file. If linesOnly is true the output will only include
+// uncovered lines without detailed context.
+func outputUncoveredLine(file *analyzer.FileReport, outputFile *os.File, linesOnly bool) {
+	if file == nil {
+		return
+	}
+
+	// Report unmapped uncovered lines even when an AST is available.
+	unmappedLines := unmappedUncoveredLineRanges(file)
+	displayUncoveredLines(file.Path, unmappedLines)
+	outputUncoveredLinesToFile(outputFile, file.Path, unmappedLines)
+
+	if file.ASTFile == nil {
+		return
+	}
+
+	for _, funcName := range file.ASTFile.FuncOrder {
+		lineRanges, ok := file.FuncUncoveredNewLinesGroups[funcName]
+		if !ok {
+			continue
+		}
+
+		switch linesOnly {
+		case true:
+			displayUncoveredLines(file.Path, lineRanges)
+		default:
+			displayUncoveredFunctionLines(file, funcName)
+		}
+
+		outputUncoveredLinesToFile(outputFile, file.Path, lineRanges)
+	}
+
+	if linesOnly {
+		fmt.Println()
+	}
+}
+
 // outputUncoveredLines writes the uncovered lines from the report to
 // [os.Stdout]. If an output file path is specified, the uncovered lines will
-// also be written to that file.
-func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error {
+// also be written to that file. If linesOnly is true the output will only
+// include uncovered lines without detailed context.
+func outputUncoveredLines(report *analyzer.Report, outputFilePath string, linesOnly bool) error {
 	if !report.HasUncoveredLines() {
 		return nil
 	}
@@ -215,25 +255,7 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 	uncoveredFiles := report.UncoveredFiles()
 
 	for _, file := range uncoveredFiles {
-		// Report unmapped uncovered lines even when an AST is available.
-		unmappedLines := unmappedUncoveredLineRanges(file)
-		displayUncoveredLines(file.Path, unmappedLines)
-		outputUncoveredLinesToFile(outputFile, file.Path, unmappedLines)
-
-		if file.ASTFile == nil {
-			continue
-		}
-
-		for _, funcName := range file.ASTFile.FuncOrder {
-			lineRanges, ok := file.FuncUncoveredNewLinesGroups[funcName]
-			if !ok {
-				continue
-			}
-
-			displayUncoveredFunctionLines(file, funcName)
-			// displayUncoveredLines(file.Path, lineRanges)
-			outputUncoveredLinesToFile(outputFile, file.Path, lineRanges)
-		}
+		outputUncoveredLine(file, outputFile, linesOnly)
 	}
 
 	return nil

@@ -17,6 +17,9 @@ const (
 	debugFlagName = "debug"
 	debugUsage    = "(optional) enable debug output, e.g. what commands are run"
 
+	linesOnlyFlagName = "lines-only"
+	linesOnlyUsage    = "(optional) display only the uncovered lines without detailed context when writing to stdout"
+
 	outputFlagName = "output"
 	outputUsage    = "(optional) file to write new code missing coverage out to"
 
@@ -52,6 +55,7 @@ func newRootCmd() *cobra.Command {
 	rootCmd.Flags().Float64VarP(&c.coverageThreshold, coverageThresholdFlagName, "c", config.DefaultConfig.CoverageThreshold, coverageThresholdUsage)
 	rootCmd.Flags().BoolVarP(&c.debug, debugFlagName, "d", false, debugUsage)
 	rootCmd.Flags().StringVarP(&c.gitTargetRef, targetRefFlagName, "t", "", targetRefUsage)
+	rootCmd.Flags().BoolVarP(&c.linesOnly, linesOnlyFlagName, "l", false, linesOnlyUsage)
 	rootCmd.Flags().StringVarP(&c.output, outputFlagName, "o", "", outputUsage)
 	rootCmd.Flags().BoolVarP(&c.verbose, verboseFlagName, "v", false, verboseUsage)
 

@@ -18,6 +18,7 @@ type cmd struct {
 	coverageFile      string
 	debug             bool
 	gitTargetRef      string
+	linesOnly         bool
 	verbose           bool
 	output            string
 }
@@ -51,7 +52,7 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	if err := outputUncoveredLines(report, c.output); err != nil {
+	if err := outputUncoveredLines(report, c.output, c.linesOnly); err != nil {
 		return err
 	}
 
