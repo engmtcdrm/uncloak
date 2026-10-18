@@ -1,9 +1,9 @@
 module github.com/engmtcdrm/uncloak
 
-go 1.26.8
+go 1.26.9
 
 require (
-	github.com/bmatcuk/doublestar/v4 v4.10.0
+	github.com/bmatcuk/doublestar/v4 v4.10.3
 	github.com/creack/pty v1.1.24
 	github.com/engmtcdrm/go-ansi v1.1.0
 	github.com/engmtcdrm/go-prettyprint v1.2.2
@@ -11,13 +11,13 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/mod v0.40.0
-	golang.org/x/term v0.45.0
+	golang.org/x/mod v0.42.0
+	golang.org/x/term v0.47.0
 )
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 )
