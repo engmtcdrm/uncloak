@@ -477,6 +477,7 @@ func Test_outputUncoveredLine(t *testing.T) {
 		contentsNoAnsi := ansi.Strip(contents)
 		require.NoError(t, err)
 		require.Contains(t, string(contentsNoAnsi), "magic.go:5:7")
+		require.NotContains(t, string(contentsNoAnsi), lineSeparator)
 	})
 }
 
