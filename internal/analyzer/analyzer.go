@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sort"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
 
@@ -115,6 +116,15 @@ func analyzeFileCoverage(report *Report, file string) (*FileReport, error) {
 		if funcName != "" {
 			reportFile.FuncUncoveredNewLines[funcName] = append(reportFile.FuncUncoveredNewLines[funcName], line)
 		}
+	}
+
+	sort.Ints(reportFile.CoveredNewLines)
+	sort.Ints(reportFile.UncoveredNewLines)
+	for _, lines := range reportFile.FuncCoveredNewLines {
+		sort.Ints(lines)
+	}
+	for _, lines := range reportFile.FuncUncoveredNewLines {
+		sort.Ints(lines)
 	}
 
 	return reportFile, nil
