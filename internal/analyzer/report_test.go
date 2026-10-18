@@ -148,9 +148,7 @@ func Test_Report_HasUncoveredLines(t *testing.T) {
 	t.Run("should return true if any file has uncovered new lines", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{}})
-		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{1}, FuncUncoveredNewLines: map[string][]int{
-			"test.go": {1},
-		}})
+		report.Files = append(report.Files, &FileReport{UncoveredNewLines: []int{1}})
 		require.True(t, report.HasUncoveredLines())
 	})
 }
@@ -182,5 +180,22 @@ func Test_Report_TotalNewLines(t *testing.T) {
 		report.Files = append(report.Files, &FileReport{CoveredNewLines: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}})
 		report.Files = append(report.Files, &FileReport{CoveredNewLines: []int{1, 2, 3, 4, 5}})
 		require.Equal(t, 15, report.TotalNewLines())
+	})
+}
+
+// Tests for [Report.UncoveredFiles] function.
+func Test_Report_UncoveredFiles(t *testing.T) {
+	t.Run("should return only files with uncovered new lines", func(t *testing.T) {
+		report := NewReport(80.0, nil, nil)
+		file1 := &FileReport{UncoveredNewLines: []int{}}
+		file2 := &FileReport{UncoveredNewLines: []int{1}}
+		file3 := &FileReport{UncoveredNewLines: []int{2, 3}}
+
+		report.Files = append(report.Files, file1, file2, file3)
+
+		uncoveredFiles := report.UncoveredFiles()
+		require.Len(t, uncoveredFiles, 2)
+		require.Contains(t, uncoveredFiles, file2)
+		require.Contains(t, uncoveredFiles, file3)
 	})
 }

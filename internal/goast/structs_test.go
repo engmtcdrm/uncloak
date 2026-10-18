@@ -85,13 +85,32 @@ func Test_newFuncBody(t *testing.T) {
 
 // Tests for [newFuncDecl] function.
 func Test_newFuncDecl(t *testing.T) {
+	const funcName = "myFunc"
+
 	t.Run("should panic if StartLine is greater than EndLine", func(t *testing.T) {
-		require.Panics(t, func() { newFuncDecl("myFunc", 10, 5, newFuncBody(10, 5)) })
+		require.Panics(t, func() { newFuncDecl(funcName, 10, 5, newFuncBody(10, 5)) })
 	})
 
 	t.Run("should return a valid FuncDecl when StartLine is less than or equal to EndLine", func(t *testing.T) {
-		fd := newFuncDecl("myFunc", 5, 10, newFuncBody(5, 10))
-		require.Equal(t, "myFunc", fd.Name)
+		fd := newFuncDecl(funcName, 5, 10, newFuncBody(5, 10))
+		require.Equal(t, funcName, fd.Name)
+		require.Equal(t, 5, fd.Start)
+		require.Equal(t, 10, fd.End)
+		require.Equal(t, []int{5, 6, 7, 8, 9, 10}, fd.Lines)
+	})
+}
+
+// Tests for [newFuncLit] function.
+func Test_newFuncLit(t *testing.T) {
+	const funcName = "myFunc"
+
+	t.Run("should panic if StartLine is greater than EndLine", func(t *testing.T) {
+		require.Panics(t, func() { newFuncLit(funcName, 10, 5, newFuncBody(10, 5)) })
+	})
+
+	t.Run("should return a valid FuncDecl when StartLine is less than or equal to EndLine", func(t *testing.T) {
+		fd := newFuncLit(funcName, 5, 10, newFuncBody(5, 10))
+		require.Equal(t, funcName, fd.Name)
 		require.Equal(t, 5, fd.Start)
 		require.Equal(t, 10, fd.End)
 		require.Equal(t, []int{5, 6, 7, 8, 9, 10}, fd.Lines)

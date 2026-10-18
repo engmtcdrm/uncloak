@@ -102,18 +102,19 @@ func analyzeFileCoverage(report *Report, file string) (*FileReport, error) {
 		}
 
 		funcName := reportFile.ASTFile.LineFunctionName(line)
-		if funcName == "" {
-			continue
-		}
-
 		if report.CoverageProfile.CoveredLines[file][line] {
-			reportFile.FuncCoveredNewLines[funcName] = append(reportFile.FuncCoveredNewLines[funcName], line)
 			reportFile.CoveredNewLines = append(reportFile.CoveredNewLines, line)
+			if funcName != "" {
+				reportFile.FuncCoveredNewLines[funcName] = append(reportFile.FuncCoveredNewLines[funcName], line)
+			}
+
 			continue
 		}
 
-		reportFile.FuncUncoveredNewLines[funcName] = append(reportFile.FuncUncoveredNewLines[funcName], line)
 		reportFile.UncoveredNewLines = append(reportFile.UncoveredNewLines, line)
+		if funcName != "" {
+			reportFile.FuncUncoveredNewLines[funcName] = append(reportFile.FuncUncoveredNewLines[funcName], line)
+		}
 	}
 
 	return reportFile, nil

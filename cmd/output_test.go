@@ -474,6 +474,23 @@ func Test_outputUncoveredLines(t *testing.T) {
 		t.Logf("Uncovered lines written to %s:\n%s", outputFile, string(contents))
 	})
 
+	t.Run("should output uncovered lines without a function", func(t *testing.T) {
+		tempDir := t.TempDir()
+		outputFile := filepath.Join(tempDir, "uncovered_lines.txt")
+		report := analyzer.NewReport(80, nil, nil)
+		report.Files = append(report.Files, &analyzer.FileReport{
+			Path:              "file.go",
+			UncoveredNewLines: []int{2, 3, 7},
+		})
+
+		err := outputUncoveredLines(report, outputFile)
+		require.NoError(t, err)
+
+		contents, err := os.ReadFile(outputFile)
+		require.NoError(t, err)
+		require.Equal(t, "file.go:2:3\nfile.go:7:7\n", string(contents))
+	})
+
 	t.Run("should return error if output path is not writable", func(t *testing.T) {
 		tempDir, _, report := initReport(t)
 
@@ -604,5 +621,38 @@ func Test_padLines(t *testing.T) {
 				_ = slices.Min(padded)
 			}
 		})
+	})
+}
+
+// Tests for [unmappedUncoveredLineRanges] function.
+func Test_unmappedUncoveredLineRanges(t *testing.T) {
+	t.Run("should return unmapped uncovered line ranges", func(t *testing.T) {
+		file := &analyzer.FileReport{
+			UncoveredNewLines: []int{1, 2, 3, 5, 6},
+			FuncUncoveredNewLines: map[string][]int{
+				"Func1": {1, 2},
+				"Func2": {5},
+			},
+		}
+
+		expected := []analyzer.LineRange{
+			{Start: 3, End: 3},
+			{Start: 6, End: 6},
+		}
+
+		result := unmappedUncoveredLineRanges(file)
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("should return nil if there are no unmapped uncovered lines", func(t *testing.T) {
+		file := &analyzer.FileReport{
+			UncoveredNewLines: []int{1, 2},
+			FuncUncoveredNewLines: map[string][]int{
+				"Func1": {1, 2},
+			},
+		}
+
+		result := unmappedUncoveredLineRanges(file)
+		require.Nil(t, result)
 	})
 }

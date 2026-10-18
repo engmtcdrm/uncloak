@@ -26,7 +26,7 @@ func Parse(filePath string) (*File, error) {
 		return nil, err
 	}
 
-	funcDecls, funcOrder := parseFuncDecls(astFile, fileSet)
+	funcDecls, funcOrder := parseFuncs(astFile, fileSet)
 
 	return &File{
 		Path:      filePath,
@@ -36,50 +36,100 @@ func Parse(filePath string) (*File, error) {
 	}, nil
 }
 
-// parseFuncDecls extracts all function declarations from the given AST file and
-// returns a slice of [FuncDecl] representing all functions found in the AST
-// file.
-func parseFuncDecls(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []string) {
+// parseFuncs parses the AST of a Go source file and extracts function
+// declarations and their order of appearance. It returns a map of function
+// names to [FuncDecl] and a slice of function names in the order they appear in
+// the source file. This function will parse both function declarations and
+// function literals.
+func parseFuncs(astFile *ast.File, fileSet *token.FileSet) (FuncDecls, []string) {
 	funcDecls := make(FuncDecls, len(astFile.Decls))
 	funcOrder := make([]string, 0)
 
-	for _, decl := range astFile.Decls {
-		funcDecl, ok := decl.(*ast.FuncDecl)
-		if !ok {
-			continue
+	ast.Inspect(astFile, func(node ast.Node) bool {
+		switch n := node.(type) {
+		case *ast.FuncDecl:
+			newDecl := parseFuncDecl(n, fileSet)
+			if newDecl == nil {
+				return true
+			}
+
+			funcDecls[newDecl.Name] = newDecl
+			funcOrder = append(funcOrder, newDecl.Name)
+		case *ast.FuncLit:
+			newDecl := parseFuncLit(n, fileSet)
+			if newDecl == nil {
+				return true
+			}
+
+			funcDecls[newDecl.Name] = newDecl
+			funcOrder = append(funcOrder, newDecl.Name)
 		}
 
-		start := fileSet.PositionFor(funcDecl.Pos(), false).Line
-		bodyStart := start
-		bodyEnd := start
-		end := start
-
-		if funcDecl.Body != nil {
-			bodyStart = fileSet.PositionFor(funcDecl.Body.Pos(), false).Line
-			bodyEnd = fileSet.PositionFor(funcDecl.Body.End(), false).Line
-			end = fileSet.PositionFor(funcDecl.End(), false).Line
-		}
-
-		name := funcDecl.Name.Name
-		if name == "init" && funcDecl.Recv == nil {
-			name += "@" + fileSet.PositionFor(funcDecl.Pos(), false).String()
-		}
-
-		if recv := receiverTypeName(funcDecl); recv != "" {
-			name = recv + "." + name
-		}
-
-		funcDecls[name] = newFuncDecl(
-			name,
-			start,
-			end,
-			newFuncBody(bodyStart, bodyEnd),
-		)
-
-		funcOrder = append(funcOrder, name)
-	}
+		return true
+	})
 
 	return funcDecls, funcOrder
+}
+
+// parseFuncDecl parses an AST function declaration and returns a [FuncDecl]
+// representing it. If the input is nil, it returns nil.
+func parseFuncDecl(funcDecl *ast.FuncDecl, fileSet *token.FileSet) *FuncDecl {
+	if funcDecl == nil || fileSet == nil {
+		return nil
+	}
+
+	start := fileSet.PositionFor(funcDecl.Pos(), false)
+	end := fileSet.PositionFor(funcDecl.End(), false).Line
+	bodyStart := start.Line
+	bodyEnd := start.Line
+
+	if funcDecl.Body != nil {
+		bodyStart = fileSet.PositionFor(funcDecl.Body.Pos(), false).Line
+		bodyEnd = fileSet.PositionFor(funcDecl.Body.End(), false).Line
+	}
+
+	name := funcDecl.Name.Name + "@" + start.String()
+
+	if recv := receiverTypeName(funcDecl); recv != "" {
+		name = recv + "." + name
+	}
+
+	return newFuncDecl(
+		name,
+		start.Line,
+		end,
+		newFuncBody(bodyStart, bodyEnd),
+	)
+}
+
+// parseFuncLit parses an AST function literal and returns a [FuncDecl]
+// representing it. If the input is nil, it returns nil.
+func parseFuncLit(funcLit *ast.FuncLit, fileSet *token.FileSet) *FuncDecl {
+	if funcLit == nil || fileSet == nil {
+		return nil
+	}
+
+	start := fileSet.PositionFor(funcLit.Pos(), false)
+	end := start.Line
+	bodyStart := start.Line
+	bodyEnd := start.Line
+
+	if funcLit.Body != nil {
+		end = fileSet.PositionFor(funcLit.End(), false).Line
+		bodyStart = fileSet.PositionFor(funcLit.Body.Pos(), false).Line
+		bodyEnd = fileSet.PositionFor(funcLit.Body.End(), false).Line
+	}
+
+	name := "func@" + start.String()
+
+	newDecl := newFuncLit(
+		name,
+		start.Line,
+		end,
+		newFuncBody(bodyStart, bodyEnd),
+	)
+
+	return newDecl
 }
 
 // receiverTypeName returns the type name of the receiver for the given function

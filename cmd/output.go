@@ -212,8 +212,16 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 
 	fmt.Printf("%s\n\n", colors.LightGreen("Missing coverage:"))
 
-	for _, file := range report.Files {
-		if len(file.FuncUncoveredNewLinesGroups) == 0 {
+	uncoveredFiles := report.UncoveredFiles()
+
+	for _, file := range uncoveredFiles {
+		// Fallback incase the AST file is not available, we handle unmapped
+		// uncovered lines separately.
+		if file.ASTFile == nil {
+			unmappedLines := unmappedUncoveredLineRanges(file)
+			displayUncoveredLines(file.Path, unmappedLines)
+			outputUncoveredLinesToFile(outputFile, file.Path, unmappedLines)
+
 			continue
 		}
 
@@ -276,4 +284,43 @@ func padLines(lines []int, funcBodyLineStart, funcBodyLineEnd int) []int {
 	slices.Sort(paddedUncoveredNewLines)
 
 	return slices.Compact(paddedUncoveredNewLines)
+}
+
+// unmappedUncoveredLineRanges returns the line ranges of uncovered lines that
+// are not mapped to any function in the given file report.
+func unmappedUncoveredLineRanges(file *analyzer.FileReport) []analyzer.LineRange {
+	mappedLines := make(map[int]struct{})
+	for _, lines := range file.FuncUncoveredNewLines {
+		for _, line := range lines {
+			mappedLines[line] = struct{}{}
+		}
+	}
+
+	var unmappedLines []int
+	for _, line := range file.UncoveredNewLines {
+		if _, ok := mappedLines[line]; !ok {
+			unmappedLines = append(unmappedLines, line)
+		}
+	}
+
+	slices.Sort(unmappedLines)
+	if len(unmappedLines) == 0 {
+		return nil
+	}
+
+	lineRanges := make([]analyzer.LineRange, 0, len(unmappedLines))
+	start := unmappedLines[0]
+	end := start
+	for _, line := range unmappedLines[1:] {
+		if line == end+1 {
+			end = line
+			continue
+		}
+
+		lineRanges = append(lineRanges, analyzer.LineRange{Start: start, End: end})
+		start = line
+		end = line
+	}
+
+	return append(lineRanges, analyzer.LineRange{Start: start, End: end})
 }

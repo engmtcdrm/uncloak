@@ -2,6 +2,7 @@ package goast
 
 import (
 	"maps"
+	"math"
 )
 
 // File represents a Go source file, including its path, lines of code, and
@@ -24,15 +25,28 @@ func (f File) LineContent(line int) string {
 }
 
 // LineFunctionName returns the name of the function that covers the given line
-// in the file.
+// in the file. If no function covers the line, it returns an empty string.
 func (f File) LineFunctionName(line int) string {
+	var functionName string
+
+	// Initialize the shortest span to the maximum possible integer value. This
+	// will be used to find the smallest function span that covers the given
+	// line.
+	shortestSpan := math.MaxInt
+
 	for _, decl := range f.FuncDecls {
-		if name := decl.LineFunctionName(line); name != "" {
-			return name
+		if decl == nil || decl.LineFunctionName(line) == "" {
+			continue
+		}
+
+		span := decl.End - decl.Start
+		if span < shortestSpan || span == shortestSpan && decl.IsLiteral {
+			functionName = decl.Name
+			shortestSpan = span
 		}
 	}
 
-	return ""
+	return functionName
 }
 
 // FuncBody represents the body of a function, including the lines it covers and
@@ -61,11 +75,12 @@ func newFuncBody(start, end int) FuncBody {
 // FuncDecl represents a function declaration within a Go source file, including
 // its name, the lines it covers, and its start and end lines.
 type FuncDecl struct {
-	Name  string   // Name of the function.
-	Lines []int    // Lines covered by the function.
-	Start int      // Starting line of the function.
-	End   int      // Ending line of the function.
-	Body  FuncBody // The body of the function.
+	Name      string   // Name of the function.
+	Lines     []int    // Lines covered by the function.
+	Start     int      // Starting line of the function.
+	End       int      // Ending line of the function.
+	Body      FuncBody // The body of the function.
+	IsLiteral bool     // Indicates if the function is an anonymous function literal.
 }
 
 // newFuncDecl creates a new [*FuncDecl] with the given name, start line, and
@@ -84,6 +99,16 @@ func newFuncDecl(name string, start, end int, body FuncBody) *FuncDecl {
 		End:   end,
 		Body:  body,
 	}
+}
+
+// newFuncLit creates a new [*FuncDecl] representing an anonymous function
+// literal with the given name, start line, end line, and body. It sets the
+// IsLiteral flag to true.
+func newFuncLit(name string, start, end int, body FuncBody) *FuncDecl {
+	funcDecl := newFuncDecl(name, start, end, body)
+	funcDecl.IsLiteral = true
+
+	return funcDecl
 }
 
 // LineFunctionName returns the name of the function that covers the given line.

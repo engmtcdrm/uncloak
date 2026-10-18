@@ -236,6 +236,40 @@ func Test_analyzeFileCoverage(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, fileReport)
 	})
+
+	t.Run("should count unmatched and anonymous-function lines in file totals", func(t *testing.T) {
+		const fileName = "sample.go"
+		const fileContent = `
+package sample
+
+var handler = func() {
+	panic("uncovered")
+}
+`
+
+		rootDir := t.TempDir()
+		filePath := filepath.Join(rootDir, "sample.go")
+		err := os.WriteFile(filePath, []byte(fileContent), 0644)
+		require.NoError(t, err)
+
+		report := NewReport(80, &gocover.Profile{
+			CoveredLines: map[string]map[int]bool{
+				fileName: {1: false, 4: false},
+			},
+		}, &gitdiff.Results{
+			RootDir: rootDir,
+			NewLines: map[string]map[int]bool{
+				fileName: {1: true, 4: true},
+			},
+		})
+
+		fileReport, err := analyzeFileCoverage(report, fileName)
+		require.NoError(t, err)
+		require.Equal(t, []int{1, 4}, fileReport.UncoveredNewLines)
+		require.Len(t, fileReport.FuncUncoveredNewLines, 1)
+		require.Equal(t, []int{4}, fileReport.FuncUncoveredNewLines[fileReport.ASTFile.LineFunctionName(4)])
+		require.Equal(t, 2, fileReport.TotalNewLines())
+	})
 }
 
 // Tests for [filterFiles] function.
