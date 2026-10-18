@@ -80,7 +80,7 @@ func CreateBranch(ctx context.Context, t *testing.T, branchName string) {
 func GetTestRepoPath(ctx context.Context, t *testing.T) string {
 	t.Helper()
 
-	repoPath := filepath.Join(rootDir(ctx, t), TestRepoDir)
+	repoPath := filepath.Join(RootDir(ctx, t), TestRepoDir)
 	return repoPath
 }
 
@@ -116,8 +116,8 @@ func getwd(t *testing.T) string {
 	return repoPath
 }
 
-// rootDir returns the root directory of the git repository.
-func rootDir(ctx context.Context, t *testing.T) string {
+// RootDir returns the root directory of the git repository.
+func RootDir(ctx context.Context, t *testing.T) string {
 	t.Helper()
 
 	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--show-toplevel")

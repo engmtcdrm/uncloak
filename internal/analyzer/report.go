@@ -99,3 +99,17 @@ func (r *Report) TotalNewLines() int {
 
 	return total
 }
+
+// UncoveredFiles returns a slice of [FileReport] instances that have uncovered
+// new lines.
+func (r *Report) UncoveredFiles() []*FileReport {
+	var uncoveredFiles []*FileReport
+
+	for _, file := range r.Files {
+		if len(file.UncoveredNewLines) > 0 {
+			uncoveredFiles = append(uncoveredFiles, file)
+		}
+	}
+
+	return uncoveredFiles
+}
