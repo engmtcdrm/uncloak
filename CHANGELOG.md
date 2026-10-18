@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.5.0] - 2026-10-18
+
 ### Added
 
 - feat: added the flag `-l/--lines-only` to display only the uncovered lines without detailed context when writing to terminal (#25)

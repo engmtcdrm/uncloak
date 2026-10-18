@@ -1,7 +1,7 @@
+### Added
+
+- feat: added the flag `-l/--lines-only` to display only the uncovered lines without detailed context when writing to terminal (#25)
+
 ### Changed
 
-- perf: added filtering to `git diff` command to filter only for `*.go` files and excluding `*_test.go` files (#22)
-
-### Fixed
-
-- fix: bug with `git diff` sometimes misrepresenting changes (#22)
+- feat: provide more detailed missing code coverage output (#24)
