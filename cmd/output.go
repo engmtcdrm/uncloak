@@ -215,13 +215,12 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string) error 
 	uncoveredFiles := report.UncoveredFiles()
 
 	for _, file := range uncoveredFiles {
-		// Fallback incase the AST file is not available, we handle unmapped
-		// uncovered lines separately.
-		if file.ASTFile == nil {
-			unmappedLines := unmappedUncoveredLineRanges(file)
-			displayUncoveredLines(file.Path, unmappedLines)
-			outputUncoveredLinesToFile(outputFile, file.Path, unmappedLines)
+		// Report unmapped uncovered lines even when an AST is available.
+		unmappedLines := unmappedUncoveredLineRanges(file)
+		displayUncoveredLines(file.Path, unmappedLines)
+		outputUncoveredLinesToFile(outputFile, file.Path, unmappedLines)
 
+		if file.ASTFile == nil {
 			continue
 		}
 

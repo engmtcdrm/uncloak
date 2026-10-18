@@ -491,6 +491,57 @@ func Test_outputUncoveredLines(t *testing.T) {
 		require.Equal(t, "file.go:2:3\nfile.go:7:7\n", string(contents))
 	})
 
+	t.Run("should output unmapped lines when an AST is available", func(t *testing.T) {
+		tempDir := t.TempDir()
+		stdoutFile := testutils.SetStdout(t)
+		outputFile := filepath.Join(tempDir, "uncovered_lines.txt")
+		report := analyzer.NewReport(80, nil, nil)
+		report.Files = append(report.Files, &analyzer.FileReport{
+			Path:              "file.go",
+			UncoveredNewLines: []int{1, 4},
+			FuncUncoveredNewLines: map[string][]int{
+				"handler": {4},
+			},
+			FuncUncoveredNewLinesGroups: map[string][]analyzer.LineRange{
+				"handler": {{Start: 4, End: 4}},
+			},
+			ASTFile: &goast.File{
+				Lines: []string{
+					"package sample",
+					"func handler() {",
+					"\tstart()",
+					"\tpanic(\"uncovered\")",
+					"}",
+				},
+				FuncDecls: goast.FuncDecls{
+					"handler": {
+						Name:  "handler",
+						Start: 2,
+						End:   5,
+						Body: goast.FuncBody{
+							Start: 2,
+							End:   5,
+						},
+					},
+				},
+				FuncOrder: []string{"handler"},
+			},
+		})
+
+		err := outputUncoveredLines(report, outputFile)
+		require.NoError(t, err)
+
+		stdoutContents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		stdoutContentsNoANSI := ansi.Strip(string(stdoutContents))
+		require.Contains(t, stdoutContentsNoANSI, "file.go:1:1")
+		require.Contains(t, stdoutContentsNoANSI, "panic(\"uncovered\")")
+
+		fileContents, err := os.ReadFile(outputFile)
+		require.NoError(t, err)
+		require.Equal(t, "file.go:1:1\nfile.go:4:4\n", string(fileContents))
+	})
+
 	t.Run("should return error if output path is not writable", func(t *testing.T) {
 		tempDir, _, report := initReport(t)
 
