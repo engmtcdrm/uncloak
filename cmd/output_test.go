@@ -420,43 +420,81 @@ func Test_formatUncoveredLine(t *testing.T) {
 	})
 }
 
+// Tests for [outputUncoveredLine] function.
+func Test_outputUncoveredLine(t *testing.T) {
+	t.Run("should handle nil file", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		outputUncoveredLine(nil, nil, false)
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		require.Empty(t, contents)
+	})
+
+	t.Run("should only output to stdout if outputFile is nil", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		file := &analyzer.FileReport{
+			Path:              "file.go",
+			UncoveredNewLines: []int{2, 3, 7},
+		}
+
+		outputUncoveredLine(file, nil, false)
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		contentsNoAnsi := ansi.Strip(contents)
+		require.NoError(t, err)
+		require.Contains(t, string(contentsNoAnsi), "file.go:2:3")
+		require.Contains(t, string(contentsNoAnsi), "file.go:7:7")
+	})
+
+	t.Run("should output uncovered lines for uncovered files", func(t *testing.T) {
+		_, stdoutFile, report := initReport(t)
+
+		uncoveredFiles := report.UncoveredFiles()
+		require.NotEmpty(t, uncoveredFiles)
+		for _, file := range uncoveredFiles {
+			outputUncoveredLine(file, nil, false)
+		}
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		contentsNoAnsi := ansi.Strip(contents)
+		require.NoError(t, err)
+		require.Contains(t, string(contentsNoAnsi), "magic.go:5:7")
+	})
+
+	t.Run("should output uncovered lines only when onlyLines is true", func(t *testing.T) {
+		_, stdoutFile, report := initReport(t)
+
+		uncoveredFiles := report.UncoveredFiles()
+		require.NotEmpty(t, uncoveredFiles)
+		for _, file := range uncoveredFiles {
+			outputUncoveredLine(file, nil, true)
+		}
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		contentsNoAnsi := ansi.Strip(contents)
+		require.NoError(t, err)
+		require.Contains(t, string(contentsNoAnsi), "magic.go:5:7")
+	})
+}
+
 // Tests for [outputUncoveredLines] function.
 func Test_outputUncoveredLines(t *testing.T) {
-	initReport := func(t *testing.T) (tempDir string, stdoutFile *os.File, report *analyzer.Report) {
-		t.Helper()
-
-		ctx := context.Background()
-
-		cfg := config.DefaultConfig
-		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
-
-		tempDir, stdoutFile = testrepo.InitWithFileCopy(ctx, t)
-		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
-		err := os.Remove(rmTestFile)
-		require.NoError(t, err)
-
-		report, err = analyzer.NewCodeCoverage(&cfg)
-		require.Error(t, err)
-		require.NotNil(t, report)
-
-		require.True(t, report.HasUncoveredLines())
-
-		return tempDir, stdoutFile, report
-	}
-
 	t.Run("should return early if no uncovered lines exist", func(t *testing.T) {
 		report := analyzer.NewReport(80.0, nil, nil)
 
 		require.False(t, report.HasUncoveredLines())
 
-		err := outputUncoveredLines(report, "")
+		err := outputUncoveredLines(report, "", false)
 		require.NoError(t, err)
 	})
 
 	t.Run("should output uncovered lines if they exist", func(t *testing.T) {
 		_, _, report := initReport(t)
 
-		err := outputUncoveredLines(report, "")
+		err := outputUncoveredLines(report, "", false)
 		require.NoError(t, err)
 	})
 
@@ -464,7 +502,7 @@ func Test_outputUncoveredLines(t *testing.T) {
 		tempDir, _, report := initReport(t)
 
 		outputFile := filepath.Join(tempDir, "uncovered_lines.txt")
-		err := outputUncoveredLines(report, outputFile)
+		err := outputUncoveredLines(report, outputFile, false)
 		require.NoError(t, err)
 
 		contents, err := os.ReadFile(outputFile)
@@ -483,7 +521,7 @@ func Test_outputUncoveredLines(t *testing.T) {
 			UncoveredNewLines: []int{2, 3, 7},
 		})
 
-		err := outputUncoveredLines(report, outputFile)
+		err := outputUncoveredLines(report, outputFile, false)
 		require.NoError(t, err)
 
 		contents, err := os.ReadFile(outputFile)
@@ -528,7 +566,7 @@ func Test_outputUncoveredLines(t *testing.T) {
 			},
 		})
 
-		err := outputUncoveredLines(report, outputFile)
+		err := outputUncoveredLines(report, outputFile, false)
 		require.NoError(t, err)
 
 		stdoutContents, err := os.ReadFile(stdoutFile.Name())
@@ -546,7 +584,7 @@ func Test_outputUncoveredLines(t *testing.T) {
 		tempDir, _, report := initReport(t)
 
 		outputFile := filepath.Join(tempDir, "non_existent_dir", "uncovered_lines.txt")
-		err := outputUncoveredLines(report, outputFile)
+		err := outputUncoveredLines(report, outputFile, false)
 		require.Error(t, err)
 	})
 
@@ -555,7 +593,7 @@ func Test_outputUncoveredLines(t *testing.T) {
 
 		require.NotEmpty(t, report.Files)
 		report.Files[0].FuncUncoveredNewLinesGroups = nil
-		err := outputUncoveredLines(report, "")
+		err := outputUncoveredLines(report, "", false)
 		require.NoError(t, err)
 	})
 }
@@ -706,4 +744,26 @@ func Test_unmappedUncoveredLineRanges(t *testing.T) {
 		result := unmappedUncoveredLineRanges(file)
 		require.Nil(t, result)
 	})
+}
+
+func initReport(t *testing.T) (tempDir string, stdoutFile *os.File, report *analyzer.Report) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	cfg := config.DefaultConfig
+	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
+
+	tempDir, stdoutFile = testrepo.InitWithFileCopy(ctx, t)
+	rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
+	err := os.Remove(rmTestFile)
+	require.NoError(t, err)
+
+	report, err = analyzer.NewCodeCoverage(&cfg)
+	require.Error(t, err)
+	require.NotNil(t, report)
+
+	require.True(t, report.HasUncoveredLines())
+
+	return tempDir, stdoutFile, report
 }
