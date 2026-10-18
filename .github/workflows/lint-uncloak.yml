@@ -16,7 +16,7 @@ jobs:
     name: Run Linter
     uses: ./.github/workflows/lint-action.yml
     with:
-      go_version: 1.26.8
+      go_version: 1.26.9
   test:
     name: Run Tests/Check Code Coverage
     needs: lint
@@ -26,6 +26,6 @@ jobs:
     uses: ./.github/workflows/uncloak-action.yml
     with:
       os: ${{ matrix.os }}
-      go_version: 1.26.8
+      go_version: 1.26.9
       base_ref: ${{ github.event.pull_request.base.sha || github.event.before }}
       head_ref: ${{ github.sha }}
