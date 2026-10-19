@@ -8,6 +8,7 @@ import (
 
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
+	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,6 +37,8 @@ func Test_Execute(t *testing.T) {
 	})
 
 	t.Run("should return error if coverage is below default", func(t *testing.T) {
+		_, _ = testutils.SetOutputStreams(t)
+
 		initValidCmd(t)
 		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
 
@@ -52,6 +55,8 @@ func Test_Execute(t *testing.T) {
 	})
 
 	t.Run("should return error if target-ref is not set", func(t *testing.T) {
+		_, _ = testutils.SetOutputStreams(t)
+
 		rootCmd = newRootCmd()
 		err := Execute()
 		require.Error(t, err)
