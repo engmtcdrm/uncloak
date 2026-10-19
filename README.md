@@ -94,6 +94,7 @@ Exclusions support exact file matches and glob patterns. For example:
 - `-c, --coverage-threshold <float>`: (optional) coverage threshold override. This will also overwrite what is specified in the configuration file
 - `-d, --debug`: (optional) enable debug output, e.g. what commands are run
 - `-h, --help`: help for uncloak
+- `-l, --lines-only`: (optional) display only the uncovered lines without detailed context when writing to stdout
 - `-o, --output`: (optional) file to write new code missing coverage out to
 - `-t, --target-ref <string>`: (required) git target reference to compare against, e.g. a branch name or commit hash
 - `-v, --verbose`: (optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output
