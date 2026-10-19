@@ -163,9 +163,7 @@ func Test_displayUncoveredLine(t *testing.T) {
 
 		contentsNoANSI := ansi.Strip(string(contents))
 
-		require.Contains(t, contentsNoANSI, "file.go:1:2")
-
-		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
+		require.Contains(t, contentsNoANSI, "file.go:1:2", "Uncovered lines written to stdout:\n"+string(contents))
 	})
 }
 
@@ -185,9 +183,10 @@ func Test_displayUncoveredLines(t *testing.T) {
 
 		contentsNoANSI := ansi.Strip(string(contents))
 
-		require.Contains(t, contentsNoANSI, "file.go:1:2")
-		require.Contains(t, contentsNoANSI, "file.go:3:4")
-		t.Logf("Uncovered lines written to stdout:\n%s", string(contents))
+		stdoutContents := "Uncovered lines written to stdout:\n" + string(contents)
+
+		require.Contains(t, contentsNoANSI, "file.go:1:2", stdoutContents)
+		require.Contains(t, contentsNoANSI, "file.go:3:4", stdoutContents)
 	})
 }
 
@@ -508,12 +507,12 @@ func Test_outputUncoveredLines(t *testing.T) {
 
 		contents, err := os.ReadFile(outputFile)
 		require.NoError(t, err)
-		require.NotEmpty(t, contents)
-
-		t.Logf("Uncovered lines written to %s:\n%s", outputFile, string(contents))
+		require.NotEmpty(t, contents, "Uncovered lines written to file:\n"+string(contents))
 	})
 
 	t.Run("should output uncovered lines without a function", func(t *testing.T) {
+		_ = testutils.SetStdout(t)
+
 		tempDir := t.TempDir()
 		outputFile := filepath.Join(tempDir, "uncovered_lines.txt")
 		report := analyzer.NewReport(80, nil, nil)
@@ -618,8 +617,7 @@ func Test_outputUncoveredLineToFile(t *testing.T) {
 		outputUncoveredLineToFile(file, "file.go", analyzer.LineRange{Start: 1, End: 2})
 		contents, err := os.ReadFile(tempFile)
 		require.NoError(t, err)
-		require.NotEmpty(t, contents)
-		t.Logf("Uncovered lines written to file:\n%s", string(contents))
+		require.NotEmpty(t, contents, "Uncovered lines written to file:\n"+string(contents))
 	})
 }
 
@@ -648,8 +646,7 @@ func Test_outputUncoveredLinesToFile(t *testing.T) {
 		outputUncoveredLinesToFile(file, "file.go", uncoveredLines)
 		contents, err := os.ReadFile(tempFile)
 		require.NoError(t, err)
-		require.NotEmpty(t, contents)
-		t.Logf("Uncovered lines written to file:\n%s", string(contents))
+		require.NotEmpty(t, contents, "Uncovered lines written to file:\n"+string(contents))
 
 		for _, lineRange := range uncoveredLines {
 			require.Contains(t, string(contents), fmt.Sprintf("file.go:%d:%d", lineRange.Start, lineRange.End))
