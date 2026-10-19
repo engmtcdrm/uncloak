@@ -9,6 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	assertMsgSetStderr      = "os.Stderr should be set to the temp file"
+	assertMsgSetStdout      = "os.Stdout should be set to the temp file"
+	assertMsgNotEqualStdout = "os.Stdout should be different from the original stdout"
+	assertMsgNotEqualStderr = "os.Stderr should be different from the original stderr"
+)
+
 type zeroReader struct{}
 
 // Read implements the [io.Reader] interface for the [zeroReader] type, always
@@ -92,11 +99,32 @@ func Test_ReadPTYOutput(t *testing.T) {
 	})
 }
 
+// Tests for [SetOutputStreams] function.
+func Test_SetOutputStreams(t *testing.T) {
+	originalStdout := *os.Stdout
+	originalStderr := *os.Stderr
+
+	stdoutFile, stderrFile := SetOutputStreams(t)
+	assert.Same(t, stdoutFile, os.Stdout, assertMsgSetStdout)
+	assert.Same(t, stderrFile, os.Stderr, assertMsgSetStderr)
+	assert.NotEqual(t, originalStdout.Fd(), (os.Stdout).Fd(), assertMsgNotEqualStdout)
+	assert.NotEqual(t, originalStderr.Fd(), (os.Stderr).Fd(), assertMsgNotEqualStderr)
+}
+
+// Tests for [SetStderr] function.
+func Test_SetStderr(t *testing.T) {
+	originalStderr := *os.Stderr
+
+	tempFile := SetStderr(t)
+	assert.Same(t, tempFile, os.Stderr, assertMsgSetStderr)
+	assert.NotEqual(t, originalStderr.Fd(), (os.Stderr).Fd(), assertMsgNotEqualStderr)
+}
+
 // Tests for [SetStdout] function.
 func Test_SetStdout(t *testing.T) {
 	originalStdout := *os.Stdout
 
 	tempFile := SetStdout(t)
-	assert.Same(t, tempFile, os.Stdout, "os.Stdout should be set to the temp file")
-	assert.NotEqual(t, originalStdout.Fd(), (os.Stdout).Fd(), "os.Stdout should be different from the original stdout")
+	assert.Same(t, tempFile, os.Stdout, assertMsgSetStdout)
+	assert.NotEqual(t, originalStdout.Fd(), (os.Stdout).Fd(), assertMsgNotEqualStdout)
 }
