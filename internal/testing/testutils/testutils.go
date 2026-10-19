@@ -106,6 +106,42 @@ func ReadPTYOutput(t *testing.T, ptyFile io.Reader, bufferSize int) string {
 	return output.String()
 }
 
+// SetOutputStreams is a helper function that sets both [os.Stdout] and
+// [os.Stderr] to temporary files for the duration of the test. It returns the
+// temporary files for stdout and stderr, respectively. The original streams are
+// restored after the test finishes.
+func SetOutputStreams(t *testing.T) (stdout *os.File, stderr *os.File) {
+	t.Helper()
+
+	stdout = SetStdout(t)
+	stderr = SetStderr(t)
+
+	return stdout, stderr
+}
+
+// SetStderr is a helper function that stores the original [os.Stderr], replaces
+// it with a temporary file, and restores the original [os.Stderr] after the
+// test finishes. It returns the temporary file.
+func SetStderr(t *testing.T) *os.File {
+	t.Helper()
+
+	originalStderr := *os.Stderr
+	t.Cleanup(func() {
+		os.Stderr = &originalStderr
+	})
+
+	tempDir := t.TempDir()
+	tempFile, err := os.CreateTemp(tempDir, "stderr")
+	require.NoError(t, err, "Failed to create temp file: %v", err)
+	t.Cleanup(func() {
+		require.NoError(t, tempFile.Close(), "Failed to close temp file: %v", err)
+	})
+
+	os.Stderr = tempFile
+
+	return tempFile
+}
+
 // SetStdout is a helper function that stores the originl [os.Stdout], replaces
 // it with a temporary file, and restores the original [os.Stdout] after the
 // test finishes. It returns the temporary file.
