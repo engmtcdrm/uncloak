@@ -279,7 +279,7 @@ func Test_load(t *testing.T) {
 	t.Run("should return error if validation fails", func(t *testing.T) {
 		unsupportedVersion := 0
 		for {
-			if slices.Contains(supportedVersions, unsupportedVersion) {
+			if slices.Contains(validVersions, unsupportedVersion) {
 				unsupportedVersion++
 				continue
 			}
