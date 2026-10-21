@@ -277,7 +277,7 @@ func Test_Manager_runMonitorTasks(t *testing.T) {
 		<-doneCh
 
 		contents, err := os.ReadFile(stdoutFile.Name())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Contains(t, string(contents), "Test task")
 		assert.Contains(t, string(contents), "Test task2")
 	})
