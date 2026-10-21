@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/goccy/go-yaml"
@@ -31,7 +32,8 @@ var (
 	// ErrConfigFileEmpty is returned when the configuration file is empty.
 	ErrConfigFileEmpty = errors.New("config file is empty. Delete it or add valid configuration content")
 
-	configFilenames = []string{".uncloak.yml", ".uncloak.yaml"}
+	validFilenames = []string{".uncloak.yml", ".uncloak.yaml"}
+	validVersions  = []int{0}
 )
 
 // Config represents the configuration of the uncloak application.
@@ -76,7 +78,7 @@ func (cfg *Config) IsExclusionFile(file string) bool {
 // Load reads the configuration from the first available config file and returns
 // a Config struct.
 func Load() (*Config, error) {
-	for _, name := range configFilenames {
+	for _, name := range validFilenames {
 		data, err := os.ReadFile(name)
 		if os.IsNotExist(err) {
 			continue
@@ -90,6 +92,32 @@ func Load() (*Config, error) {
 
 	cfg := DefaultConfig
 	return &cfg, nil
+}
+
+// Validate checks the configuration for any invalid values and returns an error
+// if any are found.
+func Validate(cfg *Config) error {
+	if !slices.Contains(validVersions, cfg.Version) {
+		message := fmt.Sprintf("unsupported config version: %d", cfg.Version)
+		return &ValidationError{Message: message}
+	}
+
+	if cfg.GoTestOptions.Count < 0 {
+		message := fmt.Sprintf("go-test.count must be non-negative, got %d", cfg.GoTestOptions.Count)
+		return &ValidationError{Message: message}
+	}
+
+	if cfg.CoverageThreshold < 0.0 || cfg.CoverageThreshold > 100.0 {
+		message := fmt.Sprintf("coverage-threshold must be between 0 and 100, got %f", cfg.CoverageThreshold)
+		return &ValidationError{Message: message}
+	}
+
+	if cfg.GoTestOptions.Timeout < 0 {
+		message := fmt.Sprintf("go-test.timeout must be non-negative, got %v", cfg.GoTestOptions.Timeout)
+		return &ValidationError{Message: message}
+	}
+
+	return nil
 }
 
 // load reads the configuration from the provided reader and returns a [Config]
@@ -111,30 +139,4 @@ func load(r *bytes.Reader) (*Config, error) {
 	}
 
 	return &cfg, nil
-}
-
-// Validate checks the configuration for any invalid values and returns an error
-// if any are found.
-func Validate(cfg *Config) error {
-	if cfg.Version != 0 {
-		message := fmt.Sprintf("unsupported config version: %d", cfg.Version)
-		return &ValidationError{Message: message}
-	}
-
-	if cfg.GoTestOptions.Count < 0 {
-		message := fmt.Sprintf("go-test.count must be non-negative, got %d", cfg.GoTestOptions.Count)
-		return &ValidationError{Message: message}
-	}
-
-	if cfg.CoverageThreshold < 0.0 || cfg.CoverageThreshold > 100.0 {
-		message := fmt.Sprintf("coverage-threshold must be between 0 and 100, got %f", cfg.CoverageThreshold)
-		return &ValidationError{Message: message}
-	}
-
-	if cfg.GoTestOptions.Timeout < 0 {
-		message := fmt.Sprintf("go-test.timeout must be non-negative, got %v", cfg.GoTestOptions.Timeout)
-		return &ValidationError{Message: message}
-	}
-
-	return nil
 }
