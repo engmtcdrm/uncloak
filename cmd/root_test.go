@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/app"
 	"github.com/engmtcdrm/uncloak/internal/gitdiff"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -61,5 +63,25 @@ func Test_Execute(t *testing.T) {
 		err := Execute()
 		require.Error(t, err)
 		require.ErrorIs(t, err, errGitTargetRef)
+	})
+}
+
+// Tests for [init] function.
+func Test_init(t *testing.T) {
+	t.Run("should set rootCmd", func(t *testing.T) {
+		require.NotNil(t, rootCmd)
+	})
+}
+
+// Tests for [newRootCmd] function.
+func Test_newRootCmd(t *testing.T) {
+	t.Run("should return a non-nil root command", func(t *testing.T) {
+		cmd := newRootCmd()
+		require.NotNil(t, cmd)
+		assert.Equal(t, app.Name, cmd.Use)
+		assert.Equal(t, app.ShortDesc, cmd.Short)
+		assert.Equal(t, app.LongDesc, cmd.Long)
+		assert.Equal(t, app.Name+" -t main", cmd.Example)
+		assert.Equal(t, app.Version, cmd.Version)
 	})
 }

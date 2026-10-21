@@ -1,9 +1,12 @@
 package config
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"os/user"
 	"runtime"
+	"slices"
 	"testing"
 	"time"
 
@@ -11,6 +14,14 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/testing/testconfig"
 	"github.com/stretchr/testify/require"
 )
+
+// Tests for [ValidationError.Error] function.
+func Test_ValidationError_Error(t *testing.T) {
+	t.Run("should return the error message", func(t *testing.T) {
+		err := &ValidationError{Message: "invalid config"}
+		require.Equal(t, "config validation: invalid config", err.Error())
+	})
+}
 
 // Tests for [Config.IsExclusionFile] function.
 func Test_Config_IsExclusionFile(t *testing.T) {
@@ -152,8 +163,8 @@ func Test_Load(t *testing.T) {
 	})
 }
 
-// Tests for [validate] function.
-func Test_validate(t *testing.T) {
+// Tests for [Validate] function.
+func Test_Validate(t *testing.T) {
 	t.Run("should return no error for valid config", func(t *testing.T) {
 		cfg := &DefaultConfig
 		err := Validate(cfg)
@@ -247,5 +258,39 @@ func Test_validate(t *testing.T) {
 		}
 		err := Validate(cfg)
 		require.NoError(t, err)
+	})
+}
+
+// Tests for [load] function.
+func Test_load(t *testing.T) {
+	t.Run("should return error for empty reader", func(t *testing.T) {
+		r := &bytes.Reader{}
+		_, err := load(r)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrConfigFileEmpty)
+	})
+
+	t.Run("should return error for invalid YAML", func(t *testing.T) {
+		r := bytes.NewReader([]byte("invalid: yaml:"))
+		_, err := load(r)
+		require.Error(t, err)
+	})
+
+	t.Run("should return error if validation fails", func(t *testing.T) {
+		unsupportedVersion := 0
+		for {
+			if slices.Contains(supportedVersions, unsupportedVersion) {
+				unsupportedVersion++
+				continue
+			}
+
+			break
+		}
+
+		testConfig := fmt.Sprintf("version: %d", unsupportedVersion)
+
+		r := bytes.NewReader([]byte(testConfig))
+		_, err := load(r)
+		require.Error(t, err)
 	})
 }
