@@ -102,8 +102,8 @@ func Test_getwd(t *testing.T) {
 	})
 }
 
-// Tests for [rootDir] function.
-func Test_rootDir(t *testing.T) {
+// Tests for [RootDir] function.
+func Test_RootDir(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should return the root directory of the temp directory", func(t *testing.T) {

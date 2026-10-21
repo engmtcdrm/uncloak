@@ -46,6 +46,24 @@ func Test_CopyDir(t *testing.T) {
 	})
 }
 
+// Tests for [CopyFile] function.
+func Test_CopyFile(t *testing.T) {
+	t.Run("CopyFile copies a single file to the destination directory", func(t *testing.T) {
+		tempDir := t.TempDir()
+		srcFilePath := filepath.Join(tempDir, "source.txt")
+		const content = "Hello, World!"
+		CreateFile(t, srcFilePath, content)
+
+		destDir := t.TempDir()
+		CopyFile(t, srcFilePath, destDir)
+
+		destFilePath := filepath.Join(destDir, "source.txt")
+		readContent, err := os.ReadFile(destFilePath)
+		require.NoError(t, err)
+		require.Equal(t, content, string(readContent))
+	})
+}
+
 // Tests for [ReadFile] function.
 func Test_ReadFile(t *testing.T) {
 	t.Run("should read the content of a file", func(t *testing.T) {

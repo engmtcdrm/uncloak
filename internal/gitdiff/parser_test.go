@@ -70,6 +70,19 @@ func Test_Run(t *testing.T) {
 	})
 }
 
+// Tests for [cmdArgsToString] function.
+func Test_cmdArgsToString(t *testing.T) {
+	t.Run("should return an empty string for no arguments", func(t *testing.T) {
+		result := cmdArgsToString([]string{})
+		require.Empty(t, result)
+	})
+
+	t.Run("should return a space-separated string for multiple arguments", func(t *testing.T) {
+		result := cmdArgsToString([]string{"git", "diff", "--cached"})
+		require.Equal(t, "git diff --cached", result)
+	})
+}
+
 // Tests for [parseHunkHeader] function.
 func Test_parseHunkHeader(t *testing.T) {
 	t.Run("valid hunk header", func(t *testing.T) {

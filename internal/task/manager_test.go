@@ -246,6 +246,43 @@ func Test_Manager_monitorTasks(t *testing.T) {
 	})
 }
 
+// Tests for [Manager.runMonitorTasks] function.
+func Test_Manager_runMonitorTasks(t *testing.T) {
+	t.Run("should start monitoring tasks in a separate goroutine", func(t *testing.T) {
+		stdoutFile := testutils.SetStdout(t)
+
+		manager := NewManager()
+		manager.Out = stdoutFile
+		doneCh := make(chan struct{})
+
+		task := NewTask("task1", "Test task")
+		manager.AddTask(task)
+		task.Start()
+
+		task2 := NewTask("task2", "Test task2")
+		manager.AddTask(task2)
+		task2.Start()
+
+		go func() {
+			manager.runMonitorTasks()
+			close(doneCh)
+		}()
+
+		// Give some time for the goroutine to start
+		time.Sleep(100 * time.Millisecond)
+		assert.False(t, manager.isTerminal()) // Just a placeholder assertion
+
+		// Stop the monitoring
+		close(manager.stopChan)
+		<-doneCh
+
+		contents, err := os.ReadFile(stdoutFile.Name())
+		require.NoError(t, err)
+		assert.Contains(t, string(contents), "Test task")
+		assert.Contains(t, string(contents), "Test task2")
+	})
+}
+
 // Tests for [Manager.terminalWidth] function.
 func Test_Manager_terminalWidth(t *testing.T) {
 	t.Run("should return the width of the terminal", func(t *testing.T) {
