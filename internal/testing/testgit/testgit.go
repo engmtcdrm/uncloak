@@ -17,7 +17,7 @@ const (
 	MainBranchName = "main"
 
 	// TestRepoDir represents the directory name of the test git repository.
-	TestRepoDir = "test-repo-covered"
+	TestRepoDir = "testdata/test-repo-covered"
 )
 
 var (
