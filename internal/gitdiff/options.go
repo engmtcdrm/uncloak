@@ -10,11 +10,15 @@ var (
 	// DefaultOptions provides the default configuration for the git diff command.
 	DefaultOptions = Options{}
 
-	// goFileFilters defines the patterns for Go files to include and exclude in
-	// the git diff command.
+	// goFileFilters defines the patterns for Go-related files to include in the
+	// git diff command.
+	//
+	// Use the following pattern to exclude specific files if needed:
+	// 	":(exclude)<file pattern>"; Example: ":(exclude)*_test.go"
 	goFileFilters = []string{
 		"*.go",
-		":(exclude)*_test.go",
+		"*go.mod",
+		"*go.sum",
 	}
 )
 
