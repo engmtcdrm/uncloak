@@ -21,25 +21,20 @@ const (
 )
 
 var (
-	gitInitCmds = []gitCmd{
-		{name: "init", args: []string{"git", "init"}},
-		{name: "branch", args: []string{"git", "branch", "-m", MainBranchName}},
-		{name: "config-user", args: []string{"git", "config", "user.name", "test-user"}},
-		{name: "config-email", args: []string{"git", "config", "user.email", "test-user@example.com"}},
+	gitInitCmds = []gitArgs{
+		{name: "init", args: []string{"init"}},
+		{name: "branch", args: []string{"branch", "-m", MainBranchName}},
+		{name: "config-user", args: []string{"config", "user.name", "test-user"}},
+		{name: "config-email", args: []string{"config", "user.email", "test-user@example.com"}},
 	}
 
-	gitAddCommitCmds = []gitCmd{
-		{name: "add", args: []string{"git", "add", "."}},
-		{name: "commit", args: []string{"git", "commit", "-m"}},
-	}
-
-	gitCreateBranchCmds = []gitCmd{
-		{name: "branch", args: []string{"git", "branch"}},
-		{name: "checkout", args: []string{"git", "checkout"}},
+	gitAddCommitCmds = []gitArgs{
+		{name: "add", args: []string{"add", "."}},
+		{name: "commit", args: []string{"commit", "-m"}},
 	}
 )
 
-type gitCmd struct {
+type gitArgs struct {
 	name string
 	args []string
 }
@@ -58,8 +53,16 @@ func AddCommit(ctx context.Context, t *testing.T, commitMsg string) {
 			args = append(args, commitMsg)
 		}
 
-		execCmd(ctx, t, args, repoPath)
+		_ = RunGit(ctx, t, args, repoPath)
 	}
+}
+
+// Checkout checks out the specified branch in the git repository.
+func Checkout(ctx context.Context, t *testing.T, branchName string) {
+	t.Helper()
+
+	repoPath := getwd(t)
+	_ = RunGit(ctx, t, []string{"checkout", branchName}, repoPath)
 }
 
 // CreateBranch creates a new branch and checks it out in the git repository.
@@ -68,11 +71,7 @@ func CreateBranch(ctx context.Context, t *testing.T, branchName string) {
 
 	repoPath := getwd(t)
 
-	for _, cmd := range gitCreateBranchCmds {
-		args := cmd.args
-		args = append(args, branchName)
-		execCmd(ctx, t, args, repoPath)
-	}
+	_ = RunGit(ctx, t, []string{"branch", branchName}, repoPath)
 }
 
 // GetTestRepoPath returns the absolute path to the test git repository
@@ -91,29 +90,8 @@ func Init(ctx context.Context, t *testing.T) {
 	repoPath := getwd(t)
 
 	for _, cmd := range gitInitCmds {
-		execCmd(ctx, t, cmd.args, repoPath)
+		_ = RunGit(ctx, t, cmd.args, repoPath)
 	}
-}
-
-// execCmd executes a command in the given repository path and checks for
-// errors.
-func execCmd(ctx context.Context, t *testing.T, args []string, repoPath string) {
-	t.Helper()
-
-	execCmd := exec.CommandContext(ctx, args[0], args[1:]...)
-	execCmd.Dir = repoPath
-	output, err := execCmd.CombinedOutput()
-	require.NoError(t, err, "Failed to run command %q, output: %s", args, string(output))
-}
-
-// getwd returns the current working directory.
-func getwd(t *testing.T) string {
-	t.Helper()
-
-	repoPath, err := os.Getwd()
-	require.NoError(t, err, "Failed to get current working directory")
-
-	return repoPath
 }
 
 // RootDir returns the root directory of the git repository.
@@ -130,4 +108,26 @@ func RootDir(ctx context.Context, t *testing.T) string {
 	require.NoError(t, err, "Failed to resolve git root directory")
 
 	return rootPath
+}
+
+// RunGit executes a command in the given repository path and checks for errors.
+func RunGit(ctx context.Context, t *testing.T, args []string, repoPath string) []byte {
+	t.Helper()
+
+	execCmd := exec.CommandContext(ctx, "git", args...)
+	execCmd.Dir = repoPath
+	output, err := execCmd.CombinedOutput()
+	require.NoError(t, err, "Failed to run command %q, output: %s", args, string(output))
+
+	return output
+}
+
+// getwd returns the current working directory.
+func getwd(t *testing.T) string {
+	t.Helper()
+
+	repoPath, err := os.Getwd()
+	require.NoError(t, err, "Failed to get current working directory")
+
+	return repoPath
 }
