@@ -2,12 +2,12 @@ package gitdiff
 
 import (
 	"context"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/engmtcdrm/uncloak/internal/testing/testfiles"
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
@@ -360,31 +360,22 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		sharedFile := filepath.Join(tempDir, "shared.go")
 		featureFile := filepath.Join(tempDir, "feature_only.go")
 
-		runGit := func(args ...string) {
-			t.Helper()
-
-			cmd := exec.CommandContext(ctx, "git", args...)
-			cmd.Dir = tempDir
-			output, err := cmd.CombinedOutput()
-			require.NoError(t, err, "failed to run git %v: %s", args, string(output))
-		}
-
-		require.NoError(t, os.WriteFile(sharedFile, []byte("package fixture\nvar Shared = 1\n"), 0o644))
+		testfiles.CreateFile(t, sharedFile, "package fixture\nvar Shared = 1\n")
 		testgit.AddCommit(ctx, t, "Add shared file")
 
 		testgit.CreateBranch(ctx, t, "feature")
 
-		runGit("checkout", testgit.MainBranchName)
-		runGit("checkout", "-b", "target-side")
+		testgit.Checkout(ctx, t, testgit.MainBranchName)
+		testgit.CreateBranch(ctx, t, "target-side")
 
-		require.NoError(t, os.WriteFile(sharedFile, []byte("package fixture\nvar Shared = 2\n"), 0o644))
+		testfiles.CreateFile(t, sharedFile, "package fixture\nvar Shared = 2\n")
 		testgit.AddCommit(ctx, t, "Target-only change")
 
-		runGit("checkout", testgit.MainBranchName)
-		runGit("merge", "--no-ff", "target-side", "-m", "Merge target-only change")
-		runGit("checkout", "feature")
+		testgit.Checkout(ctx, t, testgit.MainBranchName)
+		_ = testgit.RunGit(ctx, t, []string{"merge", "--no-ff", "target-side", "-m", "Merge target-only change"}, tempDir)
+		testgit.Checkout(ctx, t, "feature")
 
-		require.NoError(t, os.WriteFile(featureFile, []byte("package fixture\nvar FeatureOnly = 99\n"), 0o644))
+		testfiles.CreateFile(t, featureFile, "package fixture\nvar FeatureOnly = 99\n")
 		testgit.AddCommit(ctx, t, "Feature-only change")
 
 		results, err := p.runAndParseGitDiff(ctx, Options{TargetRef: testgit.MainBranchName})
@@ -393,6 +384,85 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 		assert.Equal(t, []string{"feature_only.go"}, results.Files())
 		assert.Equal(t, map[int]bool{1: true, 2: true}, results.NewLines["feature_only.go"])
 		assert.NotContains(t, results.NewLines, "shared.go")
+	})
+
+	t.Run("should return results when go.mod is modified in new branch", func(t *testing.T) {
+		tempDir, _ := testrepo.Init(ctx, t)
+		_ = tempDir
+
+		const goModInitContents = `module github.com/engmtcdrm/testing
+
+go 1.26.9
+`
+
+		const goModUpdateContents = `
+require github.com/engmtcdrm/go-ansi v1.0.0
+`
+
+		goModFile := filepath.Join(tempDir, "go.mod")
+		testfiles.CreateFile(t, goModFile, goModInitContents)
+
+		testgit.AddCommit(ctx, t, "Add go.mod")
+
+		testgit.CreateBranch(ctx, t, "feature")
+		testgit.Checkout(ctx, t, "feature")
+
+		testfiles.AppendFile(t, goModFile, goModUpdateContents)
+		testgit.AddCommit(ctx, t, "Update go.mod")
+
+		opts := Options{TargetRef: testgit.MainBranchName}
+
+		results, err := p.runAndParseGitDiff(ctx, opts)
+		require.NoError(t, err)
+		assert.NotNil(t, results)
+	})
+
+	t.Run("should return results when go.sum is modified in new branch", func(t *testing.T) {
+		tempDir, _ := testrepo.Init(ctx, t)
+
+		const goSumInitContents = "github.com/engmtcdrm/go-ansi v1.0.0 h1:dummyhash\n"
+		const goSumUpdateContents = "github.com/engmtcdrm/go-ansi v1.0.0 h1:updatedhash\n"
+
+		goSumFile := filepath.Join(tempDir, "go.sum")
+		testfiles.CreateFile(t, goSumFile, goSumInitContents)
+
+		testgit.AddCommit(ctx, t, "Add go.sum")
+
+		testgit.CreateBranch(ctx, t, "feature")
+		testgit.Checkout(ctx, t, "feature")
+
+		testfiles.AppendFile(t, goSumFile, goSumUpdateContents)
+		testgit.AddCommit(ctx, t, "Update go.sum")
+
+		opts := Options{TargetRef: testgit.MainBranchName}
+
+		results, err := p.runAndParseGitDiff(ctx, opts)
+		require.NoError(t, err)
+		assert.NotNil(t, results)
+	})
+
+	t.Run("should return results when Go test file is modified in a new branch", func(t *testing.T) {
+		tempDir, _ := testrepo.Init(ctx, t)
+
+		const testFileInitContents = "package main\n\nfunc TestSomething(t *testing.T) {}\n"
+		const testFileUpdateContents = "package main\n\nfunc TestSomething(t *testing.T) {}\nfunc TestAnother(t *testing.T) {}\n"
+
+		testFile := filepath.Join(tempDir, "main_test.go")
+		testfiles.CreateFile(t, testFile, testFileInitContents)
+
+		testgit.AddCommit(ctx, t, "Add main_test.go")
+
+		testgit.CreateBranch(ctx, t, "feature")
+		testgit.Checkout(ctx, t, "feature")
+
+		testfiles.AppendFile(t, testFile, testFileUpdateContents)
+		testgit.AddCommit(ctx, t, "Update main_test.go")
+
+		opts := Options{TargetRef: testgit.MainBranchName}
+
+		results, err := p.runAndParseGitDiff(ctx, opts)
+		require.NoError(t, err)
+		assert.NotNil(t, results)
 	})
 }
 
