@@ -81,6 +81,7 @@ func InitWithFileCopy(ctx context.Context, t *testing.T) (string, *os.File) {
 	// Copy the test repo and commit the changes
 	testfiles.CopyDir(t, repoPath, tempDir)
 	testgit.CreateBranch(ctx, t, NewBranchName)
+	testgit.Checkout(ctx, t, NewBranchName)
 	testgit.AddCommit(ctx, t, "New development")
 
 	return tempDir, stdoutFile
