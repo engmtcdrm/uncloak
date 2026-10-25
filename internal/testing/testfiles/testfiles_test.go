@@ -11,6 +11,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Tests for [AppendFile] function.
+func Test_AppendFile(t *testing.T) {
+	t.Run("should append content to an existing file", func(t *testing.T) {
+		const initialContent = "Hello"
+		const appendedContent = ", World!"
+		const expectedContent = initialContent + appendedContent
+
+		tempDir := t.TempDir()
+		filePath := filepath.Join(tempDir, "testfile.txt")
+		CreateFile(t, filePath, initialContent)
+
+		AppendFile(t, filePath, appendedContent)
+
+		content, err := os.ReadFile(filePath)
+		require.NoError(t, err)
+		require.Equal(t, expectedContent, string(content))
+	})
+}
+
 // Tests for [CreateFile] function.
 func Test_CreateFile(t *testing.T) {
 	t.Run("should create a file with the specified content", func(t *testing.T) {

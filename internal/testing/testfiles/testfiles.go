@@ -9,6 +9,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// AppendFile appends the specified content to the file at the given filePath.
+func AppendFile(t *testing.T, filePath, content string) {
+	t.Helper()
+
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, f.Close())
+	})
+
+	_, err = f.Write([]byte(content))
+	require.NoError(t, err)
+}
+
 // CreateFile creates a file with the specified content at the given filePath.
 func CreateFile(t *testing.T, filePath, content string) {
 	t.Helper()
