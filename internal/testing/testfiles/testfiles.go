@@ -13,14 +13,12 @@ import (
 func AppendFile(t *testing.T, filePath, content string) {
 	t.Helper()
 
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	tmpFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, f.Close())
-	})
 
-	_, err = f.Write([]byte(content))
+	_, err = tmpFile.Write([]byte(content))
 	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
 }
 
 // CreateFile creates a file with the specified content at the given filePath.
