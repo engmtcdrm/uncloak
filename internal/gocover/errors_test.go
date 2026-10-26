@@ -1,7 +1,6 @@
 package gocover
 
 import (
-	"context"
 	"errors"
 	"os/exec"
 	"testing"
@@ -11,10 +10,8 @@ import (
 
 // Tests for [handleParseError] function.
 func Test_handleParseError(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return an error with command and output when exec fails with panic", func(t *testing.T) {
-		cmd := exec.CommandContext(ctx, "go", "test", "-coverprofile=coverage.out", "./...")
+		cmd := exec.CommandContext(t.Context(), "go", "test", "-coverprofile=coverage.out", "./...")
 		err := handleParseError(cmd, []byte("output"), &exec.ExitError{Stderr: []byte("panic: something went wrong")})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "go test -coverprofile=coverage.out ./...")
@@ -23,7 +20,7 @@ func Test_handleParseError(t *testing.T) {
 	})
 
 	t.Run("should return an error with command and output when exec fails", func(t *testing.T) {
-		cmd := exec.CommandContext(ctx, "go", "test", "-coverprofile=coverage.out", "./...")
+		cmd := exec.CommandContext(t.Context(), "go", "test", "-coverprofile=coverage.out", "./...")
 		err := handleParseError(cmd, []byte("output"), &exec.ExitError{Stderr: []byte("stderr")})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "go test -coverprofile=coverage.out ./...")
@@ -32,7 +29,7 @@ func Test_handleParseError(t *testing.T) {
 	})
 
 	t.Run("should return an error with command and output when exec fails with unknown error", func(t *testing.T) {
-		cmd := exec.CommandContext(ctx, "go", "test", "-coverprofile=coverage.out", "./...")
+		cmd := exec.CommandContext(t.Context(), "go", "test", "-coverprofile=coverage.out", "./...")
 		err := handleParseError(cmd, []byte("output"), errors.New("unknown error"))
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "go test -coverprofile=coverage.out ./...")

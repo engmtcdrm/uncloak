@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -747,12 +746,10 @@ func Test_unmappedUncoveredLineRanges(t *testing.T) {
 func initReport(t *testing.T) (tempDir string, stdoutFile *os.File, report *analyzer.Report) {
 	t.Helper()
 
-	ctx := context.Background()
-
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 
-	tempDir, stdoutFile = testrepo.InitWithFileCopy(ctx, t)
+	tempDir, stdoutFile = testrepo.InitWithFileCopy(t.Context(), t)
 	rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
 	err := os.Remove(rmTestFile)
 	require.NoError(t, err)

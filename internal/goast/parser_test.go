@@ -1,7 +1,6 @@
 package goast
 
 import (
-	"context"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -18,8 +17,7 @@ import (
 // Tests for [Parse] function.
 func Test_Parse(t *testing.T) {
 	t.Run("should parse a valid Go source file", func(t *testing.T) {
-		ctx := context.Background()
-		rootDir := testgit.RootDir(ctx, t)
+		rootDir := testgit.RootDir(t.Context(), t)
 		file := filepath.Join(rootDir, testgit.TestRepoDir, "magic.go")
 		parsedFile, err := Parse(file)
 		require.NoError(t, err)

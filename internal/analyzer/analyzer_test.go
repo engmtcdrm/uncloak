@@ -23,13 +23,12 @@ const doesNotExist = "does-not-exist"
 
 // Tests for [NewCodeCoverage] function.
 func Test_NewCodeCoverage(t *testing.T) {
-	ctx := context.Background()
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 	testutils.SetStdout(t)
 
 	t.Run("should return a report without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		report, err := NewCodeCoverage(&cfg)
 		require.NoError(t, err)
@@ -37,7 +36,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return a report without error when debug is true", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		_ = testutils.SetStdout(t)
 
 		cfg := config.DefaultConfig
@@ -57,7 +56,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return no error if there are no new lines from git diff", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		cfg := config.DefaultConfig
 		cfg.GitDiffOptions.TargetRef = testrepo.NewBranchName
@@ -69,7 +68,7 @@ func Test_NewCodeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return an error when coverage is below threshold", func(t *testing.T) {
-		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
+		tempDir, _ := testrepo.InitWithFileCopy(t.Context(), t)
 		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
 		err := os.Remove(rmTestFile)
 		require.NoError(t, err)
@@ -80,16 +79,16 @@ func Test_NewCodeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return no error when none of the new lines are part of the coverage profile", func(t *testing.T) {
-		repoPath := testgit.GetTestRepoPath(ctx, t)
-		tempDir, _ := testrepo.Init(ctx, t)
+		repoPath := testgit.GetTestRepoPath(t.Context(), t)
+		tempDir, _ := testrepo.Init(t.Context(), t)
 
 		testfiles.CopyDir(t, repoPath, tempDir)
-		testgit.AddCommit(ctx, t, "Add more files")
+		testgit.AddCommit(t.Context(), t, "Add more files")
 
 		readmePath := filepath.Join(tempDir, "README.md")
 		testfiles.CreateFile(t, readmePath, "# Test README\nThis is a test README file.")
-		testgit.CreateBranch(ctx, t, testrepo.NewBranchName)
-		testgit.AddCommit(ctx, t, "Updated README.md")
+		testgit.CreateBranch(t.Context(), t, testrepo.NewBranchName)
+		testgit.AddCommit(t.Context(), t, "Updated README.md")
 
 		report, err := NewCodeCoverage(&cfg)
 		require.NoError(t, err)
@@ -99,13 +98,12 @@ func Test_NewCodeCoverage(t *testing.T) {
 
 // Tests for [analyzeCoverage] function.
 func Test_analyzeCoverage(t *testing.T) {
-	ctx := context.Background()
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 	testutils.SetStdout(t)
 
 	t.Run("should return a report with files", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
@@ -120,7 +118,7 @@ func Test_analyzeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return a report with excluded files", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		cfg := config.DefaultConfig
 		cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
@@ -143,7 +141,7 @@ func Test_analyzeCoverage(t *testing.T) {
 			t.Skip("Skipping test on Windows due to file permission limitations")
 		}
 
-		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
+		tempDir, _ := testrepo.InitWithFileCopy(t.Context(), t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
@@ -164,13 +162,12 @@ func Test_analyzeCoverage(t *testing.T) {
 
 // Tests for [analyzeFileCoverage] function.
 func Test_analyzeFileCoverage(t *testing.T) {
-	ctx := context.Background()
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 	testutils.SetStdout(t)
 
 	t.Run("should return a file report without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
@@ -193,7 +190,7 @@ func Test_analyzeFileCoverage(t *testing.T) {
 			t.Skip("Skipping test on Windows due to file permission limitations")
 		}
 
-		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
+		tempDir, _ := testrepo.InitWithFileCopy(t.Context(), t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
@@ -216,7 +213,7 @@ func Test_analyzeFileCoverage(t *testing.T) {
 	})
 
 	t.Run("should continue processing if func name is not found", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
@@ -317,10 +314,9 @@ func Test_printCommands(t *testing.T) {
 	})
 
 	t.Run("should print diffResults command if coverageProfile is nil", func(t *testing.T) {
-		ctx := context.Background()
 		stdoutFile := testutils.SetStdout(t)
 
-		diffResults, err := gitdiff.NewResults(ctx, "git diff --name-only")
+		diffResults, err := gitdiff.NewResults(t.Context(), "git diff --name-only")
 		require.NoError(t, err)
 
 		printCommands(nil, diffResults)
@@ -331,11 +327,10 @@ func Test_printCommands(t *testing.T) {
 	})
 
 	t.Run("should print both coverageProfile and diffResults commands if both are provided", func(t *testing.T) {
-		ctx := context.Background()
 		stdoutFile := testutils.SetStdout(t)
 
 		coverageProfile := gocover.NewProfile("go test -coverprofile=coverage.out", []byte{})
-		diffResults, err := gitdiff.NewResults(ctx, "git diff --name-only")
+		diffResults, err := gitdiff.NewResults(t.Context(), "git diff --name-only")
 		require.NoError(t, err)
 
 		printCommands(coverageProfile, diffResults)
@@ -349,12 +344,11 @@ func Test_printCommands(t *testing.T) {
 
 // Tests for [processFiles] function.
 func Test_processFiles(t *testing.T) {
-	ctx := context.Background()
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
 
 	t.Run("should return a profile and diff without error", func(t *testing.T) {
-		_, stdoutFile := testrepo.InitWithFileCopy(ctx, t)
+		_, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
 
 		profile, diff, err := processFiles(&cfg)
 		require.NoError(t, err)
@@ -414,7 +408,7 @@ func Test_processFiles(t *testing.T) {
 			t.Skip("Skipping test on Windows due to permission issues with temp directories.")
 		}
 
-		_, stdoutFile := testrepo.InitWithFileCopy(ctx, t)
+		_, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
 
 		tempDir := t.TempDir() + doesNotExist
 		t.Setenv("TMPDIR", tempDir)
@@ -442,8 +436,6 @@ func Test_processFiles(t *testing.T) {
 //
 //nolint:dupl
 func Test_runTaskGitDiff(t *testing.T) {
-	ctx := context.Background()
-
 	runTask := func(ctx context.Context, t *testing.T, stdoutFile *os.File) (*gitdiff.Results, error) {
 		t.Helper()
 
@@ -463,11 +455,11 @@ func Test_runTaskGitDiff(t *testing.T) {
 	}
 
 	t.Run("should return diff results without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		stdoutFile := testutils.SetStdout(t)
 
-		diffResults, err := runTask(ctx, t, stdoutFile)
+		diffResults, err := runTask(t.Context(), t, stdoutFile)
 		require.NoError(t, err)
 		require.NotNil(t, diffResults)
 
@@ -484,7 +476,7 @@ func Test_runTaskGitDiff(t *testing.T) {
 
 		stdoutFile := testutils.SetStdout(t)
 
-		diffResults, err := runTask(ctx, t, stdoutFile)
+		diffResults, err := runTask(t.Context(), t, stdoutFile)
 		require.Error(t, err)
 		require.Nil(t, diffResults)
 
@@ -496,9 +488,9 @@ func Test_runTaskGitDiff(t *testing.T) {
 	})
 
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		cancel() // Cancel the context immediately to simulate a canceled operation.
 
@@ -521,8 +513,6 @@ func Test_runTaskGitDiff(t *testing.T) {
 //
 //nolint:dupl
 func Test_runTaskGoCoverage(t *testing.T) {
-	ctx := context.Background()
-
 	runTask := func(ctx context.Context, t *testing.T, stdoutFile *os.File) (*gocover.Profile, error) {
 		t.Helper()
 
@@ -541,11 +531,11 @@ func Test_runTaskGoCoverage(t *testing.T) {
 	}
 
 	t.Run("should return coverage profile without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		stdoutFile := testutils.SetStdout(t)
 
-		profile, err := runTask(ctx, t, stdoutFile)
+		profile, err := runTask(t.Context(), t, stdoutFile)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 
@@ -562,7 +552,7 @@ func Test_runTaskGoCoverage(t *testing.T) {
 
 		stdoutFile := testutils.SetStdout(t)
 
-		profile, err := runTask(ctx, t, stdoutFile)
+		profile, err := runTask(t.Context(), t, stdoutFile)
 		require.Error(t, err)
 		require.Nil(t, profile)
 
@@ -574,9 +564,9 @@ func Test_runTaskGoCoverage(t *testing.T) {
 	})
 
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		cancel() // Cancel the context immediately to simulate a canceled operation.
 

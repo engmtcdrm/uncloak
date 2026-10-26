@@ -1,7 +1,6 @@
 package gitdiff
 
 import (
-	"context"
 	"errors"
 	"os/exec"
 	"testing"
@@ -53,18 +52,16 @@ func Test_InvalidRefError_Error(t *testing.T) {
 
 // Tests for [handleExecError] function.
 func Test_handleExecError(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return ErrGitDoesNotExist when git is not found", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Setenv("PATH", tempDir)
-		cmd := exec.CommandContext(ctx, "git", "diff")
+		cmd := exec.CommandContext(t.Context(), "git", "diff")
 		err := handleExecError(cmd, nil, &exec.Error{Name: "git", Err: exec.ErrNotFound})
 		require.ErrorIs(t, err, exec.ErrNotFound)
 	})
 
 	t.Run("should return an error with command and output when exec fails", func(t *testing.T) {
-		cmd := exec.CommandContext(ctx, "git", "diff")
+		cmd := exec.CommandContext(t.Context(), "git", "diff")
 		err := handleExecError(cmd, []byte("output"), &exec.ExitError{Stderr: []byte("stderr")})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "git diff")
@@ -73,7 +70,7 @@ func Test_handleExecError(t *testing.T) {
 	})
 
 	t.Run("should return an error with command and output when exec fails with unknown error", func(t *testing.T) {
-		cmd := exec.CommandContext(ctx, "git", "diff")
+		cmd := exec.CommandContext(t.Context(), "git", "diff")
 		err := handleExecError(cmd, []byte("output"), errors.New("unknown error"))
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "git diff")
