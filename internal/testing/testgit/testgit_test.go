@@ -1,7 +1,6 @@
 package testgit
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,7 +11,6 @@ import (
 // Tests for [AddCommit] function.
 func Test_AddCommit(t *testing.T) {
 	t.Run("should add and commit changes in a git repository in the test repo directory", func(t *testing.T) {
-		ctx := context.Background()
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
 
@@ -24,15 +22,13 @@ func Test_AddCommit(t *testing.T) {
 			require.NoError(t, readmeFile.Close())
 		})
 
-		Init(ctx, t)
-		AddCommit(ctx, t, "Initial commit")
+		Init(t.Context(), t)
+		AddCommit(t.Context(), t, "Initial commit")
 	})
 }
 
 // Tests for [Checkout] function.
 func Test_Checkout(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should checkout a branch in a git repository in the test repo directory", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
@@ -47,20 +43,18 @@ func Test_Checkout(t *testing.T) {
 			require.NoError(t, readmeFile.Close())
 		})
 
-		Init(ctx, t)
-		AddCommit(ctx, t, "Initial commit")
-		CreateBranch(ctx, t, testBranch)
-		Checkout(ctx, t, testBranch)
+		Init(t.Context(), t)
+		AddCommit(t.Context(), t, "Initial commit")
+		CreateBranch(t.Context(), t, testBranch)
+		Checkout(t.Context(), t, testBranch)
 
-		currentBranchName := RunGit(ctx, t, []string{"branch", "--show-current"}, tempDir)
+		currentBranchName := RunGit(t.Context(), t, []string{"branch", "--show-current"}, tempDir)
 		require.Contains(t, string(currentBranchName), testBranch)
 	})
 }
 
 // Tests for [CreateBranch] function.
 func Test_CreateBranch(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should create a branch in a git repository in the test repo directory", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
@@ -73,58 +67,52 @@ func Test_CreateBranch(t *testing.T) {
 			require.NoError(t, readmeFile.Close())
 		})
 
-		Init(ctx, t)
-		AddCommit(ctx, t, "Initial commit")
-		CreateBranch(ctx, t, "test-branch")
+		Init(t.Context(), t)
+		AddCommit(t.Context(), t, "Initial commit")
+		CreateBranch(t.Context(), t, "test-branch")
 	})
 }
 
 // Tests for [GetTestRepoPath] function.
 func Test_GetTestRepoPath(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return the absolute path to the test git repository", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
 
-		Init(ctx, t)
+		Init(t.Context(), t)
 
 		expectedRootPath, err := filepath.EvalSymlinks(tempDir)
 		require.NoError(t, err)
 
 		expectedPath := filepath.Join(expectedRootPath, TestRepoDir)
-		result := GetTestRepoPath(ctx, t)
+		result := GetTestRepoPath(t.Context(), t)
 		require.Equal(t, expectedPath, result)
 	})
 }
 
 // Tests for [Init] function.
 func Test_Init(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should initialize a git repository in the test repo directory", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
 
-		Init(ctx, t)
+		Init(t.Context(), t)
 	})
 }
 
 // Tests for [RootDir] function.
 func Test_RootDir(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return the root directory of the temp directory", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
-		Init(ctx, t)
+		Init(t.Context(), t)
 
 		subDir := filepath.Join(tempDir, "subdir")
 		err := os.Mkdir(subDir, os.ModePerm)
 		require.NoError(t, err)
 
 		t.Chdir(subDir)
-		result := RootDir(ctx, t)
+		result := RootDir(t.Context(), t)
 		expectedRootPath, err := filepath.EvalSymlinks(tempDir)
 		require.NoError(t, err)
 
@@ -135,10 +123,9 @@ func Test_RootDir(t *testing.T) {
 // Tests for [RunGit] function.
 func Test_RunGit(t *testing.T) {
 	t.Run("should execute a command and return its output", func(t *testing.T) {
-		ctx := context.Background()
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
-		output := RunGit(ctx, t, []string{"version"}, tempDir)
+		output := RunGit(t.Context(), t, []string{"version"}, tempDir)
 		require.Contains(t, string(output), "git version")
 	})
 }

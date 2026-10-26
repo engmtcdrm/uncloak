@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,8 +15,6 @@ import (
 
 // Tests for [Execute] function.
 func Test_Execute(t *testing.T) {
-	ctx := context.Background()
-
 	// Simple test helper to initialize a new root command and set required
 	// flag(s). We want this due to the nature of the rootCmd being global
 	// within this package. Otherwise flags could carry over.
@@ -32,7 +29,7 @@ func Test_Execute(t *testing.T) {
 
 	t.Run("should run without error when in git repository", func(t *testing.T) {
 		initValidCmd(t)
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 
 		err := Execute()
 		require.NoError(t, err)
@@ -42,7 +39,7 @@ func Test_Execute(t *testing.T) {
 		_, _ = testutils.SetOutputStreams(t)
 
 		initValidCmd(t)
-		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
+		tempDir, _ := testrepo.InitWithFileCopy(t.Context(), t)
 
 		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
 		err := os.Remove(rmTestFile)

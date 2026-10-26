@@ -1,7 +1,6 @@
 package gitdiff
 
 import (
-	"context"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -17,13 +16,11 @@ import (
 
 // Tests for [Run] function.
 func Test_Run(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return results with valid options", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(t.Context(), opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
@@ -31,8 +28,8 @@ func Test_Run(t *testing.T) {
 	t.Run("should return error when opts has no target ref set", func(t *testing.T) {
 		expectedErr := NewInvalidRefError("", true)
 
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		results, err := Run(ctx, Options{})
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
+		results, err := Run(t.Context(), Options{})
 		require.Error(t, err)
 		require.ErrorAs(t, err, &expectedErr)
 		require.Nil(t, results)
@@ -42,29 +39,29 @@ func Test_Run(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := Options{}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(t.Context(), opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
 
 	t.Run("should return error when there is no parent branch", func(t *testing.T) {
-		tempDir, _ := testrepo.Init(ctx, t)
+		tempDir, _ := testrepo.Init(t.Context(), t)
 		t.Chdir(tempDir)
 		opts := Options{}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(t.Context(), opts)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
 
 	t.Run("should not return error if git is in a detached HEAD state", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
-		cmd := exec.CommandContext(ctx, "git", "checkout", "--detach", "HEAD")
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
+		cmd := exec.CommandContext(t.Context(), "git", "checkout", "--detach", "HEAD")
 		require.NoError(t, cmd.Run())
 
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := Run(ctx, opts)
+		results, err := Run(t.Context(), opts)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 	})
@@ -106,7 +103,6 @@ func Test_parseHunkHeader(t *testing.T) {
 
 // Tests for [parser.parseGitDiffData] function.
 func Test_parser_parseGitDiffData(t *testing.T) {
-	ctx := context.Background()
 	p := &parser{}
 	diffData := `diff --git a/internal/gitdiff/parser.go b/internal/gitdiff/parser.go
 new file mode 100644
@@ -119,21 +115,21 @@ index 0000000..6d36618
 
 	t.Run("Should return error if scanner encounters an error", func(t *testing.T) {
 		r := &testutils.ErrorReader{}
-		results, err := p.parseGitDiffData(ctx, r)
+		results, err := p.parseGitDiffData(t.Context(), r)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
 
 	t.Run("should return nil results for empty input", func(t *testing.T) {
 		r := &testutils.EmptyReader{}
-		results, err := p.parseGitDiffData(ctx, r)
+		results, err := p.parseGitDiffData(t.Context(), r)
 		require.NoError(t, err)
 		require.Nil(t, results)
 	})
 
 	t.Run("should parse valid git diff data", func(t *testing.T) {
 		r := strings.NewReader(diffData)
-		results, err := p.parseGitDiffData(ctx, r)
+		results, err := p.parseGitDiffData(t.Context(), r)
 		require.NoError(t, err)
 		require.NotNil(t, results)
 		assert.Len(t, results.Files(), 1)
@@ -144,7 +140,7 @@ index 0000000..6d36618
 		t.Chdir(t.TempDir())
 
 		r := strings.NewReader(diffData)
-		results, err := p.parseGitDiffData(ctx, r)
+		results, err := p.parseGitDiffData(t.Context(), r)
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
@@ -152,7 +148,6 @@ index 0000000..6d36618
 
 // Tests for [parser.parseLines] function.
 func Test_parser_parseLines(t *testing.T) {
-	ctx := context.Background()
 	p := &parser{}
 
 	t.Run("should correctly identify new lines on new files", func(t *testing.T) {
@@ -186,7 +181,7 @@ func Test_parser_parseLines(t *testing.T) {
 			"+func report() {}",
 		}
 
-		results, err := p.parseLines(ctx, lines)
+		results, err := p.parseLines(t.Context(), lines)
 		require.NoError(t, err)
 		assert.Len(t, results.Files(), 3)
 		assert.Equal(t, map[int]bool{1: true, 2: true}, results.NewLines["internal/gitdiff/parser.go"])
@@ -208,7 +203,7 @@ func Test_parser_parseLines(t *testing.T) {
 			"+This is another existing line",
 		}
 
-		results, err := p.parseLines(ctx, lines)
+		results, err := p.parseLines(t.Context(), lines)
 		require.Error(t, err)
 		assert.Nil(t, results)
 	})
@@ -302,7 +297,7 @@ func Test_parser_parseLines(t *testing.T) {
 			},
 		}
 
-		results, err := p.parseLines(ctx, lines)
+		results, err := p.parseLines(t.Context(), lines)
 		require.NoError(t, err)
 		require.Equal(t, expectedLines, results.NewLines)
 	})
@@ -310,14 +305,13 @@ func Test_parser_parseLines(t *testing.T) {
 
 // Tests for [parser.runAndParseGitDiff] function.
 func Test_parser_runAndParseGitDiff(t *testing.T) {
-	ctx := context.Background()
 	p := &parser{}
 
 	t.Run("should return error if current directory is not a git repository", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		opts := Options{}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(t.Context(), opts)
 		require.Error(t, err)
 		assert.NotNil(t, results)
 		assert.NotEmpty(t, results.Command)
@@ -328,9 +322,9 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 			TargetRef: testgit.MainBranchName,
 		}
 
-		_, _ = testrepo.Init(ctx, t)
+		_, _ = testrepo.Init(t.Context(), t)
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(t.Context(), opts)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrNoOutput)
 		assert.NotNil(t, results)
@@ -338,48 +332,48 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 	})
 
 	t.Run("should return results for valid git diff command", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(t.Context(), opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
 
 	t.Run("should return results for valid git diff command with debug true", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(t.Context(), opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
 
 	t.Run("should only report feature lines for divergent histories", func(t *testing.T) {
-		tempDir, _ := testrepo.Init(ctx, t)
+		tempDir, _ := testrepo.Init(t.Context(), t)
 		sharedFile := filepath.Join(tempDir, "shared.go")
 		featureFile := filepath.Join(tempDir, "feature_only.go")
 
 		testfiles.CreateFile(t, sharedFile, "package fixture\nvar Shared = 1\n")
-		testgit.AddCommit(ctx, t, "Add shared file")
+		testgit.AddCommit(t.Context(), t, "Add shared file")
 
-		testgit.CreateBranch(ctx, t, "feature")
+		testgit.CreateBranch(t.Context(), t, "feature")
 
-		testgit.Checkout(ctx, t, testgit.MainBranchName)
-		testgit.CreateBranch(ctx, t, "target-side")
-		testgit.Checkout(ctx, t, "target-side")
+		testgit.Checkout(t.Context(), t, testgit.MainBranchName)
+		testgit.CreateBranch(t.Context(), t, "target-side")
+		testgit.Checkout(t.Context(), t, "target-side")
 
 		testfiles.CreateFile(t, sharedFile, "package fixture\nvar Shared = 2\n")
-		testgit.AddCommit(ctx, t, "Target-only change")
+		testgit.AddCommit(t.Context(), t, "Target-only change")
 
-		testgit.Checkout(ctx, t, testgit.MainBranchName)
-		_ = testgit.RunGit(ctx, t, []string{"merge", "--no-ff", "target-side", "-m", "Merge target-only change"}, tempDir)
-		testgit.Checkout(ctx, t, "feature")
+		testgit.Checkout(t.Context(), t, testgit.MainBranchName)
+		_ = testgit.RunGit(t.Context(), t, []string{"merge", "--no-ff", "target-side", "-m", "Merge target-only change"}, tempDir)
+		testgit.Checkout(t.Context(), t, "feature")
 
 		testfiles.CreateFile(t, featureFile, "package fixture\nvar FeatureOnly = 99\n")
-		testgit.AddCommit(ctx, t, "Feature-only change")
+		testgit.AddCommit(t.Context(), t, "Feature-only change")
 
-		results, err := p.runAndParseGitDiff(ctx, Options{TargetRef: testgit.MainBranchName})
+		results, err := p.runAndParseGitDiff(t.Context(), Options{TargetRef: testgit.MainBranchName})
 		require.NoError(t, err)
 		require.NotNil(t, results)
 		assert.Equal(t, []string{"feature_only.go"}, results.Files())
@@ -388,7 +382,7 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 	})
 
 	t.Run("should return results when go.mod is modified in new branch", func(t *testing.T) {
-		tempDir, _ := testrepo.Init(ctx, t)
+		tempDir, _ := testrepo.Init(t.Context(), t)
 		_ = tempDir
 
 		const goModInitContents = `module github.com/engmtcdrm/testing
@@ -403,23 +397,23 @@ require github.com/engmtcdrm/go-ansi v1.0.0
 		goModFile := filepath.Join(tempDir, "go.mod")
 		testfiles.CreateFile(t, goModFile, goModInitContents)
 
-		testgit.AddCommit(ctx, t, "Add go.mod")
+		testgit.AddCommit(t.Context(), t, "Add go.mod")
 
-		testgit.CreateBranch(ctx, t, "feature")
-		testgit.Checkout(ctx, t, "feature")
+		testgit.CreateBranch(t.Context(), t, "feature")
+		testgit.Checkout(t.Context(), t, "feature")
 
 		testfiles.AppendFile(t, goModFile, goModUpdateContents)
-		testgit.AddCommit(ctx, t, "Update go.mod")
+		testgit.AddCommit(t.Context(), t, "Update go.mod")
 
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(t.Context(), opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
 
 	t.Run("should return results when go.sum is modified in new branch", func(t *testing.T) {
-		tempDir, _ := testrepo.Init(ctx, t)
+		tempDir, _ := testrepo.Init(t.Context(), t)
 
 		const goSumInitContents = "github.com/engmtcdrm/go-ansi v1.0.0 h1:dummyhash\n"
 		const goSumUpdateContents = "github.com/engmtcdrm/go-ansi v1.0.0 h1:updatedhash\n"
@@ -427,23 +421,23 @@ require github.com/engmtcdrm/go-ansi v1.0.0
 		goSumFile := filepath.Join(tempDir, "go.sum")
 		testfiles.CreateFile(t, goSumFile, goSumInitContents)
 
-		testgit.AddCommit(ctx, t, "Add go.sum")
+		testgit.AddCommit(t.Context(), t, "Add go.sum")
 
-		testgit.CreateBranch(ctx, t, "feature")
-		testgit.Checkout(ctx, t, "feature")
+		testgit.CreateBranch(t.Context(), t, "feature")
+		testgit.Checkout(t.Context(), t, "feature")
 
 		testfiles.AppendFile(t, goSumFile, goSumUpdateContents)
-		testgit.AddCommit(ctx, t, "Update go.sum")
+		testgit.AddCommit(t.Context(), t, "Update go.sum")
 
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(t.Context(), opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
 
 	t.Run("should return results when Go test file is modified in a new branch", func(t *testing.T) {
-		tempDir, _ := testrepo.Init(ctx, t)
+		tempDir, _ := testrepo.Init(t.Context(), t)
 
 		const testFileInitContents = "package main\n\nfunc TestSomething(t *testing.T) {}\n"
 		const testFileUpdateContents = "package main\n\nfunc TestSomething(t *testing.T) {}\nfunc TestAnother(t *testing.T) {}\n"
@@ -451,17 +445,17 @@ require github.com/engmtcdrm/go-ansi v1.0.0
 		testFile := filepath.Join(tempDir, "main_test.go")
 		testfiles.CreateFile(t, testFile, testFileInitContents)
 
-		testgit.AddCommit(ctx, t, "Add main_test.go")
+		testgit.AddCommit(t.Context(), t, "Add main_test.go")
 
-		testgit.CreateBranch(ctx, t, "feature")
-		testgit.Checkout(ctx, t, "feature")
+		testgit.CreateBranch(t.Context(), t, "feature")
+		testgit.Checkout(t.Context(), t, "feature")
 
 		testfiles.AppendFile(t, testFile, testFileUpdateContents)
-		testgit.AddCommit(ctx, t, "Update main_test.go")
+		testgit.AddCommit(t.Context(), t, "Update main_test.go")
 
 		opts := Options{TargetRef: testgit.MainBranchName}
 
-		results, err := p.runAndParseGitDiff(ctx, opts)
+		results, err := p.runAndParseGitDiff(t.Context(), opts)
 		require.NoError(t, err)
 		assert.NotNil(t, results)
 	})
@@ -469,42 +463,40 @@ require github.com/engmtcdrm/go-ansi v1.0.0
 
 // Tests for [validateRefs] function.
 func Test_validateRefs(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return error if targetRef is invalid", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		targetRef := "invalid-ref"
 
-		err := validateRefs(ctx, targetRef, headRef)
+		err := validateRefs(t.Context(), targetRef, headRef)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), targetRef)
 	})
 
 	t.Run("should return error if headRef is invalid", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		targetRef := testgit.MainBranchName
 		headRef := "invalid-ref"
 
-		err := validateRefs(ctx, targetRef, headRef)
+		err := validateRefs(t.Context(), targetRef, headRef)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), headRef)
 	})
 
 	t.Run("should return no error if targetRef and headRef are the same", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		targetRef := testgit.MainBranchName
 		headRef := testgit.MainBranchName
 
-		err := validateRefs(ctx, targetRef, headRef)
+		err := validateRefs(t.Context(), targetRef, headRef)
 		require.NoError(t, err)
 	})
 
 	t.Run("should not return error if targetRef and headRef are different", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		targetRef := testgit.MainBranchName
 		headRef := "HEAD"
 
-		err := validateRefs(ctx, targetRef, headRef)
+		err := validateRefs(t.Context(), targetRef, headRef)
 		require.NoError(t, err)
 	})
 }

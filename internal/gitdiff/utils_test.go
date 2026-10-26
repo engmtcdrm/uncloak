@@ -1,7 +1,6 @@
 package gitdiff
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -11,10 +10,8 @@ import (
 
 // Tests for [gitRootDir] function.
 func Test_gitRootDir(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return the root directory of this repo", func(t *testing.T) {
-		rootDir, err := gitRootDir(ctx)
+		rootDir, err := gitRootDir(t.Context())
 		require.NoError(t, err)
 		require.NotEmpty(t, rootDir)
 	})
@@ -22,22 +19,20 @@ func Test_gitRootDir(t *testing.T) {
 	t.Run("should return an error when exec fails", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Setenv("PATH", tempDir)
-		_, err := gitRootDir(ctx)
+		_, err := gitRootDir(t.Context())
 		require.Error(t, err)
 	})
 }
 
 // Tests for [isGitDir] function.
 func Test_isGitDir(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return true with this repo", func(t *testing.T) {
-		require.True(t, isGitDir(ctx))
+		require.True(t, isGitDir(t.Context()))
 	})
 
 	t.Run("should return false with a non-git directory", func(t *testing.T) {
 		t.Chdir(os.TempDir())
-		require.False(t, isGitDir(ctx))
+		require.False(t, isGitDir(t.Context()))
 	})
 }
 
@@ -58,23 +53,21 @@ func Test_isGoFile(t *testing.T) {
 
 // Tests for [validateRef] function.
 func Test_validateRef(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should return true for valid reference", func(t *testing.T) {
-		testrepo.InitWithFileCopy(ctx, t)
+		testrepo.InitWithFileCopy(t.Context(), t)
 
-		require.True(t, validateRef(ctx, LocalMain))
+		require.True(t, validateRef(t.Context(), LocalMain))
 	})
 
 	t.Run("should return true for HEAD reference", func(t *testing.T) {
-		testrepo.InitWithFileCopy(ctx, t)
+		testrepo.InitWithFileCopy(t.Context(), t)
 
-		require.True(t, validateRef(ctx, "HEAD"))
+		require.True(t, validateRef(t.Context(), "HEAD"))
 	})
 
 	t.Run("should return false for invalid reference", func(t *testing.T) {
-		testrepo.InitWithFileCopy(ctx, t)
+		testrepo.InitWithFileCopy(t.Context(), t)
 
-		require.False(t, validateRef(ctx, "invalid-ref"))
+		require.False(t, validateRef(t.Context(), "invalid-ref"))
 	})
 }

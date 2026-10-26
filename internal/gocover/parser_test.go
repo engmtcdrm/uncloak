@@ -2,7 +2,6 @@ package gocover
 
 import (
 	"bytes"
-	"context"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -17,34 +16,33 @@ const doesNotExist = "does-not-exist"
 
 // Tests for [Run] function.
 func Test_Run(t *testing.T) {
-	ctx := context.Background()
 	opts := &DefaultOptions
 
 	t.Run("should return error if go list fails", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 
-		_, err := Run(ctx, "", opts)
+		_, err := Run(t.Context(), "", opts)
 		require.Error(t, err)
 	})
 
 	t.Run("should return valid profile for empty filePath", func(t *testing.T) {
 		tempDir := t.TempDir()
-		repoPath := testgit.GetTestRepoPath(ctx, t)
+		repoPath := testgit.GetTestRepoPath(t.Context(), t)
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
-		profile, err := Run(ctx, "", opts)
+		profile, err := Run(t.Context(), "", opts)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 	})
 
 	t.Run("should return valid profile for nil options", func(t *testing.T) {
 		tempDir := t.TempDir()
-		repoPath := testgit.GetTestRepoPath(ctx, t)
+		repoPath := testgit.GetTestRepoPath(t.Context(), t)
 		testfiles.CopyDir(t, repoPath, tempDir)
 		t.Chdir(tempDir)
 
-		profile, err := Run(ctx, "", nil)
+		profile, err := Run(t.Context(), "", nil)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 	})
@@ -62,7 +60,7 @@ func Test_Run(t *testing.T) {
 			t.Setenv("TMPDIR", tempDir)
 		}
 
-		profile, err := Run(ctx, "", opts)
+		profile, err := Run(t.Context(), "", opts)
 		require.Error(t, err)
 		require.NotNil(t, profile)
 		require.Empty(t, profile.Command)
@@ -191,7 +189,6 @@ func Test_parser_parseLines(t *testing.T) {
 
 // Tests for [parser.runTestCoverage] function.
 func Test_parser_runTestCoverage(t *testing.T) {
-	ctx := context.Background()
 	p := &parser{
 		GoList: &GoList{
 			Module: "test.com/testmodule",
@@ -211,7 +208,7 @@ func Test_parser_runTestCoverage(t *testing.T) {
 			t.Setenv("TMPDIR", tempDir)
 		}
 
-		filePath, err := p.runTestCoverage(ctx)
+		filePath, err := p.runTestCoverage(t.Context())
 		require.Error(t, err)
 		require.Empty(t, filePath)
 	})
@@ -220,18 +217,18 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Chdir(tempDir)
 
-		filePath, err := p.runTestCoverage(ctx)
+		filePath, err := p.runTestCoverage(t.Context())
 		require.Error(t, err)
 		require.Empty(t, filePath)
 	})
 
 	t.Run("should return valid file path for successful test coverage run", func(t *testing.T) {
 		tempDir := t.TempDir()
-		repoPath := testgit.GetTestRepoPath(ctx, t)
+		repoPath := testgit.GetTestRepoPath(t.Context(), t)
 		testfiles.CopyDir(t, repoPath, tempDir)
 
 		t.Chdir(tempDir)
-		filePath, err := p.runTestCoverage(ctx)
+		filePath, err := p.runTestCoverage(t.Context())
 		require.NoError(t, err)
 		require.NotEmpty(t, filePath)
 	})

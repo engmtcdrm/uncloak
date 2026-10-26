@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,10 +17,8 @@ import (
 
 // Tests for [cmd.Run] function.
 func Test_cmd_Run(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should run the command without error when in git repository", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
@@ -34,7 +31,7 @@ func Test_cmd_Run(t *testing.T) {
 	})
 
 	t.Run("should run without error when in git repository and with arguments", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
@@ -59,7 +56,7 @@ func Test_cmd_Run(t *testing.T) {
 	})
 
 	t.Run("should error when config file is invalid", func(t *testing.T) {
-		tempDir, _ := testrepo.Init(ctx, t)
+		tempDir, _ := testrepo.Init(t.Context(), t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
@@ -80,7 +77,7 @@ func Test_cmd_Run(t *testing.T) {
 	})
 
 	t.Run("should error when coverage-threshold is negative", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
@@ -93,7 +90,7 @@ func Test_cmd_Run(t *testing.T) {
 	})
 
 	t.Run("should error when output file cannot be written", func(t *testing.T) {
-		tempDir, _ := testrepo.InitWithFileCopy(ctx, t)
+		tempDir, _ := testrepo.InitWithFileCopy(t.Context(), t)
 		rmTestFile := filepath.Join(tempDir, "magic_100_test.go")
 		err := os.Remove(rmTestFile)
 		require.NoError(t, err)
@@ -118,7 +115,7 @@ func Test_cmd_Run(t *testing.T) {
 	})
 
 	t.Run("should run without returning an error if there are no changes", func(t *testing.T) {
-		_, stdoutFile := testrepo.InitWithFileCopy(ctx, t)
+		_, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
@@ -178,10 +175,8 @@ func Test_cmd_ValidateFlags(t *testing.T) {
 
 // Tests for [cmd.handleFlags] function.
 func Test_cmd_handleFlags(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("should set config values from flags", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(ctx, t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		c := &cmd{}
 		cfg := config.DefaultConfig
 		localRootCmd := newRootCmd()
