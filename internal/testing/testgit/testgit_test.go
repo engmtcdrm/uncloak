@@ -29,6 +29,34 @@ func Test_AddCommit(t *testing.T) {
 	})
 }
 
+// Tests for [Checkout] function.
+func Test_Checkout(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("should checkout a branch in a git repository in the test repo directory", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Chdir(tempDir)
+
+		const testBranch = "test-branch"
+
+		// Create a README.md file to ensure the git repository is not empty
+		readmeMd := filepath.Join(tempDir, "README.md")
+		readmeFile, err := os.Create(readmeMd)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, readmeFile.Close())
+		})
+
+		Init(ctx, t)
+		AddCommit(ctx, t, "Initial commit")
+		CreateBranch(ctx, t, testBranch)
+		Checkout(ctx, t, testBranch)
+
+		currentBranchName := RunGit(ctx, t, []string{"branch", "--show-current"}, tempDir)
+		require.Contains(t, string(currentBranchName), testBranch)
+	})
+}
+
 // Tests for [CreateBranch] function.
 func Test_CreateBranch(t *testing.T) {
 	ctx := context.Background()
@@ -82,26 +110,6 @@ func Test_Init(t *testing.T) {
 	})
 }
 
-// Tests for [execCmd] function.
-func Test_execCmd(t *testing.T) {
-	t.Run("should execute a command and return its output", func(t *testing.T) {
-		ctx := context.Background()
-		tempDir := t.TempDir()
-		t.Chdir(tempDir)
-		execCmd(ctx, t, []string{"git", "version"}, tempDir)
-	})
-}
-
-// Tests for [getwd] function.
-func Test_getwd(t *testing.T) {
-	t.Run("should return the current working directory", func(t *testing.T) {
-		expectedWd, err := os.Getwd()
-		require.NoError(t, err)
-
-		require.Equal(t, expectedWd, getwd(t))
-	})
-}
-
 // Tests for [RootDir] function.
 func Test_RootDir(t *testing.T) {
 	ctx := context.Background()
@@ -121,5 +129,26 @@ func Test_RootDir(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, expectedRootPath, result)
+	})
+}
+
+// Tests for [RunGit] function.
+func Test_RunGit(t *testing.T) {
+	t.Run("should execute a command and return its output", func(t *testing.T) {
+		ctx := context.Background()
+		tempDir := t.TempDir()
+		t.Chdir(tempDir)
+		output := RunGit(ctx, t, []string{"version"}, tempDir)
+		require.Contains(t, string(output), "git version")
+	})
+}
+
+// Tests for [getwd] function.
+func Test_getwd(t *testing.T) {
+	t.Run("should return the current working directory", func(t *testing.T) {
+		expectedWd, err := os.Getwd()
+		require.NoError(t, err)
+
+		require.Equal(t, expectedWd, getwd(t))
 	})
 }

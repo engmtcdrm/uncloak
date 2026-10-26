@@ -39,9 +39,7 @@ func Init(ctx context.Context, t *testing.T) (string, *os.File) {
 	readmeMd := filepath.Join(tempDir, "README.md")
 	readmeFile, err := os.Create(readmeMd)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, readmeFile.Close())
-	})
+	defer readmeFile.Close() //nolint:errcheck
 
 	t.Chdir(tempDir)
 	testgit.Init(ctx, t)
@@ -70,9 +68,7 @@ func InitWithFileCopy(ctx context.Context, t *testing.T) (string, *os.File) {
 	readmeMd := filepath.Join(tempDir, "README.md")
 	readmeFile, err := os.Create(readmeMd)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, readmeFile.Close())
-	})
+	defer readmeFile.Close() //nolint:errcheck
 
 	t.Chdir(tempDir)
 	testgit.Init(ctx, t)
@@ -81,6 +77,7 @@ func InitWithFileCopy(ctx context.Context, t *testing.T) (string, *os.File) {
 	// Copy the test repo and commit the changes
 	testfiles.CopyDir(t, repoPath, tempDir)
 	testgit.CreateBranch(ctx, t, NewBranchName)
+	testgit.Checkout(ctx, t, NewBranchName)
 	testgit.AddCommit(ctx, t, "New development")
 
 	return tempDir, stdoutFile

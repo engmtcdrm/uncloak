@@ -9,16 +9,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// AppendFile appends the specified content to the file at the given filePath.
+func AppendFile(t *testing.T, filePath, content string) {
+	t.Helper()
+
+	tmpFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	require.NoError(t, err)
+	defer tmpFile.Close() //nolint:errcheck
+
+	_, err = tmpFile.Write([]byte(content))
+	require.NoError(t, err)
+}
+
 // CreateFile creates a file with the specified content at the given filePath.
 func CreateFile(t *testing.T, filePath, content string) {
 	t.Helper()
 
 	tmpFile, err := os.Create(filePath)
 	require.NoError(t, err, "Failed to create file")
+	defer tmpFile.Close() //nolint:errcheck
 
 	_, err = tmpFile.Write([]byte(content))
 	require.NoError(t, err, "Failed to write to file")
-	require.NoError(t, tmpFile.Close())
 }
 
 // CopyDir is a test helper function to copy all files from the
