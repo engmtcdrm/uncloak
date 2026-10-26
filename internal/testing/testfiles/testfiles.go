@@ -31,7 +31,6 @@ func CreateFile(t *testing.T, filePath, content string) {
 
 	_, err = tmpFile.Write([]byte(content))
 	require.NoError(t, err, "Failed to write to file")
-
 }
 
 // CopyDir is a test helper function to copy all files from the
