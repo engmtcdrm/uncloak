@@ -367,6 +367,7 @@ func Test_parser_runAndParseGitDiff(t *testing.T) {
 
 		testgit.Checkout(ctx, t, testgit.MainBranchName)
 		testgit.CreateBranch(ctx, t, "target-side")
+		testgit.Checkout(ctx, t, "target-side")
 
 		testfiles.CreateFile(t, sharedFile, "package fixture\nvar Shared = 2\n")
 		testgit.AddCommit(ctx, t, "Target-only change")
