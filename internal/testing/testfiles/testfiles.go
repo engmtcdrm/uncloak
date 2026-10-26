@@ -15,10 +15,10 @@ func AppendFile(t *testing.T, filePath, content string) {
 
 	tmpFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	require.NoError(t, err)
+	defer tmpFile.Close() //nolint:errcheck
 
 	_, err = tmpFile.Write([]byte(content))
 	require.NoError(t, err)
-	require.NoError(t, tmpFile.Close())
 }
 
 // CreateFile creates a file with the specified content at the given filePath.
@@ -27,10 +27,11 @@ func CreateFile(t *testing.T, filePath, content string) {
 
 	tmpFile, err := os.Create(filePath)
 	require.NoError(t, err, "Failed to create file")
+	defer tmpFile.Close() //nolint:errcheck
 
 	_, err = tmpFile.Write([]byte(content))
 	require.NoError(t, err, "Failed to write to file")
-	require.NoError(t, tmpFile.Close())
+
 }
 
 // CopyDir is a test helper function to copy all files from the
