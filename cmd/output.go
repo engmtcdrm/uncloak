@@ -234,7 +234,7 @@ func outputUncoveredLine(file *analyzer.FileReport, outputFile *os.File, linesOn
 // [os.Stdout]. If an output file path is specified, the uncovered lines will
 // also be written to that file. If linesOnly is true the output will only
 // include uncovered lines without detailed context.
-func outputUncoveredLines(report *analyzer.Report, outputFilePath string, linesOnly bool) error {
+func outputUncoveredLines(report *analyzer.Report, outputFilePath string, linesOnly bool, filesToFilter ...string) error {
 	if !report.HasUncoveredLines() {
 		return nil
 	}
@@ -252,13 +252,33 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string, linesO
 
 	fmt.Printf("%s\n\n", colors.LightGreen("Missing coverage:"))
 
+	if len(filesToFilter) > 0 && filesToFilter[0] != "" {
+		fmt.Printf("Filtering missing coverage by files: %v\n\n", filesToFilter)
+	}
+
 	uncoveredFiles := report.UncoveredFiles()
 
 	for _, file := range uncoveredFiles {
+		if len(filesToFilter) > 0 && filesToFilter[0] != "" && !isFilterFile(file.Path, filesToFilter) {
+			continue
+		}
+
 		outputUncoveredLine(file, outputFile, linesOnly)
 	}
 
 	return nil
+}
+
+// isFilterFile checks if the given file matches any of the exclusion
+// patterns in the config.
+func isFilterFile(file string, files []string) bool {
+	for _, f := range files {
+		if file == f {
+			return true
+		}
+	}
+
+	return false
 }
 
 // outputUncoveredLineToFile writes the uncovered line range for a given file to

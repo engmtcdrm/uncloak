@@ -21,6 +21,8 @@ type cmd struct {
 	linesOnly         bool
 	verbose           bool
 	output            string
+
+	filterUncoveredFile string
 }
 
 // Run executes the command with the provided Cobra command and arguments. It
@@ -52,7 +54,7 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	if err := outputUncoveredLines(report, c.output, c.linesOnly); err != nil {
+	if err := outputUncoveredLines(report, c.output, c.linesOnly, c.filterUncoveredFile); err != nil {
 		return err
 	}
 
