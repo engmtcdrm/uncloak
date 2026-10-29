@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	errGitTargetRef = errors.New("flag -t/--target-ref is required. This should be the target reference to compare against, e.g. a branch name or commit hash")
+	errGitTargetRef             = errors.New("flag -t/--target-ref is required. This should be the target reference to compare against, e.g. a branch name or commit hash")
+	errEmptyUncoveredFilterFile = errors.New("flag -f/--file cannot be empty when specifying an uncovered file filter")
 )
 
 // coverageThresholdError indicates that the new code coverage is below the

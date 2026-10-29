@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/engmtcdrm/uncloak/internal/analyzer"
 	"github.com/engmtcdrm/uncloak/internal/colors"
@@ -22,7 +23,7 @@ type cmd struct {
 	verbose           bool
 	output            string
 
-	filterUncoveredFile string
+	uncoveredFilterFile string
 }
 
 // Run executes the command with the provided Cobra command and arguments. It
@@ -54,7 +55,7 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	if err := outputUncoveredLines(report, c.output, c.linesOnly, c.filterUncoveredFile); err != nil {
+	if err := outputUncoveredLines(report, c.output, c.linesOnly, c.uncoveredFilterFile); err != nil {
 		return err
 	}
 
@@ -77,6 +78,20 @@ func (c *cmd) ValidateFlags(cmd *cobra.Command, _ []string) error {
 		return errGitTargetRef
 	}
 
+	if cmd.Flags().Changed(uncoveredFilterFileFlagName) {
+		if c.uncoveredFilterFile == "" {
+			return errEmptyUncoveredFilterFile
+		}
+
+		_, err := os.Stat(c.uncoveredFilterFile)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return fmt.Errorf("uncovered filter file does not exist: %w", err)
+			}
+			return fmt.Errorf("failed to stat uncovered filter file: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -97,5 +112,9 @@ func (c *cmd) handleFlags(cfg *config.Config, cmd *cobra.Command) {
 
 	if cmd.Flags().Changed(targetRefFlagName) {
 		cfg.GitDiffOptions.TargetRef = c.gitTargetRef
+	}
+
+	if cmd.Flags().Changed(uncoveredFilterFileFlagName) {
+		cfg.UncoveredFileFilter = c.uncoveredFilterFile
 	}
 }

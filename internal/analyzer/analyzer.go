@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 
 	pp "github.com/engmtcdrm/go-prettyprint"
@@ -60,6 +61,12 @@ func NewCodeCoverage(cfg *config.Config) (*Report, error) {
 // coverage.
 func analyzeCoverage(report *Report, cfg *config.Config) (*Report, error) {
 	filteredFiles := filterFiles(cfg, report.GitDiffResults.Files())
+
+	errEmptyUncoveredFilterFile := errors.New("flag -f/--file cannot be empty when specifying an uncovered file filter")
+
+	if cfg.UncoveredFileFilter != "" && !slices.Contains(filteredFiles, cfg.UncoveredFileFilter) {
+		return nil, errEmptyUncoveredFilterFile
+	}
 
 	for _, file := range filteredFiles {
 		reportFile, err := analyzeFileCoverage(report, file)

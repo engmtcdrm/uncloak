@@ -43,9 +43,10 @@ type Config struct {
 	CoverageThreshold float64         `yaml:"coverage-threshold"` // Minimum coverage threshold.
 	GoTestOptions     gocover.Options `yaml:"go-test"`            // Go test options for coverage analysis.
 
-	Debug          bool            // Not configurable via YAML, used for enabling debug output.
-	CoverageFile   string          // Not configurable via YAML, used for specifying the Go coverage file path.
-	GitDiffOptions gitdiff.Options // Not configurable via YAML, Git-related configuration.
+	Debug               bool            // Not configurable via YAML, used for enabling debug output.
+	CoverageFile        string          // Not configurable via YAML, used for specifying the Go coverage file path.
+	GitDiffOptions      gitdiff.Options // Not configurable via YAML, Git-related configuration.
+	UncoveredFileFilter string          // Not configurable via YAML, used for filtering uncovered file output.
 }
 
 // ValidationError represents an error related to the configuration validation.

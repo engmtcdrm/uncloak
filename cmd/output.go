@@ -252,17 +252,9 @@ func outputUncoveredLines(report *analyzer.Report, outputFilePath string, linesO
 
 	fmt.Printf("%s\n\n", colors.LightGreen("Missing coverage:"))
 
-	if len(filesToFilter) > 0 && filesToFilter[0] != "" {
-		fmt.Printf("Filtering missing coverage by files: %v\n\n", filesToFilter)
-	}
-
 	uncoveredFiles := report.UncoveredFiles()
 
 	for _, file := range uncoveredFiles {
-		if len(filesToFilter) > 0 && filesToFilter[0] != "" && !isFilterFile(file.Path, filesToFilter) {
-			continue
-		}
-
 		outputUncoveredLine(file, outputFile, linesOnly)
 	}
 
