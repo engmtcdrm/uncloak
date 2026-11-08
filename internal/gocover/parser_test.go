@@ -2,6 +2,7 @@ package gocover
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -118,6 +119,18 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		require.Nil(t, results)
 	})
 
+	t.Run("shoudld return valid profile and no error when there are no lines to test", func(t *testing.T) {
+		tempDir := t.TempDir()
+		tempFile := filepath.Join(tempDir, "coverage.out")
+		coverageData := "mode: set"
+
+		testfiles.CreateFile(t, tempFile, coverageData)
+
+		results, err := p.parseCoverageProfile(tempFile)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+	})
+
 	t.Run("should return valid profile for valid file", func(t *testing.T) {
 		tempDir := t.TempDir()
 		tempFile := filepath.Join(tempDir, "coverage.out")
@@ -144,8 +157,8 @@ func Test_parser_parseLines(t *testing.T) {
 		},
 	}
 
-	t.Run("should return error if line length is less than 2", func(t *testing.T) {
-		profile, err := p.parseLines([]string{"mode: set"})
+	t.Run("should return error if line length is 0", func(t *testing.T) {
+		profile, err := p.parseLines([]string{})
 		require.Error(t, err)
 		require.Nil(t, profile)
 	})
@@ -185,6 +198,12 @@ func Test_parser_parseLines(t *testing.T) {
 		require.Equal(t, ModeSet, profile.Mode)
 		require.Len(t, profile.CoveredLines, 2)
 	})
+
+	t.Run("should return valid profile and no error when there are no lines to test", func(t *testing.T) {
+		profile, err := p.parseLines([]string{"mode: set"})
+		require.NoError(t, err)
+		require.NotNil(t, profile)
+	})
 }
 
 // Tests for [parser.runTestCoverage] function.
@@ -209,6 +228,10 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		}
 
 		filePath, err := p.runTestCoverage(t.Context())
+		t.Cleanup(func() {
+			os.RemoveAll(tempDir) //nolint:errcheck
+		})
+
 		require.Error(t, err)
 		require.Empty(t, filePath)
 	})
@@ -218,6 +241,10 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		t.Chdir(tempDir)
 
 		filePath, err := p.runTestCoverage(t.Context())
+		t.Cleanup(func() {
+			os.RemoveAll(tempDir) //nolint:errcheck
+		})
+
 		require.Error(t, err)
 		require.Empty(t, filePath)
 	})
@@ -229,6 +256,10 @@ func Test_parser_runTestCoverage(t *testing.T) {
 
 		t.Chdir(tempDir)
 		filePath, err := p.runTestCoverage(t.Context())
+		t.Cleanup(func() {
+			os.RemoveAll(tempDir) //nolint:errcheck
+		})
+
 		require.NoError(t, err)
 		require.NotEmpty(t, filePath)
 	})

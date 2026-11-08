@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -84,8 +85,8 @@ func (p *parser) parseCoverageProfile(filePath string) (*Profile, error) {
 // parseLines processes the lines of a Go coverage profile and returns them in a
 // [Profile] struct.
 func (p *parser) parseLines(lines []string) (*Profile, error) {
-	if len(lines) < 2 {
-		return nil, ErrInvalidCoverageFile
+	if len(lines) == 0 {
+		return nil, ErrEmptyCoverageFile
 	}
 
 	profile := NewProfile(p.Command, p.RawGoTestOutput)
@@ -112,7 +113,7 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 			&coverageLine.Statements, &coverageLine.Count,
 		)
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(ErrInvalidCoverageFile, err)
 		}
 
 		coverageLine.Path = path
