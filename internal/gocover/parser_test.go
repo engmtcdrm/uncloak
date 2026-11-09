@@ -10,6 +10,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/testing/testfiles"
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -84,11 +85,12 @@ func Test_parser_parseCoverageData(t *testing.T) {
 		require.Nil(t, results)
 	})
 
-	t.Run("should return nil results for empty input", func(t *testing.T) {
+	t.Run("should return error for empty input", func(t *testing.T) {
 		r := &testutils.EmptyReader{}
 		results, err := p.parseCoverageData(r)
-		require.NoError(t, err)
+		require.Error(t, err)
 		require.Nil(t, results)
+		assert.ErrorIs(t, err, ErrEmptyCoverageFile)
 	})
 
 	t.Run("should return valid profile for valid input", func(t *testing.T) {
@@ -117,6 +119,20 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		results, err := p.parseCoverageProfile("nonexistent_file.txt")
 		require.Error(t, err)
 		require.Nil(t, results)
+	})
+
+	t.Run("shoudld return error when coverage file is empty", func(t *testing.T) {
+		tempDir := t.TempDir()
+		tempFile := filepath.Join(tempDir, "coverage.out")
+
+		tmpFile, err := os.Create(tempFile)
+		require.NoError(t, err)
+		tmpFile.Close()
+
+		results, err := p.parseCoverageProfile(tempFile)
+		require.Error(t, err)
+		require.Nil(t, results)
+		assert.ErrorIs(t, err, ErrEmptyCoverageFile)
 	})
 
 	t.Run("shoudld return valid profile and no error when there are no lines to test", func(t *testing.T) {

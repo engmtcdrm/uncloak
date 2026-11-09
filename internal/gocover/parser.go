@@ -63,10 +63,6 @@ func (p *parser) parseCoverageData(r io.Reader) (*Profile, error) {
 		return nil, err
 	}
 
-	if len(lines) == 0 {
-		return nil, nil
-	}
-
 	return p.parseLines(lines)
 }
 
@@ -93,6 +89,10 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 
 	if after, ok := strings.CutPrefix(lines[0], "mode: "); ok {
 		profile.Mode = Mode(after)
+	}
+
+	if profile.Mode == "" {
+		return nil, ErrInvalidCoverageFile
 	}
 
 	for _, line := range lines[1:] {
