@@ -127,7 +127,7 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 
 		tmpFile, err := os.Create(tempFile)
 		require.NoError(t, err)
-		tmpFile.Close()
+		require.NoError(t, tmpFile.Close())
 
 		results, err := p.parseCoverageProfile(tempFile)
 		require.Error(t, err)
@@ -198,6 +198,32 @@ func Test_parser_parseLines(t *testing.T) {
 
 		profile, err := p.parseLines(lines)
 		require.Error(t, err)
+		require.Nil(t, profile)
+	})
+
+	t.Run("should return error if mode is not valid", func(t *testing.T) {
+		lines := []string{
+			"mode: invalid",
+			"test.com/testmodule/file1.go:10.1,20.2 1 1",
+		}
+
+		profile, err := p.parseLines(lines)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidCoverageFile)
+		require.ErrorIs(t, err, ErrInvalidMode)
+		require.Nil(t, profile)
+	})
+
+	t.Run("should return error if mode is missing", func(t *testing.T) {
+		lines := []string{
+			"mode:",
+			"test.com/testmodule/file1.go:10.1,20.2 1 1",
+		}
+
+		profile, err := p.parseLines(lines)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidCoverageFile)
+		require.ErrorIs(t, err, ErrMissingMode)
 		require.Nil(t, profile)
 	})
 

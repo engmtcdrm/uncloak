@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -88,11 +87,15 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 	profile := NewProfile(p.Command, p.RawGoTestOutput)
 
 	if after, ok := strings.CutPrefix(lines[0], "mode: "); ok {
-		profile.Mode = Mode(after)
+		var err error
+		profile.Mode, err = parseMode(after)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, err)
+		}
 	}
 
 	if profile.Mode == "" {
-		return nil, ErrInvalidCoverageFile
+		return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, ErrMissingMode)
 	}
 
 	for _, line := range lines[1:] {
@@ -101,7 +104,7 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 		// split at last ':' so paths that contain ':' (Windows drive letters) still work
 		i := strings.LastIndex(line, ":")
 		if i == -1 {
-			return nil, fmt.Errorf("invalid coverage line: %q", line)
+			return nil, fmt.Errorf("%w: %w: %q", ErrInvalidCoverageFile, ErrInvalidCoverageLine, line)
 		}
 
 		path := strings.TrimPrefix(line[:i], p.GoList.Module+"/")
@@ -113,7 +116,7 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 			&coverageLine.Statements, &coverageLine.Count,
 		)
 		if err != nil {
-			return nil, errors.Join(ErrInvalidCoverageFile, err)
+			return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, err)
 		}
 
 		coverageLine.Path = path
