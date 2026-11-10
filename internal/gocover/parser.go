@@ -116,7 +116,7 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 			&coverageLine.Statements, &coverageLine.Count,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, err)
+			return nil, fmt.Errorf("%w: %w: %w", ErrInvalidCoverageFile, ErrInvalidCoverageLine, err)
 		}
 
 		coverageLine.Path = path
