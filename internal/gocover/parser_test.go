@@ -187,6 +187,8 @@ func Test_parser_parseLines(t *testing.T) {
 
 		profile, err := p.parseLines(lines)
 		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidCoverageFile)
+		require.ErrorIs(t, err, ErrInvalidCoverageLine)
 		require.Nil(t, profile)
 	})
 
@@ -198,6 +200,8 @@ func Test_parser_parseLines(t *testing.T) {
 
 		profile, err := p.parseLines(lines)
 		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidCoverageFile)
+		require.ErrorIs(t, err, ErrInvalidCoverageLine)
 		require.Nil(t, profile)
 	})
 
