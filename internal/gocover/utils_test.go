@@ -10,7 +10,7 @@ import (
 func Test_parseMode(t *testing.T) {
 	t.Run("should return the correct mode", func(t *testing.T) {
 		expectedMode := ModeSet
-		result, err := parseMode("set")
+		result, err := parseMode(string(expectedMode))
 		require.NoError(t, err)
 		require.Equal(t, expectedMode, result)
 	})
