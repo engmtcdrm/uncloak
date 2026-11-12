@@ -37,7 +37,6 @@ func Test_NewCodeCoverage(t *testing.T) {
 
 	t.Run("should return a report without error when debug is true", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
-		_ = testutils.SetStdout(t)
 
 		cfg := config.DefaultConfig
 		cfg.Debug = true
@@ -100,7 +99,6 @@ func Test_NewCodeCoverage(t *testing.T) {
 func Test_analyzeCoverage(t *testing.T) {
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
-	testutils.SetStdout(t)
 
 	t.Run("should return a report with files", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
@@ -164,7 +162,6 @@ func Test_analyzeCoverage(t *testing.T) {
 func Test_analyzeFileCoverage(t *testing.T) {
 	cfg := config.DefaultConfig
 	cfg.GitDiffOptions.TargetRef = testgit.MainBranchName
-	testutils.SetStdout(t)
 
 	t.Run("should return a file report without error", func(t *testing.T) {
 		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
@@ -248,6 +245,8 @@ var handler = func() {
 		filePath := filepath.Join(rootDir, "sample.go")
 		err := os.WriteFile(filePath, []byte(fileContent), 0644)
 		require.NoError(t, err)
+
+		testutils.SetStdout(t)
 
 		report := NewReport(80, &gocover.Profile{
 			CoveredLines: map[string]map[int]bool{
@@ -455,9 +454,7 @@ func Test_runTaskGitDiff(t *testing.T) {
 	}
 
 	t.Run("should return diff results without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
-
-		stdoutFile := testutils.SetStdout(t)
+		_, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
 
 		diffResults, err := runTask(t.Context(), t, stdoutFile)
 		require.NoError(t, err)
@@ -490,11 +487,9 @@ func Test_runTaskGitDiff(t *testing.T) {
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 
-		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
+		_, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
 
 		cancel() // Cancel the context immediately to simulate a canceled operation.
-
-		stdoutFile := testutils.SetStdout(t)
 
 		diffResults, err := runTask(ctx, t, stdoutFile)
 		require.Error(t, err)
@@ -513,10 +508,17 @@ func Test_runTaskGitDiff(t *testing.T) {
 //
 //nolint:dupl
 func Test_runTaskGoCoverage(t *testing.T) {
-	runTask := func(ctx context.Context, t *testing.T, stdoutFile *os.File) (*gocover.Profile, error) {
+	runTask := func(ctx context.Context, t *testing.T, stdoutFile *os.File, cfg *config.Config) (*gocover.Profile, error) {
 		t.Helper()
 
-		defaultConfig := config.DefaultConfig
+		var defaultConfig config.Config
+		if cfg == nil {
+			defaultConfig = config.DefaultConfig
+		} else {
+			defaultConfig = *cfg
+		}
+
+		// defaultConfig is already set above based on cfg
 		tm := task.NewManager()
 		tm.Out = stdoutFile
 		tm.Start()
@@ -531,11 +533,9 @@ func Test_runTaskGoCoverage(t *testing.T) {
 	}
 
 	t.Run("should return coverage profile without error", func(t *testing.T) {
-		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
+		_, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
 
-		stdoutFile := testutils.SetStdout(t)
-
-		profile, err := runTask(t.Context(), t, stdoutFile)
+		profile, err := runTask(t.Context(), t, stdoutFile, nil)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
 
@@ -552,7 +552,7 @@ func Test_runTaskGoCoverage(t *testing.T) {
 
 		stdoutFile := testutils.SetStdout(t)
 
-		profile, err := runTask(t.Context(), t, stdoutFile)
+		profile, err := runTask(t.Context(), t, stdoutFile, nil)
 		require.Error(t, err)
 		require.Nil(t, profile)
 
@@ -566,13 +566,11 @@ func Test_runTaskGoCoverage(t *testing.T) {
 	t.Run("should return error with warning if context is canceled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 
-		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
+		_, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
 
 		cancel() // Cancel the context immediately to simulate a canceled operation.
 
-		stdoutFile := testutils.SetStdout(t)
-
-		profile, err := runTask(ctx, t, stdoutFile)
+		profile, err := runTask(ctx, t, stdoutFile, nil)
 		require.Error(t, err)
 		require.ErrorAs(t, err, &taskCanceledError{})
 		require.Nil(t, profile)
@@ -582,5 +580,28 @@ func Test_runTaskGoCoverage(t *testing.T) {
 		assert.Contains(t, output, "!", "Captured output:\n%s", output)
 		assert.NotContains(t, output, "✓", "Captured output:\n%s", output)
 		assert.NotContains(t, output, "✗", "Captured output:\n%s", output)
+	})
+
+	t.Run("should return no error when code has no lines to test", func(t *testing.T) {
+		tempDir, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
+		tempFile := filepath.Join(tempDir, "coverage.out")
+		coverageData := "mode: set"
+
+		testfiles.CreateFile(t, tempFile, coverageData)
+
+		t.Chdir(tempDir)
+
+		cfg := config.DefaultConfig
+		cfg.CoverageFile = "coverage.out"
+
+		profile, err := runTask(t.Context(), t, stdoutFile, &cfg)
+		require.NoError(t, err)
+		require.Nil(t, profile)
+
+		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
+
+		assert.Contains(t, output, "✓", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "✗", "Captured output:\n%s", output)
+		assert.NotContains(t, output, "!", "Captured output:\n%s", output)
 	})
 }
