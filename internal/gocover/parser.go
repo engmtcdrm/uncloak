@@ -98,6 +98,10 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, ErrMissingMode)
 	}
 
+	if len(lines) == 1 {
+		return nil, ErrNoLinesToTest
+	}
+
 	for _, line := range lines[1:] {
 		var coverageLine Line
 
