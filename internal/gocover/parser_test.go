@@ -105,6 +105,15 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 		require.Equal(t, ModeSet, results.Mode)
 		require.Len(t, results.CoveredLines, 2)
 	})
+
+	t.Run("should return error if no lines to test", func(t *testing.T) {
+		input := "mode: set"
+		r := bytes.NewBufferString(input)
+		results, err := p.parseCoverageData(r)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNoLinesToTest)
+		require.Nil(t, results)
+	})
 }
 
 // Tests for [parser.parseCoverageProfile] function.
@@ -121,7 +130,7 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		require.Nil(t, results)
 	})
 
-	t.Run("shoudld return error when coverage file is empty", func(t *testing.T) {
+	t.Run("should return error when coverage file is empty", func(t *testing.T) {
 		tempDir := t.TempDir()
 		tempFile := filepath.Join(tempDir, "coverage.out")
 
@@ -135,7 +144,7 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		assert.ErrorIs(t, err, ErrEmptyCoverageFile)
 	})
 
-	t.Run("shoudld return valid profile and no error when there are no lines to test", func(t *testing.T) {
+	t.Run("should return error when there are no lines to test", func(t *testing.T) {
 		tempDir := t.TempDir()
 		tempFile := filepath.Join(tempDir, "coverage.out")
 		coverageData := "mode: set"
@@ -143,8 +152,9 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		testfiles.CreateFile(t, tempFile, coverageData)
 
 		results, err := p.parseCoverageProfile(tempFile)
-		require.NoError(t, err)
-		require.NotNil(t, results)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNoLinesToTest)
+		require.Nil(t, results)
 	})
 
 	t.Run("should return valid profile for valid file", func(t *testing.T) {
@@ -245,10 +255,11 @@ func Test_parser_parseLines(t *testing.T) {
 		require.Len(t, profile.CoveredLines, 2)
 	})
 
-	t.Run("should return valid profile and no error when there are no lines to test", func(t *testing.T) {
+	t.Run("should return error when there are no lines to test", func(t *testing.T) {
 		profile, err := p.parseLines([]string{"mode: set"})
-		require.NoError(t, err)
-		require.NotNil(t, profile)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNoLinesToTest)
+		require.Nil(t, profile)
 	})
 }
 
