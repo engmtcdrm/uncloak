@@ -26,12 +26,9 @@ jobs:
     needs:
       - validate-pr-title-and-commits
       - lint
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
     uses: ./.github/workflows/uncloak-action.yml
     with:
-      os: ${{ matrix.os }}
+      os_matrix: '["ubuntu-latest", "windows-latest", "macos-latest"]'
       go_version: 1.26.10
       base_ref: ${{ github.event.pull_request.base.sha || github.event.before }}
       head_ref: ${{ github.sha }}
