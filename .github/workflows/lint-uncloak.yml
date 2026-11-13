@@ -5,6 +5,7 @@ name: Run Linting and Tests
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches:
       - "main"
@@ -12,6 +13,9 @@ on:
       - "*" # Ignore all tags
 
 jobs:
+  validate-pr-title-and-commits:
+    name: Validate PR Title and Commit Messages
+    uses: ./.github/workflows/conventional-pr-commit-action.yml
   lint:
     name: Run Linter
     uses: ./.github/workflows/lint-action.yml
@@ -19,7 +23,9 @@ jobs:
       go_version: 1.26.10
   test:
     name: Run Tests/Check Code Coverage
-    needs: lint
+    needs:
+      - validate-pr-title-and-commits
+      - lint
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
