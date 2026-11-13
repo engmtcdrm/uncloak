@@ -112,8 +112,8 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 		results, err := p.parseCoverageData(r)
 		require.NoError(t, err)
 		require.NotNil(t, results)
-		require.Len(t, results.CoveredLines, 0)
-		require.Len(t, results.Lines, 0)
+		require.Empty(t, results.CoveredLines, 0)
+		require.Empty(t, results.Lines, 0)
 	})
 }
 
@@ -155,8 +155,8 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		results, err := p.parseCoverageProfile(tempFile)
 		require.NoError(t, err)
 		require.NotNil(t, results)
-		require.Len(t, results.CoveredLines, 0)
-		require.Len(t, results.Lines, 0)
+		require.Empty(t, results.CoveredLines, 0)
+		require.Empty(t, results.Lines, 0)
 	})
 
 	t.Run("should return valid profile for valid file", func(t *testing.T) {
@@ -261,8 +261,8 @@ func Test_parser_parseLines(t *testing.T) {
 		profile, err := p.parseLines([]string{"mode: set"})
 		require.NoError(t, err)
 		require.NotNil(t, profile)
-		require.Len(t, profile.CoveredLines, 0)
-		require.Len(t, profile.Lines, 0)
+		require.Empty(t, profile.CoveredLines, 0)
+		require.Empty(t, profile.Lines, 0)
 	})
 }
 

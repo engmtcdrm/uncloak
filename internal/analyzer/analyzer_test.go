@@ -597,8 +597,8 @@ func Test_runTaskGoCoverage(t *testing.T) {
 		profile, err := runTask(t.Context(), t, stdoutFile, &cfg)
 		require.NoError(t, err)
 		require.NotNil(t, profile)
-		require.Len(t, profile.CoveredLines, 0)
-		require.Len(t, profile.Lines, 0)
+		require.Empty(t, profile.CoveredLines, 0)
+		require.Empty(t, profile.Lines, 0)
 
 		output := testfiles.ReadFileWithANSIStrip(t, stdoutFile.Name())
 
