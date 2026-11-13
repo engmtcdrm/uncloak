@@ -106,13 +106,14 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 		require.Len(t, results.CoveredLines, 2)
 	})
 
-	t.Run("should return error if no lines to test", func(t *testing.T) {
+	t.Run("should return no error if no lines to test", func(t *testing.T) {
 		input := "mode: set"
 		r := bytes.NewBufferString(input)
 		results, err := p.parseCoverageData(r)
-		require.Error(t, err)
-		require.ErrorIs(t, err, ErrNoLinesToTest)
-		require.Nil(t, results)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.Len(t, results.CoveredLines, 0)
+		require.Len(t, results.Lines, 0)
 	})
 }
 
@@ -144,7 +145,7 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		assert.ErrorIs(t, err, ErrEmptyCoverageFile)
 	})
 
-	t.Run("should return error when there are no lines to test", func(t *testing.T) {
+	t.Run("should return no error if no lines to test", func(t *testing.T) {
 		tempDir := t.TempDir()
 		tempFile := filepath.Join(tempDir, "coverage.out")
 		coverageData := "mode: set"
@@ -152,9 +153,10 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		testfiles.CreateFile(t, tempFile, coverageData)
 
 		results, err := p.parseCoverageProfile(tempFile)
-		require.Error(t, err)
-		require.ErrorIs(t, err, ErrNoLinesToTest)
-		require.Nil(t, results)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.Len(t, results.CoveredLines, 0)
+		require.Len(t, results.Lines, 0)
 	})
 
 	t.Run("should return valid profile for valid file", func(t *testing.T) {
@@ -255,11 +257,12 @@ func Test_parser_parseLines(t *testing.T) {
 		require.Len(t, profile.CoveredLines, 2)
 	})
 
-	t.Run("should return error when there are no lines to test", func(t *testing.T) {
+	t.Run("should return no error if no lines to test", func(t *testing.T) {
 		profile, err := p.parseLines([]string{"mode: set"})
-		require.Error(t, err)
-		require.ErrorIs(t, err, ErrNoLinesToTest)
-		require.Nil(t, profile)
+		require.NoError(t, err)
+		require.NotNil(t, profile)
+		require.Len(t, profile.CoveredLines, 0)
+		require.Len(t, profile.Lines, 0)
 	})
 }
 

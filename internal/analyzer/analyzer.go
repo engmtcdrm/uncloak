@@ -263,19 +263,18 @@ func runTaskGoCoverage(ctx context.Context, tm *task.Manager, coverageFilePath s
 
 	switch {
 	case err != nil:
-		switch {
-		case errors.Is(ctx.Err(), context.Canceled):
-			gotask.SetMessage("Go test coverage analysis stopped - Please see Git diff analysis as to why it was stopped")
+		if errors.Is(ctx.Err(), context.Canceled) {
+			gotask.SetMessage("Stopped Go test coverage analysis - Please see Git diff analysis as to why it was stopped")
 			gotask.Warning()
 			err = newTaskCanceledError(err)
-		case errors.Is(err, gocover.ErrNoLinesToTest):
-			gotask.SetMessage("Go test coverage analysis finished - No lines to test")
-			gotask.Finish()
-			err = nil
-		default:
+		} else {
 			gotask.Error()
 		}
 	default:
+		if len(p.Lines) == 0 {
+			gotask.SetMessage("Finished Go test coverage analysis - No lines to test")
+		}
+
 		gotask.Finish()
 	}
 

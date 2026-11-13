@@ -31,10 +31,6 @@ var (
 	// file.
 	ErrNoModuleName = errors.New("no module name found in go.mod file")
 
-	// ErrNoLinesToTest indicates that there are no lines to test in the
-	// coverage file.
-	ErrNoLinesToTest = errors.New("no lines to test")
-
 	panicText = []byte("panic:")
 )
 
