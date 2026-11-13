@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.6.1] - 2026-11-12
+
 ### Fixed
 
 - fix: messaging when Go test has no lines to test (#34)

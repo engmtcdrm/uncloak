@@ -1,3 +1,3 @@
-### Changed
+### Fixed
 
-- feat: updated `git diff` filter logic (#30)
+- fix: messaging when Go test has no lines to test (#34)
