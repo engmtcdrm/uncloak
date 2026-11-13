@@ -5,6 +5,7 @@ on:
 
 jobs:
   validate-pr-title:
+    if: github.event_name == 'pull_request'
     name: Validate PR Title
     runs-on: ubuntu-latest
     steps:
