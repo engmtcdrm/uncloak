@@ -3,10 +3,10 @@ name: Uncloak Action
 on:
   workflow_call:
     inputs:
-      os:
+      os_matrix:
         required: true
         type: string
-        description: The operating system to run the tests on
+        description: JSON array of operating systems to run the tests on
       go_version:
         required: true
         type: string
@@ -22,7 +22,11 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ inputs.os }}
+    name: Test on ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ${{ fromJSON(inputs.os_matrix) }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
