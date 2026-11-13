@@ -2,6 +2,7 @@ package gocover
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/testing/testfiles"
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -83,11 +85,12 @@ func Test_parser_parseCoverageData(t *testing.T) {
 		require.Nil(t, results)
 	})
 
-	t.Run("should return nil results for empty input", func(t *testing.T) {
+	t.Run("should return error for empty input", func(t *testing.T) {
 		r := &testutils.EmptyReader{}
 		results, err := p.parseCoverageData(r)
-		require.NoError(t, err)
+		require.Error(t, err)
 		require.Nil(t, results)
+		assert.ErrorIs(t, err, ErrEmptyCoverageFile)
 	})
 
 	t.Run("should return valid profile for valid input", func(t *testing.T) {
@@ -101,6 +104,16 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 		require.NotNil(t, results)
 		require.Equal(t, ModeSet, results.Mode)
 		require.Len(t, results.CoveredLines, 2)
+	})
+
+	t.Run("should return no error if no lines to test", func(t *testing.T) {
+		input := "mode: set"
+		r := bytes.NewBufferString(input)
+		results, err := p.parseCoverageData(r)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.Empty(t, results.CoveredLines, 0)
+		require.Empty(t, results.Lines, 0)
 	})
 }
 
@@ -116,6 +129,34 @@ func Test_parser_parseCoverageProfile(t *testing.T) {
 		results, err := p.parseCoverageProfile("nonexistent_file.txt")
 		require.Error(t, err)
 		require.Nil(t, results)
+	})
+
+	t.Run("should return error when coverage file is empty", func(t *testing.T) {
+		tempDir := t.TempDir()
+		tempFile := filepath.Join(tempDir, "coverage.out")
+
+		tmpFile, err := os.Create(tempFile)
+		require.NoError(t, err)
+		require.NoError(t, tmpFile.Close())
+
+		results, err := p.parseCoverageProfile(tempFile)
+		require.Error(t, err)
+		require.Nil(t, results)
+		assert.ErrorIs(t, err, ErrEmptyCoverageFile)
+	})
+
+	t.Run("should return no error if no lines to test", func(t *testing.T) {
+		tempDir := t.TempDir()
+		tempFile := filepath.Join(tempDir, "coverage.out")
+		coverageData := "mode: set"
+
+		testfiles.CreateFile(t, tempFile, coverageData)
+
+		results, err := p.parseCoverageProfile(tempFile)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.Empty(t, results.CoveredLines, 0)
+		require.Empty(t, results.Lines, 0)
 	})
 
 	t.Run("should return valid profile for valid file", func(t *testing.T) {
@@ -144,8 +185,8 @@ func Test_parser_parseLines(t *testing.T) {
 		},
 	}
 
-	t.Run("should return error if line length is less than 2", func(t *testing.T) {
-		profile, err := p.parseLines([]string{"mode: set"})
+	t.Run("should return error if line length is 0", func(t *testing.T) {
+		profile, err := p.parseLines([]string{})
 		require.Error(t, err)
 		require.Nil(t, profile)
 	})
@@ -158,6 +199,8 @@ func Test_parser_parseLines(t *testing.T) {
 
 		profile, err := p.parseLines(lines)
 		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidCoverageFile)
+		require.ErrorIs(t, err, ErrInvalidCoverageLine)
 		require.Nil(t, profile)
 	})
 
@@ -169,6 +212,34 @@ func Test_parser_parseLines(t *testing.T) {
 
 		profile, err := p.parseLines(lines)
 		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidCoverageFile)
+		require.ErrorIs(t, err, ErrInvalidCoverageLine)
+		require.Nil(t, profile)
+	})
+
+	t.Run("should return error if mode is not valid", func(t *testing.T) {
+		lines := []string{
+			"mode: invalid",
+			"test.com/testmodule/file1.go:10.1,20.2 1 1",
+		}
+
+		profile, err := p.parseLines(lines)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidCoverageFile)
+		require.ErrorIs(t, err, ErrInvalidMode)
+		require.Nil(t, profile)
+	})
+
+	t.Run("should return error if mode is missing", func(t *testing.T) {
+		lines := []string{
+			"mode:",
+			"test.com/testmodule/file1.go:10.1,20.2 1 1",
+		}
+
+		profile, err := p.parseLines(lines)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidCoverageFile)
+		require.ErrorIs(t, err, ErrMissingMode)
 		require.Nil(t, profile)
 	})
 
@@ -184,6 +255,14 @@ func Test_parser_parseLines(t *testing.T) {
 		require.NotNil(t, profile)
 		require.Equal(t, ModeSet, profile.Mode)
 		require.Len(t, profile.CoveredLines, 2)
+	})
+
+	t.Run("should return no error if no lines to test", func(t *testing.T) {
+		profile, err := p.parseLines([]string{"mode: set"})
+		require.NoError(t, err)
+		require.NotNil(t, profile)
+		require.Empty(t, profile.CoveredLines, 0)
+		require.Empty(t, profile.Lines, 0)
 	})
 }
 
@@ -209,6 +288,10 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		}
 
 		filePath, err := p.runTestCoverage(t.Context())
+		t.Cleanup(func() {
+			os.RemoveAll(tempDir) //nolint:errcheck
+		})
+
 		require.Error(t, err)
 		require.Empty(t, filePath)
 	})
@@ -218,6 +301,10 @@ func Test_parser_runTestCoverage(t *testing.T) {
 		t.Chdir(tempDir)
 
 		filePath, err := p.runTestCoverage(t.Context())
+		t.Cleanup(func() {
+			os.RemoveAll(tempDir) //nolint:errcheck
+		})
+
 		require.Error(t, err)
 		require.Empty(t, filePath)
 	})
@@ -229,6 +316,10 @@ func Test_parser_runTestCoverage(t *testing.T) {
 
 		t.Chdir(tempDir)
 		filePath, err := p.runTestCoverage(t.Context())
+		t.Cleanup(func() {
+			os.RemoveAll(tempDir) //nolint:errcheck
+		})
+
 		require.NoError(t, err)
 		require.NotEmpty(t, filePath)
 	})

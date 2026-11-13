@@ -62,10 +62,6 @@ func (p *parser) parseCoverageData(r io.Reader) (*Profile, error) {
 		return nil, err
 	}
 
-	if len(lines) == 0 {
-		return nil, nil
-	}
-
 	return p.parseLines(lines)
 }
 
@@ -84,14 +80,22 @@ func (p *parser) parseCoverageProfile(filePath string) (*Profile, error) {
 // parseLines processes the lines of a Go coverage profile and returns them in a
 // [Profile] struct.
 func (p *parser) parseLines(lines []string) (*Profile, error) {
-	if len(lines) < 2 {
-		return nil, ErrInvalidCoverageFile
+	if len(lines) == 0 {
+		return nil, ErrEmptyCoverageFile
 	}
 
 	profile := NewProfile(p.Command, p.RawGoTestOutput)
 
 	if after, ok := strings.CutPrefix(lines[0], "mode: "); ok {
-		profile.Mode = Mode(after)
+		var err error
+		profile.Mode, err = parseMode(after)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, err)
+		}
+	}
+
+	if profile.Mode == "" {
+		return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, ErrMissingMode)
 	}
 
 	for _, line := range lines[1:] {
@@ -100,7 +104,7 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 		// split at last ':' so paths that contain ':' (Windows drive letters) still work
 		i := strings.LastIndex(line, ":")
 		if i == -1 {
-			return nil, fmt.Errorf("invalid coverage line: %q", line)
+			return nil, fmt.Errorf("%w: %w: %q", ErrInvalidCoverageFile, ErrInvalidCoverageLine, line)
 		}
 
 		path := strings.TrimPrefix(line[:i], p.GoList.Module+"/")
@@ -112,7 +116,7 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 			&coverageLine.Statements, &coverageLine.Count,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: %w: %w", ErrInvalidCoverageFile, ErrInvalidCoverageLine, err)
 		}
 
 		coverageLine.Path = path

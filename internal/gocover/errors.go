@@ -11,13 +11,25 @@ import (
 )
 
 var (
-	// ErrNoModuleName indicates that no module name was found in the go.mod
-	// file.
-	ErrNoModuleName = errors.New("no module name found in go.mod file")
+	// ErrEmptyCoverageFile indicates that the coverage file is empty.
+	ErrEmptyCoverageFile = errors.New("empty coverage file")
 
 	// ErrInvalidCoverageFile indicates that the coverage file has an invalid
 	// format.
 	ErrInvalidCoverageFile = errors.New("invalid coverage file format")
+
+	// ErrInvalidCoverageLine indicates that a coverage line is invalid.
+	ErrInvalidCoverageLine = errors.New("invalid coverage line")
+
+	// ErrInvalidMode indicates that the coverage mode is invalid.
+	ErrInvalidMode = errors.New("invalid coverage mode")
+
+	// ErrMissingMode indicates that the coverage mode is missing.
+	ErrMissingMode = errors.New("missing coverage mode")
+
+	// ErrNoModuleName indicates that no module name was found in the go.mod
+	// file.
+	ErrNoModuleName = errors.New("no module name found in go.mod file")
 
 	panicText = []byte("panic:")
 )
