@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  APP: uncloak
+
+tasks:
+  build:
+    desc: Build the application
+    cmds:
+      - echo "Size before build:"
+      - ls -la {{.APP}}
+      - ls -lh {{.APP}}
+      - CGO_ENABLED=0 go build --ldflags "-s -w"
+      - echo -e "\nSize after build:"
+      - ls -la {{.APP}}
+      - ls -lh {{.APP}}
+    silent: true
+  run:
+    desc: Run {{.APP}} against the main branch
+    cmds:
+      - go run . -t main
+    silent: true
+  lint:
+    desc: Run linters
+    cmds:
+      - echo "Running golangci-lint..."
+      - golangci-lint run --timeout 5m
+    silent: true
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+    silent: true
+  test-cover:
+    desc: Run tests with coverage
+    cmds:
+      - go test -coverprofile=coverage.out
+      - go tool cover -html=coverage.out -o coverage.html
+      - rm coverage.out
+    silent: true
+  test-cover-all:
+    desc: Run tests with coverage for all packages
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - rm coverage.out
+    silent: true
+  test-v:
+    desc: Run tests with verbose output
+    cmds:
+      - go test ./... -v
+    silent: true
