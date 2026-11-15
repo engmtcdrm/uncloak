@@ -103,7 +103,7 @@ Examples:
 
 ```bash
 uncloak --target-ref main --coverage-threshold 70.31 --verbose
-uncloak -t main -c -v
+uncloak -t main -c 70.31 -v
 ```
 
 ## Exit status
