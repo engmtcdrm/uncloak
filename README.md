@@ -88,28 +88,28 @@ Exclusions support exact file matches and glob patterns. For example:
 
 ## Flags
 
-`uncloak` supports these command-line flags:
-
 - `-C, --coverage-file <string>`: (optional) path to the Go coverage file. If not specified, the default is to use the go tool to generate the coverage file
 - `-c, --coverage-threshold <float>`: (optional) coverage threshold override. This will also overwrite what is specified in the configuration file
-- `-d, --debug`: (optional) enable debug output, e.g. what commands are run
-- `-h, --help`: help for uncloak
-- `-l, --lines-only`: (optional) display only the uncovered lines without detailed context when writing to stdout
-- `-o, --output`: (optional) file to write new code missing coverage out to
+- `-d, --debug[=true|false]`: (optional) enable debug output, e.g. what commands are run
+- `-h, --help[=true|false]`: help for uncloak
+- `-l, --lines-only[=true|false]`: (optional) display only the uncovered lines without detailed context when writing to stdout
+- `-o, --output <string>`: (optional) file to write new code missing coverage out to
+- `-s, --summary <string>`: (optional) output a JSON summary of the coverage results to the specified file
 - `-t, --target-ref <string>`: (required) git target reference to compare against, e.g. a branch name or commit hash
-- `-v, --verbose`: (optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output
-- `--version`: version for uncloak
+- `-v, --verbose[=true|false]`: (optional) enable verbose output, e.g. output from go test command. This does not enable verbose go test. Use configuration file to enable verbose go test output
+- `--version[=true|false]`: version for uncloak
 
-Example:
+Examples:
 
 ```bash
 uncloak --target-ref main --coverage-threshold 70.31 --verbose
+uncloak -t main -c -v
 ```
 
 ## Exit status
 
 - `0` when coverage meets the configured threshold
-- non-zero when coverage is below the threshold or an analysis error occurs
+- non-zero when coverage is below the threshold or an error during analysis occurs
 
 ## Example workflow
 
@@ -124,3 +124,4 @@ uncloak --target-ref main --coverage-threshold 70.31 --verbose
 - New branches must have one commit prior to being able to run `uncloak` against a target reference.
 - Brand new Go files must be staged or committed for `uncloak` to analyze them; untracked files will not be part of the `git diff` analysis.
 - The tool expects to run inside a Git repository.
+- The tool can be run in subdirectories, but remember the coverage will not be representative of the entire repository. This can be handy for focusing on specific parts of the codebase while writing tests.
