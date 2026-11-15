@@ -1,3 +1,3 @@
-### Fixed
+### Added
 
-- fix: messaging when Go test has no lines to test (#34)
+- feat: added the flag `-s/--summary` to output a JSON summary of the coverage results to the specified file ([#38](https://github.com/engmtcdrm/uncloak/pull/38))

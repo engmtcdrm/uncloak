@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.7.0] - 2026-11-15
+
 ### Added
 
 - feat: added the flag `-s/--summary` to output a JSON summary of the coverage results to the specified file ([#38](https://github.com/engmtcdrm/uncloak/pull/38))
