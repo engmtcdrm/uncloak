@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/config"
@@ -157,10 +157,6 @@ func Test_cmd_Run(t *testing.T) {
 	})
 
 	t.Run("should return an error if summary file cannot be written", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("Skipping os.WriteFile error test on Windows")
-		}
-
 		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()
@@ -175,11 +171,10 @@ func Test_cmd_Run(t *testing.T) {
 		err = localRootCmd.Flags().Set("target-ref", testrepo.NewBranchName)
 		require.NoError(t, err)
 
-		err = os.Chmod(summaryTempDir, 0000)
-		require.NoError(t, err, "Failed to change file permissions")
-		t.Cleanup(func() {
-			require.NoError(t, os.Chmod(summaryTempDir, 0755))
-		})
+		// Force error to happen during json marshalling by setting
+		// coverageThreshold to NaN
+		c.coverageThreshold = math.NaN()
+		err = localRootCmd.Flags().Set("coverage-threshold", "NaN")
 
 		err = c.Run(localRootCmd, []string{})
 		require.Error(t, err)
