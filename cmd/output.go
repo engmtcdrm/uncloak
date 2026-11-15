@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
@@ -26,6 +27,21 @@ var (
 	ellipsisLen   = utf8.RuneCountInString(ellipsis)     // Length of the ellipsis string
 	lineNbrIndent = strings.Repeat(" ", lineNbrIndentBy) // String of spaces used to indent the line number column
 )
+
+const (
+	summaryVersion = 0
+)
+
+type coverageSummary struct {
+	Version                    int     `json:"version"`
+	CoveragePercent            float64 `json:"coveragePercent"`
+	CoveragePercentFormatted   string  `json:"coveragePercentFormatted"`
+	CoverageThreshold          float64 `json:"coverageThreshold"`
+	CoverageThresholdFormatted string  `json:"coverageThresholdFormatted"`
+	CoveredNewLines            int     `json:"coveredNewLines"`
+	TotalNewLines              int     `json:"totalNewLines"`
+	Passed                     bool    `json:"passed"`
+}
 
 // displayUncoveredFunctionLines displays the uncovered lines for a given
 // function within a file to [os.Stdout].
@@ -189,6 +205,55 @@ func formatUncoveredLine(maxLineDigits int, lineNbr int, lineContent string) str
 		pp.Boldf("%*d", maxLineDigits, lineNbr),
 		pp.Redf(" %s %s", lineSeparator, lineContent),
 	)
+}
+
+// outputSummary writes a summary of the coverage report to the specified output
+// file in JSON format.
+func outputSummary(report *analyzer.Report, summaryFilePath string, coverageThreshold float64) error {
+	if summaryFilePath == "" {
+		return nil
+	}
+
+	var sum coverageSummary
+
+	switch report {
+	case nil:
+		sum = coverageSummary{
+			Version:                    summaryVersion,
+			CoveragePercent:            0,
+			CoveragePercentFormatted:   fmt.Sprintf(floatFormat, 0.0),
+			CoverageThreshold:          coverageThreshold,
+			CoverageThresholdFormatted: fmt.Sprintf(floatFormat, coverageThreshold),
+			Passed:                     false,
+			CoveredNewLines:            0,
+			TotalNewLines:              0,
+		}
+	default:
+		coveragePercent := report.CoveragePercent()
+
+		sum = coverageSummary{
+			Version:                    summaryVersion,
+			CoveragePercent:            coveragePercent,
+			CoveragePercentFormatted:   fmt.Sprintf(floatFormat, coveragePercent),
+			CoverageThreshold:          coverageThreshold,
+			CoverageThresholdFormatted: fmt.Sprintf(floatFormat, coverageThreshold),
+			Passed:                     coveragePercent >= coverageThreshold,
+			CoveredNewLines:            report.TotalCoveredNewLines(),
+			TotalNewLines:              report.TotalNewLines(),
+		}
+	}
+
+	jsonData, err := json.MarshalIndent(sum, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(summaryFilePath, jsonData, 0o644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // outputUncoveredLine writes the uncovered lines for a single file to

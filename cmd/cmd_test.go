@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/engmtcdrm/uncloak/internal/config"
@@ -98,8 +100,8 @@ func Test_cmd_Run(t *testing.T) {
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
-		c.output = "/invalid/path/to/output/file"
-		err = localRootCmd.Flags().Set("output", c.output)
+		c.outputFile = "/invalid/path/to/output/file"
+		err = localRootCmd.Flags().Set("output", c.outputFile)
 		require.NoError(t, err)
 
 		c.gitTargetRef = gitdiff.LocalMain
@@ -115,7 +117,7 @@ func Test_cmd_Run(t *testing.T) {
 	})
 
 	t.Run("should run without returning an error if there are no changes", func(t *testing.T) {
-		_, stdoutFile := testrepo.InitWithFileCopy(t.Context(), t)
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
 		c := &cmd{}
 		localRootCmd := newRootCmd()
 
@@ -125,7 +127,65 @@ func Test_cmd_Run(t *testing.T) {
 
 		err = c.Run(localRootCmd, []string{})
 		require.NoError(t, err)
-		_ = stdoutFile
+	})
+
+	t.Run("should output a summary file when summaryFilePath is provided", func(t *testing.T) {
+		tempDir, _ := testrepo.InitWithFileCopy(t.Context(), t)
+		c := &cmd{}
+		localRootCmd := newRootCmd()
+
+		summaryFilePath := filepath.Join(tempDir, "summary.json")
+		c.summaryFile = summaryFilePath
+		err := localRootCmd.Flags().Set("summary", summaryFilePath)
+		require.NoError(t, err)
+
+		c.gitTargetRef = testrepo.NewBranchName
+		err = localRootCmd.Flags().Set("target-ref", testrepo.NewBranchName)
+		require.NoError(t, err)
+
+		err = c.Run(localRootCmd, []string{})
+		require.NoError(t, err)
+
+		summaryContents, err := os.ReadFile(summaryFilePath)
+		require.NoError(t, err)
+		require.NotEmpty(t, summaryContents)
+
+		var summary coverageSummary
+		err = json.Unmarshal(summaryContents, &summary)
+		require.NoError(t, err)
+		require.NotEmpty(t, summary)
+	})
+
+	t.Run("should return an error if summary file cannot be written", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping os.WriteFile error test on Windows")
+		}
+
+		_, _ = testrepo.InitWithFileCopy(t.Context(), t)
+		c := &cmd{}
+		localRootCmd := newRootCmd()
+
+		summaryTempDir := t.TempDir()
+		summaryFilePath := filepath.Join(summaryTempDir, "summary.json")
+		c.summaryFile = summaryFilePath
+		err := localRootCmd.Flags().Set("summary", summaryFilePath)
+		require.NoError(t, err)
+
+		c.gitTargetRef = testrepo.NewBranchName
+		err = localRootCmd.Flags().Set("target-ref", testrepo.NewBranchName)
+		require.NoError(t, err)
+
+		err = os.Chmod(summaryTempDir, 0000)
+		require.NoError(t, err, "Failed to change file permissions")
+		t.Cleanup(func() {
+			require.NoError(t, os.Chmod(summaryTempDir, 0755))
+		})
+
+		err = c.Run(localRootCmd, []string{})
+		require.Error(t, err)
+
+		_, err = os.ReadFile(summaryFilePath)
+		require.Error(t, err, "expected summary file not to exist")
 	})
 }
 

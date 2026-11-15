@@ -20,7 +20,8 @@ type cmd struct {
 	gitTargetRef      string
 	linesOnly         bool
 	verbose           bool
-	output            string
+	outputFile        string
+	summaryFile       string
 }
 
 // Run executes the command with the provided Cobra command and arguments. It
@@ -45,6 +46,10 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if err := outputSummary(report, c.summaryFile, cfg.CoverageThreshold); err != nil {
+		return err
+	}
+
 	if c.verbose {
 		if len(report.CoverageProfile.RawTestOutput) > 0 {
 			fmt.Printf("%s\n\n", colors.LightGreen("Go Test Output:"))
@@ -52,7 +57,7 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	if err := outputUncoveredLines(report, c.output, c.linesOnly); err != nil {
+	if err := outputUncoveredLines(report, c.outputFile, c.linesOnly); err != nil {
 		return err
 	}
 
