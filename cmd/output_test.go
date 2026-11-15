@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -16,6 +19,7 @@ import (
 	"github.com/engmtcdrm/uncloak/internal/testing/testgit"
 	"github.com/engmtcdrm/uncloak/internal/testing/testrepo"
 	"github.com/engmtcdrm/uncloak/internal/testing/testutils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -415,6 +419,143 @@ func Test_formatUncoveredLine(t *testing.T) {
 				require.Equal(t, tt.lineContent, resultNoANSI[contentStartIdx:])
 			})
 		}
+	})
+}
+
+// Tests for [outputSummary] function.
+func Test_outputSummary(t *testing.T) {
+	const defaultCoverage = 80.0
+
+	t.Run("should return no error if summaryFilePath is empty", func(t *testing.T) {
+		err := outputSummary(nil, "", defaultCoverage)
+		require.NoError(t, err)
+	})
+
+	t.Run("should return no error if summaryFilePath provided and report is nil", func(t *testing.T) {
+		tempDir := t.TempDir()
+		summaryFilePath := filepath.Join(tempDir, "summary.json")
+		err := outputSummary(nil, summaryFilePath, defaultCoverage)
+		require.NoError(t, err)
+
+		summaryContents, err := os.ReadFile(summaryFilePath)
+		require.NoError(t, err)
+		require.NotEmpty(t, summaryContents)
+
+		var summary coverageSummary
+		err = json.Unmarshal(summaryContents, &summary)
+		require.NoError(t, err)
+		assert.Equal(t, summaryVersion, summary.Version)
+		assert.Empty(t, summary.CoveragePercent)
+		assert.Equal(t, fmt.Sprintf(floatFormat, 0.0), summary.CoveragePercentFormatted)
+		assert.InEpsilon(t, defaultCoverage, summary.CoverageThreshold, 0.0001)
+		assert.Equal(t, fmt.Sprintf(floatFormat, defaultCoverage), summary.CoverageThresholdFormatted)
+		assert.False(t, summary.Passed)
+		assert.Equal(t, 0, summary.CoveredNewLines)
+		assert.Equal(t, 0, summary.TotalNewLines)
+	})
+
+	t.Run("should return no error if summaryFilePath provided and coverage is below threshold", func(t *testing.T) {
+		tempDir := t.TempDir()
+		summaryFilePath := filepath.Join(tempDir, "summary.json")
+		report := &analyzer.Report{
+			Files: []*analyzer.FileReport{
+				{
+					Path:              "file.go",
+					CoveredNewLines:   []int{1, 4, 5},
+					UncoveredNewLines: []int{2, 3, 7},
+				},
+			},
+		}
+
+		expectedCoveredLines := report.TotalCoveredNewLines()
+		expectedTotalLines := report.TotalNewLines()
+
+		err := outputSummary(report, summaryFilePath, defaultCoverage)
+		require.NoError(t, err)
+
+		summaryContents, err := os.ReadFile(summaryFilePath)
+		require.NoError(t, err)
+		require.NotEmpty(t, summaryContents)
+
+		var summary coverageSummary
+		err = json.Unmarshal(summaryContents, &summary)
+		require.NoError(t, err)
+		assert.Equal(t, summaryVersion, summary.Version)
+		assert.InEpsilon(t, 50.0, summary.CoveragePercent, 0.0001)
+		assert.Equal(t, fmt.Sprintf(floatFormat, 50.0), summary.CoveragePercentFormatted)
+		assert.InEpsilon(t, defaultCoverage, summary.CoverageThreshold, 0.0001)
+		assert.Equal(t, fmt.Sprintf(floatFormat, defaultCoverage), summary.CoverageThresholdFormatted)
+		assert.False(t, summary.Passed)
+		assert.Equal(t, expectedCoveredLines, summary.CoveredNewLines)
+		assert.Equal(t, expectedTotalLines, summary.TotalNewLines)
+	})
+
+	t.Run("should return no error if summaryFilePath provided and coverage is above threshold", func(t *testing.T) {
+		tempDir := t.TempDir()
+		summaryFilePath := filepath.Join(tempDir, "summary.json")
+		report := &analyzer.Report{
+			Files: []*analyzer.FileReport{
+				{
+					Path:            "file.go",
+					CoveredNewLines: []int{1, 2, 3, 4, 5, 6},
+				},
+			},
+		}
+
+		expectedCoveredLines := report.TotalCoveredNewLines()
+		expectedTotalLines := report.TotalNewLines()
+
+		err := outputSummary(report, summaryFilePath, defaultCoverage)
+		require.NoError(t, err)
+
+		summaryContents, err := os.ReadFile(summaryFilePath)
+		require.NoError(t, err)
+		require.NotEmpty(t, summaryContents)
+
+		var summary coverageSummary
+		err = json.Unmarshal(summaryContents, &summary)
+		require.NoError(t, err)
+		assert.Equal(t, summaryVersion, summary.Version)
+		assert.InEpsilon(t, 100.0, summary.CoveragePercent, 0.0001)
+		assert.Equal(t, fmt.Sprintf(floatFormat, 100.0), summary.CoveragePercentFormatted)
+		assert.InEpsilon(t, defaultCoverage, summary.CoverageThreshold, 0.0001)
+		assert.Equal(t, fmt.Sprintf(floatFormat, defaultCoverage), summary.CoverageThresholdFormatted)
+		assert.True(t, summary.Passed)
+		assert.Equal(t, expectedCoveredLines, summary.CoveredNewLines)
+		assert.Equal(t, expectedTotalLines, summary.TotalNewLines)
+	})
+
+	t.Run("should return error if json.MarshalIndent returns an error", func(t *testing.T) {
+		tempDir := t.TempDir()
+		summaryFilePath := filepath.Join(tempDir, "summary.json")
+		err := outputSummary(nil, summaryFilePath, math.NaN())
+		require.Error(t, err)
+	})
+
+	t.Run("shoudl return error if os.WriteFile returns an error", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping os.WriteFile error test on Windows")
+		}
+
+		tempDir := t.TempDir()
+		summaryFilePath := filepath.Join(tempDir, "summary.json")
+		report := &analyzer.Report{
+			Files: []*analyzer.FileReport{
+				{
+					Path:            "file.go",
+					CoveredNewLines: []int{1, 2, 3, 4, 5, 6},
+				},
+			},
+		}
+
+		err := os.Chmod(tempDir, 0000)
+		require.NoError(t, err, "Failed to change file permissions")
+		t.Cleanup(func() {
+			require.NoError(t, os.Chmod(tempDir, 0755))
+		})
+
+		err = outputSummary(report, summaryFilePath, defaultCoverage)
+		require.Error(t, err)
 	})
 }
 

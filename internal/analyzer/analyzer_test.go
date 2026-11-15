@@ -135,7 +135,7 @@ func Test_analyzeCoverage(t *testing.T) {
 	})
 
 	t.Run("should return an error from analyzeFileCoverage when file permissions are restricted", func(t *testing.T) {
-		if goos := runtime.GOOS; goos == "windows" {
+		if runtime.GOOS == "windows" {
 			t.Skip("Skipping test on Windows due to file permission limitations")
 		}
 
@@ -183,7 +183,7 @@ func Test_analyzeFileCoverage(t *testing.T) {
 	})
 
 	t.Run("should return an error if NewFileReport fails", func(t *testing.T) {
-		if goos := runtime.GOOS; goos == "windows" {
+		if runtime.GOOS == "windows" {
 			t.Skip("Skipping test on Windows due to file permission limitations")
 		}
 

@@ -23,6 +23,9 @@ const (
 	outputFlagName = "output"
 	outputUsage    = "(optional) file to write new code missing coverage out to"
 
+	summaryFlagName = "summary"
+	summaryUsage    = "(optional) output a JSON summary of the coverage results to the specified file"
+
 	targetRefFlagName = "target-ref"
 	targetRefUsage    = "(required) git target reference to compare against, e.g. a branch name or commit hash"
 
@@ -56,7 +59,8 @@ func newRootCmd() *cobra.Command {
 	rootCmd.Flags().BoolVarP(&c.debug, debugFlagName, "d", false, debugUsage)
 	rootCmd.Flags().StringVarP(&c.gitTargetRef, targetRefFlagName, "t", "", targetRefUsage)
 	rootCmd.Flags().BoolVarP(&c.linesOnly, linesOnlyFlagName, "l", false, linesOnlyUsage)
-	rootCmd.Flags().StringVarP(&c.output, outputFlagName, "o", "", outputUsage)
+	rootCmd.Flags().StringVarP(&c.outputFile, outputFlagName, "o", "", outputUsage)
+	rootCmd.Flags().StringVarP(&c.summaryFile, summaryFlagName, "s", "", summaryUsage)
 	rootCmd.Flags().BoolVarP(&c.verbose, verboseFlagName, "v", false, verboseUsage)
 
 	return rootCmd
