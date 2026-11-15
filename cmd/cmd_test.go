@@ -175,6 +175,7 @@ func Test_cmd_Run(t *testing.T) {
 		// coverageThreshold to NaN
 		c.coverageThreshold = math.NaN()
 		err = localRootCmd.Flags().Set("coverage-threshold", "NaN")
+		require.NoError(t, err)
 
 		err = c.Run(localRootCmd, []string{})
 		require.Error(t, err)
