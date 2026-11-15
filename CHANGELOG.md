@@ -7,75 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- feat: added the flag `-s/--summary` to output a JSON summary of the coverage results to the specified file ([#38](https://github.com/engmtcdrm/uncloak/pull/38))
+
 ## [v0.6.1] - 2026-11-12
 
 ### Fixed
 
-- fix: messaging when Go test has no lines to test (#34)
+- fix: messaging when Go test has no lines to test ([#34](https://github.com/engmtcdrm/uncloak/pull/34))
 
 ## [v0.6.0] - 2026-10-25
 
 ### Changed
 
-- feat: updated `git diff` filter logic (#30)
+- feat: updated `git diff` filter logic ([#30](https://github.com/engmtcdrm/uncloak/pull/30))
 
 ## [v0.5.0] - 2026-10-18
 
 ### Added
 
-- feat: added the flag `-l/--lines-only` to display only the uncovered lines without detailed context when writing to terminal (#25)
+- feat: added the flag `-l/--lines-only` to display only the uncovered lines without detailed context when writing to terminal ([#25](https://github.com/engmtcdrm/uncloak/pull/25))
 
 ### Changed
 
-- feat: provide more detailed missing code coverage output (#24)
+- feat: provide more detailed missing code coverage output ([#24](https://github.com/engmtcdrm/uncloak/pull/24))
 
 ## [0.4.1] - 2026-09-08
 
 ### Changed
 
-- perf: added filtering to `git diff` command to filter only for `*.go` files and excluding `*_test.go` files (#22)
+- perf: added filtering to `git diff` command to filter only for `*.go` files and excluding `*_test.go` files ([#22](https://github.com/engmtcdrm/uncloak/pull/22))
 
 ### Fixed
 
-- fix: bug with `git diff` sometimes misrepresenting changes (#22)
+- fix: bug with `git diff` sometimes misrepresenting changes ([#22](https://github.com/engmtcdrm/uncloak/pull/22))
 
 ## [0.4.0] - 2026-09-02
 
 ### Changed
 
-- feat: changed the flag `-t/--target-ref` to be required instead of optional (#18)
+- feat: changed the flag `-t/--target-ref` to be required instead of optional ([#18](https://github.com/engmtcdrm/uncloak/pull/18))
 
 ## [0.3.0] - 2026-08-30
 
 ### Added
 
-- feat: added configuration options for `go-test`. See [README.md](README.md#configuration-fields) for details. (#13)
-- feat: added early exit on task failure (#14)
-- feat: added `-C/--coverage-file` to provide a coverage file to do analysis on (#17)
+- feat: added configuration options for `go-test`. See [README.md](README.md#configuration-fields) for details. ([#13](https://github.com/engmtcdrm/uncloak/pull/13))
+- feat: added early exit on task failure ([#14](https://github.com/engmtcdrm/uncloak/pull/14))
+- feat: added `-C/--coverage-file` to provide a coverage file to do analysis on ([#17](https://github.com/engmtcdrm/uncloak/pull/17))
 
 ### Fixed
 
-- fix: bug where cursor remains hidden when `ctrl+c` is pressed while tasks are running (#20)
+- fix: bug where cursor remains hidden when `ctrl+c` is pressed while tasks are running ([#20](https://github.com/engmtcdrm/uncloak/pull/20))
 
 ## [0.2.0] - 2026-08-18
 
 ### Added
 
-- feat: added flag `-o/--output` to write new code missing coverage out to a file (#8)
-- feat: display time durations while running commands in background (#9)
+- feat: added flag `-o/--output` to write new code missing coverage out to a file ([#8](https://github.com/engmtcdrm/uncloak/pull/8))
+- feat: display time durations while running commands in background ([#9](https://github.com/engmtcdrm/uncloak/pull/9))
 
 ### Changed
 
-- refactor: changed header output to utilize bytes.Buffer for better performance (#4)
-- refactor: missing coverage output to bold path and split each file by a newline for readability (#5)
+- refactor: changed header output to utilize bytes.Buffer for better performance ([#4](https://github.com/engmtcdrm/uncloak/pull/4))
+- refactor: missing coverage output to bold path and split each file by a newline for readability ([#5](https://github.com/engmtcdrm/uncloak/pull/5))
 
 ## [0.1.1] - 2026-08-03
 
 ### Changed
 
-- chore: Adjusted how versioning is set for builds to support both `.goreleaser.yml` and `go install`. (#2)
-- chore: Added `-trimpath` to `.goreleaser.yml`. (#2)
+- chore: Adjusted how versioning is set for builds to support both `.goreleaser.yml` and `go install`. ([#2](https://github.com/engmtcdrm/uncloak/pull/2))
+- chore: Added `-trimpath` to `.goreleaser.yml`. ([#2](https://github.com/engmtcdrm/uncloak/pull/2))
 
 ## [0.1.0] - 2026-07-26
 
-Initial development (#1)
+Initial development ([#1](https://github.com/engmtcdrm/uncloak/pull/1))
