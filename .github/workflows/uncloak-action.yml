@@ -144,15 +144,12 @@ jobs:
               else if (result.outcome === 'failure' || result.jobResult === 'failure') status = '❌';
               else if (summary) status = '✅';
 
-              const coveredLines = summary
-                ? (summary.coveredNewLines === 0 && summary.totalNewLines === 0 ? 'N/A' : `${summary.coveredNewLines}/${summary.totalNewLines}`)
-                : '-';
-              return `| ${status} ${escapeCell(result.os)} | ${summary ? escapeCell(summary.coveragePercentFormatted) : '-'} | ${summary ? escapeCell(summary.coverageThresholdFormatted) : '-'} | ${coveredLines} |`;
+              return `| ${status} ${escapeCell(result.os)} | ${summary ? escapeCell(summary.coveragePercentFormatted) : '-'} | ${summary ? escapeCell(summary.coverageThresholdFormatted) : '-'} |`;
             });
             const table = [
-              '| Operating System | New Code Coverage | Coverage Threshold | Covered New Lines |',
-              '| --- | ---: | ---: | ---: |',
-              ...(rows.length ? rows : ['| No summary artifacts were uploaded | - | - | - | - |']),
+              '| Operating System | New Code Coverage | Coverage Threshold |',
+              '| --- | ---: | ---: |',
+              ...(rows.length ? rows : ['| No summary artifacts were uploaded | - | - |']),
             ].join('\n');
             const gateStatus = process.env.GATE_ENABLED === 'true' ? 'Gating: **Enabled**' : 'Gating: **Disabled**';
             const titleStatus = process.env.GATE_ENABLED !== 'true' || process.env.TEST_RESULT === 'success' ? '✅' : '❌';
