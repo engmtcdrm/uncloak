@@ -140,7 +140,7 @@ jobs:
             const rows = results.map(result => {
               const summary = result.summary;
               let status = 'Summary unavailable';
-              if (summary && !summary.passed) status = 'Below threshold';
+              if (summary && !summary.passed) status = '❌';
               else if (result.outcome === 'failure' || result.jobResult === 'failure') status = '❌';
               else if (summary) status = '✅';
 
