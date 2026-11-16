@@ -116,6 +116,7 @@ jobs:
         uses: actions/github-script@v9
         env:
           GATE_ENABLED: ${{ inputs.gate }}
+          TEST_RESULT: ${{ needs.test.result }}
         with:
           script: |
             const fs = require('fs');
@@ -154,7 +155,8 @@ jobs:
               ...(rows.length ? rows : ['| No summary artifacts were uploaded | - | - | - | - |']),
             ].join('\n');
             const gateStatus = process.env.GATE_ENABLED === 'true' ? 'Gating: **Enabled**' : 'Gating: **Disabled**';
-            const body = `${marker}\n## uncloak Coverage Summary\n\n${gateStatus}\n\n${table}`;
+            const titleStatus = process.env.GATE_ENABLED !== 'true' || process.env.TEST_RESULT === 'success' ? '✅' : '❌';
+            const body = `${marker}\n## ${titleStatus} uncloak Coverage Summary\n\n${gateStatus}\n\n${table}`;
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
             const comments = await github.paginate(github.rest.issues.listComments, {
