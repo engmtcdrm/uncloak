@@ -19,14 +19,21 @@ on:
         required: true
         type: string
         description: The head Git reference to compare against (e.g. branch containing changes)
+      gate:
+        required: true
+        type: boolean
+        description: Whether to gate the workflow based on uncloak results
 
 jobs:
   test:
     name: Test on ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: ${{ fromJSON(inputs.os_matrix) }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -34,7 +41,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ inputs.go_version }}
 
@@ -44,8 +51,134 @@ jobs:
           echo "Installed $(uncloak --version)"
 
       - name: Run uncloak against '${{ inputs.base_ref }}'
+        id: uncloak
+        continue-on-error: true
         run: |
           git checkout ${{ inputs.base_ref }}
           git checkout ${{ inputs.head_ref }}
           git branch -vv
-          uncloak -t ${{ inputs.base_ref }} -d -v
+          uncloak -t ${{ inputs.base_ref }} -d -v -s summary.json
+
+      - name: Prepare summary artifact
+        if: always()
+        uses: actions/github-script@v9
+        env:
+          MATRIX_OS: ${{ matrix.os }}
+          UNCLOAK_OUTCOME: ${{ steps.uncloak.outcome }}
+          JOB_STATUS: ${{ job.status }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const summaryPath = path.resolve('summary.json');
+            const summary = fs.existsSync(summaryPath)
+              ? JSON.parse(fs.readFileSync(summaryPath, 'utf8'))
+              : null;
+            const result = {
+              os: process.env.MATRIX_OS,
+              outcome: process.env.UNCLOAK_OUTCOME,
+              jobResult: process.env.JOB_STATUS,
+              summary,
+            };
+            fs.writeFileSync(
+              path.join(process.env.RUNNER_TEMP, 'uncloak-result.json'),
+              JSON.stringify(result, null, 2),
+            );
+
+      - name: Upload summary artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: uncloak-summary-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/uncloak-result.json
+          if-no-files-found: error
+
+      - name: Gate workflow on uncloak result
+        if: ${{ inputs.gate && steps.uncloak.outcome == 'failure' }}
+        run: exit 1
+
+  comment:
+    name: Comment coverage summary on pull request
+    needs: test
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download summary artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: uncloak-summary-*
+          path: ${{ runner.temp }}/uncloak-summaries
+
+      - name: Create or update pull request comment
+        uses: actions/github-script@v9
+        env:
+          GATE_ENABLED: ${{ inputs.gate }}
+          TEST_RESULT: ${{ needs.test.result }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const marker = '<!-- uncloak-coverage-summary -->';
+            const artifactsPath = path.join(process.env.RUNNER_TEMP, 'uncloak-summaries');
+            const results = [];
+
+            if (fs.existsSync(artifactsPath)) {
+              const resultPaths = [];
+              for (const entry of fs.readdirSync(artifactsPath, { withFileTypes: true })) {
+                if (entry.isFile() && entry.name === 'uncloak-result.json') {
+                  resultPaths.push(path.join(artifactsPath, entry.name));
+                } else if (entry.isDirectory()) {
+                  const resultPath = path.join(artifactsPath, entry.name, 'uncloak-result.json');
+                  if (fs.existsSync(resultPath)) resultPaths.push(resultPath);
+                }
+              }
+              for (const resultPath of resultPaths) {
+                results.push(JSON.parse(fs.readFileSync(resultPath, 'utf8')));
+              }
+            }
+
+            results.sort((a, b) => a.os.localeCompare(b.os));
+            const escapeCell = value => String(value).replace(/[|\\\r\n]/g, char => `\\${char}`);
+            const rows = results.map(result => {
+              const summary = result.summary;
+              const failed = !summary || !summary.passed || result.outcome === 'failure' || result.jobResult === 'failure';
+              const status = failed ? '❌' : '✅';
+
+              return `| \`${escapeCell(result.os)}\` | ${summary ? escapeCell(summary.coveragePercentFormatted) : '-'} | ${status} |`;
+            });
+            const table = [
+              '| Operating System | New Code Coverage | Status |',
+              '| --- | :---: | :---: |',
+              ...(rows.length ? rows : ['| No summary artifacts were uploaded | - | - |']),
+            ].join('\n');
+            const gatePassed = results.length > 0
+              && process.env.TEST_RESULT === 'success'
+              && results.every(result => result.summary?.passed && result.outcome !== 'failure' && result.jobResult !== 'failure');
+            const gateStatus = process.env.GATE_ENABLED !== 'true'
+              ? '➖ Disabled'
+              : gatePassed ? '✅ Passed' : '❌ Failed';
+            const threshold = results.find(result => result.summary)?.summary.coverageThresholdFormatted ?? 'Unavailable';
+            const body = `${marker}\n## uncloak Coverage Summary\n\nCoverage Gate: **${gateStatus}**\nCoverage Threshold: **≥ ${escapeCell(threshold)}**\n\n${table}`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find(comment => comment.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }

@@ -27,8 +27,12 @@ jobs:
       - validate-pr-title-and-commits
       - lint
     uses: ./.github/workflows/uncloak-action.yml
+    permissions:
+      contents: read
+      pull-requests: write
     with:
       os_matrix: '["ubuntu-latest", "windows-latest", "macos-latest"]'
       go_version: 1.26.11
       base_ref: ${{ github.event.pull_request.base.sha || github.event.before }}
       head_ref: ${{ github.sha }}
+      gate: true
