@@ -139,21 +139,24 @@ jobs:
             const escapeCell = value => String(value).replace(/[|\\\r\n]/g, char => `\\${char}`);
             const rows = results.map(result => {
               const summary = result.summary;
-              let status = 'Summary unavailable';
-              if (summary && !summary.passed) status = '❌';
-              else if (result.outcome === 'failure' || result.jobResult === 'failure') status = '❌';
-              else if (summary) status = '✅';
+              const failed = !summary || !summary.passed || result.outcome === 'failure' || result.jobResult === 'failure';
+              const status = failed ? '❌' : '✅';
 
-              return `| ${status} ${escapeCell(result.os)} | ${summary ? escapeCell(summary.coveragePercentFormatted) : '-'} | ${summary ? escapeCell(summary.coverageThresholdFormatted) : '-'} |`;
+              return `| \`${escapeCell(result.os)}\` | ${summary ? escapeCell(summary.coveragePercentFormatted) : '-'} | ${status} |`;
             });
             const table = [
-              '| Operating System | New Code Coverage | Coverage Threshold |',
-              '| --- | ---: | ---: |',
+              '| Operating System | New Code Coverage | Status |',
+              '| --- | :---: | :---: |',
               ...(rows.length ? rows : ['| No summary artifacts were uploaded | - | - |']),
             ].join('\n');
-            const gateStatus = process.env.GATE_ENABLED === 'true' ? 'Gating: **Enabled**' : 'Gating: **Disabled**';
-            const titleStatus = process.env.GATE_ENABLED !== 'true' || process.env.TEST_RESULT === 'success' ? '✅' : '❌';
-            const body = `${marker}\n## ${titleStatus} uncloak Coverage Summary\n\n${gateStatus}\n\n${table}`;
+            const gatePassed = results.length > 0
+              && process.env.TEST_RESULT === 'success'
+              && results.every(result => result.summary?.passed && result.outcome !== 'failure' && result.jobResult !== 'failure');
+            const gateStatus = process.env.GATE_ENABLED !== 'true'
+              ? '➖ Disabled'
+              : gatePassed ? '✅ Passed' : '❌ Failed';
+            const threshold = results.find(result => result.summary)?.summary.coverageThresholdFormatted ?? 'Unavailable';
+            const body = `${marker}\n## uncloak Coverage Summary\n\nCoverage Gate: **${gateStatus}**\nCoverage Threshold: **≥ ${escapeCell(threshold)}**\n\n${table}`;
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
             const comments = await github.paginate(github.rest.issues.listComments, {
