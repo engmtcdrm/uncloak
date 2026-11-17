@@ -126,12 +126,17 @@ jobs:
             const results = [];
 
             if (fs.existsSync(artifactsPath)) {
-              for (const artifact of fs.readdirSync(artifactsPath, { withFileTypes: true })) {
-                if (!artifact.isDirectory()) continue;
-                const resultPath = path.join(artifactsPath, artifact.name, 'uncloak-result.json');
-                if (fs.existsSync(resultPath)) {
-                  results.push(JSON.parse(fs.readFileSync(resultPath, 'utf8')));
+              const resultPaths = [];
+              for (const entry of fs.readdirSync(artifactsPath, { withFileTypes: true })) {
+                if (entry.isFile() && entry.name === 'uncloak-result.json') {
+                  resultPaths.push(path.join(artifactsPath, entry.name));
+                } else if (entry.isDirectory()) {
+                  const resultPath = path.join(artifactsPath, entry.name, 'uncloak-result.json');
+                  if (fs.existsSync(resultPath)) resultPaths.push(resultPath);
                 }
+              }
+              for (const resultPath of resultPaths) {
+                results.push(JSON.parse(fs.readFileSync(resultPath, 'utf8')));
               }
             }
 
