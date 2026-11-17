@@ -31,6 +31,10 @@ uncloak --target-ref main
 
 If coverage is below the threshold, the command exits with an error. Regardless of the coverage result, it prints the uncovered new line ranges, if any.
 
+## GitHub Actions
+
+This repository includes a reusable workflow for running `uncloak` in GitHub Actions. See the [uncloak Action guide](docs/uncloak-action.md) for setup, inputs, and an example caller workflow.
+
 ## Configuration
 
 `uncloak` reads configuration from a YAML file in the current working directory.
