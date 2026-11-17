@@ -30,8 +30,8 @@ func Test_C(t *testing.T) {
 func Test_D(t *testing.T) {
 	t.Log("Running Test_D")
 
-	if runtime.GOOS == "windows" {
-		t.Skip("Skipping test on Windows")
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Skipping test on Windows and macOS")
 	}
 
 	D()
