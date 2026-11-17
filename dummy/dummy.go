@@ -15,3 +15,13 @@ func B() {
 func C() {
 	println("Function C called")
 }
+
+// D calls Function D.
+func D() {
+	println("Function D called")
+}
+
+// E calls Function E.
+func E() {
+	println("Function E called")
+}
