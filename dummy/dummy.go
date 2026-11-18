@@ -1,3 +1,5 @@
+// Package dummy provides a set of functions that print messages indicating they
+// were called.
 package dummy
 
 import "fmt"
