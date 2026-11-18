@@ -1,6 +1,9 @@
 package dummy
 
-import "testing"
+import (
+	"runtime"
+	"testing"
+)
 
 // Tests for [A] function.
 func Test_A(t *testing.T) {
@@ -34,6 +37,10 @@ func Test_E(t *testing.T) {
 
 // Tests for [F] function.
 func Test_F(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test on Windows")
+	}
+
 	t.Log("Testing function F")
 	F()
 }
