@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- fix: prevent uncovered lines from overriding covered lines in coverage map [#50](https://github.com/engmtcdrm/uncloak/pull/50)
+
 ## [v0.7.0] - 2026-11-15
 
 ### Added
