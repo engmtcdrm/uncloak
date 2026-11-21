@@ -68,57 +68,61 @@ func Test_Profile_IsInTestCoverage(t *testing.T) {
 
 // Tests for [Profile.expandCoveredLines] function.
 func Test_Profile_expandCoveredLines(t *testing.T) {
-	profile := NewProfile("", []byte{})
+	const filePath = "file.go"
 
 	t.Run("single line", func(t *testing.T) {
+		profile := NewProfile("", nil)
 		line := Line{
-			Path:      "file.go",
+			Path:      filePath,
 			StartLine: 1,
 			EndLine:   1,
 			Count:     1,
 		}
 		profile.expandCoveredLines(line)
 
-		require.True(t, profile.CoveredLines["file.go"][1])
+		require.True(t, profile.CoveredLines[filePath][1])
 	})
 
 	t.Run("multiple lines", func(t *testing.T) {
+		profile := NewProfile("", nil)
 		line := Line{
-			Path:      "file.go",
+			Path:      filePath,
 			StartLine: 1,
 			EndLine:   3,
 			Count:     1,
 		}
 		profile.expandCoveredLines(line)
 
-		require.True(t, profile.CoveredLines["file.go"][1])
-		require.True(t, profile.CoveredLines["file.go"][2])
-		require.True(t, profile.CoveredLines["file.go"][3])
+		require.True(t, profile.CoveredLines[filePath][1])
+		require.True(t, profile.CoveredLines[filePath][2])
+		require.True(t, profile.CoveredLines[filePath][3])
 	})
 
 	t.Run("uncovered lines", func(t *testing.T) {
+		profile := NewProfile("", nil)
 		line := Line{
-			Path:      "file.go",
+			Path:      filePath,
 			StartLine: 1,
 			EndLine:   3,
 			Count:     0,
 		}
 		profile.expandCoveredLines(line)
 
-		require.False(t, profile.CoveredLines["file.go"][1])
-		require.False(t, profile.CoveredLines["file.go"][2])
-		require.False(t, profile.CoveredLines["file.go"][3])
+		require.False(t, profile.CoveredLines[filePath][1])
+		require.False(t, profile.CoveredLines[filePath][2])
+		require.False(t, profile.CoveredLines[filePath][3])
 	})
 
 	t.Run("covered and uncovered lines", func(t *testing.T) {
+		profile := NewProfile("", nil)
 		line1 := Line{
-			Path:      "file1.go",
+			Path:      filePath,
 			StartLine: 1,
 			EndLine:   2,
 			Count:     1,
 		}
 		line2 := Line{
-			Path:      "file1.go",
+			Path:      filePath,
 			StartLine: 3,
 			EndLine:   4,
 			Count:     0,
@@ -126,33 +130,36 @@ func Test_Profile_expandCoveredLines(t *testing.T) {
 		profile.expandCoveredLines(line1)
 		profile.expandCoveredLines(line2)
 
-		require.True(t, profile.CoveredLines["file1.go"][1])
-		require.True(t, profile.CoveredLines["file1.go"][2])
-		require.False(t, profile.CoveredLines["file1.go"][3])
-		require.False(t, profile.CoveredLines["file1.go"][4])
+		require.True(t, profile.CoveredLines[filePath][1])
+		require.True(t, profile.CoveredLines[filePath][2])
+		require.False(t, profile.CoveredLines[filePath][3])
+		require.False(t, profile.CoveredLines[filePath][4])
 	})
 
 	t.Run("covered and uncovered lines in different files", func(t *testing.T) {
+		const otherFilePath = "file2.go"
+
+		profile := NewProfile("", nil)
 		line1 := Line{
-			Path:      "file1.go",
+			Path:      filePath,
 			StartLine: 1,
 			EndLine:   2,
 			Count:     1,
 		}
 		line2 := Line{
-			Path:      "file1.go",
+			Path:      filePath,
 			StartLine: 3,
 			EndLine:   4,
 			Count:     0,
 		}
 		line3 := Line{
-			Path:      "file2.go",
+			Path:      otherFilePath,
 			StartLine: 1,
 			EndLine:   2,
 			Count:     1,
 		}
 		line4 := Line{
-			Path:      "file2.go",
+			Path:      otherFilePath,
 			StartLine: 3,
 			EndLine:   4,
 			Count:     0,
@@ -162,13 +169,42 @@ func Test_Profile_expandCoveredLines(t *testing.T) {
 		profile.expandCoveredLines(line3)
 		profile.expandCoveredLines(line4)
 
-		require.True(t, profile.CoveredLines["file1.go"][1])
-		require.True(t, profile.CoveredLines["file1.go"][2])
-		require.False(t, profile.CoveredLines["file1.go"][3])
-		require.False(t, profile.CoveredLines["file1.go"][4])
-		require.True(t, profile.CoveredLines["file2.go"][1])
-		require.True(t, profile.CoveredLines["file2.go"][2])
-		require.False(t, profile.CoveredLines["file2.go"][3])
-		require.False(t, profile.CoveredLines["file2.go"][4])
+		require.True(t, profile.CoveredLines[filePath][1])
+		require.True(t, profile.CoveredLines[filePath][2])
+		require.False(t, profile.CoveredLines[filePath][3])
+		require.False(t, profile.CoveredLines[filePath][4])
+		require.True(t, profile.CoveredLines[otherFilePath][1])
+		require.True(t, profile.CoveredLines[otherFilePath][2])
+		require.False(t, profile.CoveredLines[otherFilePath][3])
+		require.False(t, profile.CoveredLines[otherFilePath][4])
+	})
+
+	t.Run("uncovered lines do not override covered lines", func(t *testing.T) {
+		profile := NewProfile("", nil)
+
+		line := Line{
+			Path:      filePath,
+			StartLine: 1,
+			EndLine:   3,
+			Count:     1,
+		}
+
+		profile.expandCoveredLines(line)
+
+		require.True(t, profile.CoveredLines[filePath][1])
+		require.True(t, profile.CoveredLines[filePath][2])
+		require.True(t, profile.CoveredLines[filePath][3])
+
+		line = Line{
+			Path:      filePath,
+			StartLine: 1,
+			EndLine:   3,
+			Count:     0,
+		}
+		profile.expandCoveredLines(line)
+
+		require.True(t, profile.CoveredLines[filePath][1])
+		require.True(t, profile.CoveredLines[filePath][2])
+		require.True(t, profile.CoveredLines[filePath][3])
 	})
 }
