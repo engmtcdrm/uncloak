@@ -67,6 +67,6 @@ func (cp *Profile) expandCoveredLines(cl Line) {
 	}
 
 	for line := cl.StartLine; line <= cl.EndLine; line++ {
-		coverageMap[line] = cl.Count > 0
+		coverageMap[line] = coverageMap[line] || cl.Count > 0
 	}
 }
