@@ -84,7 +84,7 @@ func analyzeCoverage(report *Report, cfg *config.Config) (*Report, error) {
 func analyzeFileCoverage(report *Report, file string) (*FileReport, error) {
 	newLines := report.GitDiffResults.NewLines[file]
 
-	if report.CoverageProfile.CoveredLines[file] == nil {
+	if report.GoCoverageReport.CoveredLines[file] == nil {
 		return nil, nil
 	}
 
@@ -98,12 +98,12 @@ func analyzeFileCoverage(report *Report, file string) (*FileReport, error) {
 	reportFile.Path = file
 
 	for line := range newLines {
-		if !report.CoverageProfile.IsInTestCoverage(file, line) {
+		if !report.GoCoverageReport.IsInTestCoverage(file, line) {
 			continue
 		}
 
 		funcName := reportFile.ASTFile.LineFunctionName(line)
-		if report.CoverageProfile.CoveredLines[file][line] {
+		if report.GoCoverageReport.CoveredLines[file][line] {
 			reportFile.CoveredNewLines = append(reportFile.CoveredNewLines, line)
 			if funcName != "" {
 				reportFile.FuncCoveredNewLines[funcName] = append(reportFile.FuncCoveredNewLines[funcName], line)

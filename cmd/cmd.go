@@ -51,9 +51,9 @@ func (c *cmd) Run(cmd *cobra.Command, _ []string) error {
 	}
 
 	if c.verbose {
-		if len(report.CoverageProfile.RawTestOutput) > 0 {
+		if len(report.GoCoverageReport.RawTestOutput) > 0 {
 			fmt.Printf("%s\n\n", colors.LightGreen("Go Test Output:"))
-			fmt.Println(string(report.CoverageProfile.RawTestOutput))
+			fmt.Println(string(report.GoCoverageReport.RawTestOutput))
 		}
 	}
 

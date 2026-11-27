@@ -10,7 +10,7 @@ import (
 // reports.
 type Report struct {
 	CoverageThreshold float64
-	CoverageProfile   *gocover.Report
+	GoCoverageReport  *gocover.Report
 	GitDiffResults    *gitdiff.Results
 	Files             []*FileReport
 }
@@ -35,7 +35,7 @@ func NewReport(coverageThreshold float64, coverageProfile *gocover.Report, gitDi
 
 	return &Report{
 		CoverageThreshold: coverageThreshold,
-		CoverageProfile:   coverageProfile,
+		GoCoverageReport:  coverageProfile,
 		GitDiffResults:    gitDiff,
 	}
 }

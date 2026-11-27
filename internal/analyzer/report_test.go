@@ -17,14 +17,14 @@ func Test_NewReport(t *testing.T) {
 		gitDiff := &gitdiff.Results{}
 		report := NewReport(80.0, coverageProfile, gitDiff)
 		require.InDelta(t, 80.0, report.CoverageThreshold, 0.1)
-		require.Same(t, coverageProfile, report.CoverageProfile)
+		require.Same(t, coverageProfile, report.GoCoverageReport)
 		require.Same(t, gitDiff, report.GitDiffResults)
 	})
 
 	t.Run("should create a new Report instance with empty coverage profile and git diff", func(t *testing.T) {
 		report := NewReport(80.0, nil, nil)
 		require.InDelta(t, 80.0, report.CoverageThreshold, 0.1)
-		require.NotNil(t, report.CoverageProfile)
+		require.NotNil(t, report.GoCoverageReport)
 		require.NotNil(t, report.GitDiffResults)
 	})
 

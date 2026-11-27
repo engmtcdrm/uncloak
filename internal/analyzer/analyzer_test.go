@@ -223,7 +223,7 @@ func Test_analyzeFileCoverage(t *testing.T) {
 
 		// Add some dummy lines that do not belong to any function
 		report.GitDiffResults.NewLines[files[0]][999] = true
-		report.CoverageProfile.CoveredLines[files[0]][999] = true
+		report.GoCoverageReport.CoveredLines[files[0]][999] = true
 
 		// Simulate a scenario where the function name is not found
 		fileReport, err := analyzeFileCoverage(report, files[0])
