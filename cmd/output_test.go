@@ -615,7 +615,7 @@ func Test_outputUncoveredLine(t *testing.T) {
 		contents, err := os.ReadFile(stdoutFile.Name())
 		contentsNoAnsi := ansi.Strip(contents)
 		require.NoError(t, err)
-		require.Contains(t, string(contentsNoAnsi), "magic.go:5:7")
+		require.Contains(t, string(contentsNoAnsi), "magic.go:6:7")
 		require.NotContains(t, string(contentsNoAnsi), lineSeparator)
 	})
 }

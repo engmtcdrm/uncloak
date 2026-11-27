@@ -102,13 +102,13 @@ func (p *parser) parseLines(lines []string) (*Profile, error) {
 		var coverageLine Line
 
 		// split at last ':' so paths that contain ':' (Windows drive letters) still work
-		i := strings.LastIndex(line, ":")
-		if i == -1 {
+		before, after, ok := strings.CutLast(line, ":")
+		if !ok {
 			return nil, fmt.Errorf("%w: %w: %q", ErrInvalidCoverageFile, ErrInvalidCoverageLine, line)
 		}
 
-		path := strings.TrimPrefix(line[:i], p.GoList.Module+"/")
-		ranges := line[i+1:]
+		path := strings.TrimPrefix(before, p.GoList.Module+"/")
+		ranges := after
 
 		_, err := fmt.Sscanf(ranges, "%d.%d,%d.%d %d %d",
 			&coverageLine.StartLine, &coverageLine.StartColumn,

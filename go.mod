@@ -1,9 +1,9 @@
 module github.com/engmtcdrm/uncloak
 
-go 1.26.11
+go 1.27.4
 
 require (
-	github.com/bmatcuk/doublestar/v4 v4.10.4
+	github.com/bmatcuk/doublestar/v4 v4.10.7
 	github.com/creack/pty v1.1.24
 	github.com/engmtcdrm/go-ansi v1.1.0
 	github.com/engmtcdrm/go-prettyprint v1.2.2
