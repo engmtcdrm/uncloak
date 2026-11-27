@@ -69,120 +69,103 @@ func Test_Report_IsInTestCoverage(t *testing.T) {
 
 // Tests for [Report.expandCoveredLines] function.
 func Test_Report_expandCoveredLines(t *testing.T) {
+	const fileName = "file.go"
+
 	t.Run("single line", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line := ProfileBlock{
-			Path: "file.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 1,
-				EndLine:   1,
-				Count:     1,
-			},
+		block := cover.ProfileBlock{
+			StartLine: 1,
+			EndLine:   1,
+			Count:     1,
 		}
-		report.expandCoveredLines(line)
 
-		require.True(t, report.CoveredLines["file.go"][1])
+		report.expandCoveredLines(fileName, block)
+
+		require.True(t, report.CoveredLines[fileName][1])
 	})
 
 	t.Run("multiple lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line := ProfileBlock{
-			Path: "file.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 1,
-				EndLine:   3,
-				Count:     1,
-			},
+		block := cover.ProfileBlock{
+			StartLine: 1,
+			EndLine:   3,
+			Count:     1,
 		}
-		report.expandCoveredLines(line)
 
-		require.True(t, report.CoveredLines["file.go"][1])
-		require.True(t, report.CoveredLines["file.go"][2])
-		require.True(t, report.CoveredLines["file.go"][3])
+		report.expandCoveredLines(fileName, block)
+
+		require.True(t, report.CoveredLines[fileName][1])
+		require.True(t, report.CoveredLines[fileName][2])
+		require.True(t, report.CoveredLines[fileName][3])
 	})
 
 	t.Run("uncovered lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line := ProfileBlock{
-			Path: "file.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 1,
-				EndLine:   3,
-				Count:     0,
-			},
+		block := cover.ProfileBlock{
+			StartLine: 1,
+			EndLine:   3,
+			Count:     0,
 		}
-		report.expandCoveredLines(line)
 
-		require.False(t, report.CoveredLines["file.go"][1])
-		require.False(t, report.CoveredLines["file.go"][2])
-		require.False(t, report.CoveredLines["file.go"][3])
+		report.expandCoveredLines(fileName, block)
+
+		require.False(t, report.CoveredLines[fileName][1])
+		require.False(t, report.CoveredLines[fileName][2])
+		require.False(t, report.CoveredLines[fileName][3])
 	})
 
 	t.Run("covered and uncovered lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line1 := ProfileBlock{
-			Path: "file1.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 1,
-				EndLine:   2,
-				Count:     1,
-			},
+		block1 := cover.ProfileBlock{
+			StartLine: 1,
+			EndLine:   2,
+			Count:     1,
 		}
-		line2 := ProfileBlock{
-			Path: "file1.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 3,
-				EndLine:   4,
-				Count:     0,
-			},
+		block2 := cover.ProfileBlock{
+			StartLine: 3,
+			EndLine:   4,
+			Count:     0,
 		}
-		report.expandCoveredLines(line1)
-		report.expandCoveredLines(line2)
 
-		require.True(t, report.CoveredLines["file1.go"][1])
-		require.True(t, report.CoveredLines["file1.go"][2])
-		require.False(t, report.CoveredLines["file1.go"][3])
-		require.False(t, report.CoveredLines["file1.go"][4])
+		report.expandCoveredLines(fileName, block1)
+		report.expandCoveredLines(fileName, block2)
+
+		require.True(t, report.CoveredLines[fileName][1])
+		require.True(t, report.CoveredLines[fileName][2])
+		require.False(t, report.CoveredLines[fileName][3])
+		require.False(t, report.CoveredLines[fileName][4])
 	})
 
 	t.Run("covered and uncovered lines in different files", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line1 := ProfileBlock{
-			Path: "file1.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 1,
-				EndLine:   2,
-				Count:     1,
-			},
+		// file1.go
+		block1 := cover.ProfileBlock{
+			StartLine: 1,
+			EndLine:   2,
+			Count:     1,
 		}
-		line2 := ProfileBlock{
-			Path: "file1.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 3,
-				EndLine:   4,
-				Count:     0,
-			},
+		block2 := cover.ProfileBlock{
+			StartLine: 3,
+			EndLine:   4,
+			Count:     0,
 		}
-		line3 := ProfileBlock{
-			Path: "file2.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 1,
-				EndLine:   2,
-				Count:     1,
-			},
+
+		// file2.go
+		block3 := cover.ProfileBlock{
+			StartLine: 1,
+			EndLine:   2,
+			Count:     1,
 		}
-		line4 := ProfileBlock{
-			Path: "file2.go",
-			ProfileBlock: cover.ProfileBlock{
-				StartLine: 3,
-				EndLine:   4,
-				Count:     0,
-			},
+		block4 := cover.ProfileBlock{
+			StartLine: 3,
+			EndLine:   4,
+			Count:     0,
 		}
-		report.expandCoveredLines(line1)
-		report.expandCoveredLines(line2)
-		report.expandCoveredLines(line3)
-		report.expandCoveredLines(line4)
+
+		report.expandCoveredLines("file1.go", block1)
+		report.expandCoveredLines("file1.go", block2)
+		report.expandCoveredLines("file2.go", block3)
+		report.expandCoveredLines("file2.go", block4)
 
 		require.True(t, report.CoveredLines["file1.go"][1])
 		require.True(t, report.CoveredLines["file1.go"][2])

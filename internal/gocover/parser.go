@@ -79,30 +79,26 @@ func (p *parser) parseProfilesBlocks(profiles []*cover.Profile) (*Report, error)
 		return nil, fmt.Errorf("%w: %w", ErrEmptyCoverageFile, io.EOF)
 	}
 
-	profile := NewReport(p.Command, p.RawGoTestOutput)
+	report := NewReport(p.Command, p.RawGoTestOutput)
 
-	for _, cp := range profiles {
-		path := strings.TrimPrefix(cp.FileName, p.GoList.Module+"/")
+	for _, profile := range profiles {
+		path := strings.TrimPrefix(profile.FileName, p.GoList.Module+"/")
 
-		mode, err := parseMode(cp.Mode)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, err)
+		cProfile := &Profile{
+			Profile:          *profile,
+			NoModuleFileName: path,
 		}
 
-		for _, b := range cp.Blocks {
-			block := ProfileBlock{
-				FilePath:     filepath.Join(p.GoList.Dir, path),
-				Path:         path,
-				Mode:         mode,
-				ProfileBlock: b,
-			}
+		report.Profiles = append(report.Profiles, cProfile)
 
-			profile.Blocks = append(profile.Blocks, block)
-			profile.expandCoveredLines(block)
+		for _, b := range profile.Blocks {
+			report.Blocks = append(report.Blocks, b)
+			report.expandCoveredLines(cProfile.NoModuleFileName, b)
 		}
+
 	}
 
-	return profile, nil
+	return report, nil
 }
 
 // runTestCoverage executes `go test -coverprofile` to generate a coverage

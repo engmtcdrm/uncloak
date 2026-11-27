@@ -10,20 +10,19 @@ import (
 // of code with coverage information, the lines covered by tests, and the raw
 // test output.
 type Report struct {
-	Blocks        []ProfileBlock          // The blocks of code with coverage information.
-	CoveredLines  map[string]map[int]bool // The lines covered by tests, keyed by file path and line number.
-	RawTestOutput []byte                  // The raw output from running tests.
+	Blocks        []cover.ProfileBlock    // The blocks of code with coverage information.
 	Command       string                  // The command used to run the tests.
+	CoveredLines  map[string]map[int]bool // The lines covered by tests, keyed by file path and line number.
+	Profiles      []*Profile              // The coverage profiles for the source files.
+	RawTestOutput []byte                  // The raw output from running tests.
+
 }
 
-// ProfileBlock represents a block of code in a source file with coverage
-// information.
-type ProfileBlock struct {
-	cover.ProfileBlock
+// Profile represents the profiling data for a specific file.
+type Profile struct {
+	cover.Profile
 
-	FilePath string // The absolute file path of the source file.
-	Path     string // The relative file path of the source file, relative to the module root.
-	Mode     Mode   // The coverage mode for this block.
+	NoModuleFileName string // The file path of the source file relative to the module root, without the module prefix.
 }
 
 // NewReport creates a new [Report] instance with the provide command and raw
@@ -34,9 +33,10 @@ func NewReport(command string, rawTestOutput []byte) *Report {
 	}
 
 	return &Report{
-		Blocks:        []ProfileBlock{},
-		CoveredLines:  make(map[string]map[int]bool),
+		Blocks:        []cover.ProfileBlock{},
 		Command:       command,
+		CoveredLines:  make(map[string]map[int]bool),
+		Profiles:      []*Profile{},
 		RawTestOutput: rawTestOutput,
 	}
 }
@@ -61,14 +61,14 @@ func (r *Report) IsInTestCoverage(file string, line int) bool {
 	return ok
 }
 
-func (r *Report) expandCoveredLines(cl ProfileBlock) {
-	coverageMap, ok := r.CoveredLines[cl.Path]
+func (r *Report) expandCoveredLines(fileName string, pb cover.ProfileBlock) {
+	coverageMap, ok := r.CoveredLines[fileName]
 	if !ok {
-		coverageMap = make(map[int]bool, cl.EndLine-cl.StartLine+1)
-		r.CoveredLines[cl.Path] = coverageMap
+		coverageMap = make(map[int]bool, pb.EndLine-pb.StartLine+1)
+		r.CoveredLines[fileName] = coverageMap
 	}
 
-	for line := cl.StartLine; line <= cl.EndLine; line++ {
-		coverageMap[line] = coverageMap[line] || cl.Count > 0
+	for line := pb.StartLine; line <= pb.EndLine; line++ {
+		coverageMap[line] = coverageMap[line] || pb.Count > 0
 	}
 }
