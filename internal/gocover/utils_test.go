@@ -21,4 +21,11 @@ func Test_parseMode(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, expectedMode, result)
 	})
+
+	t.Run("should return an error for an empty mode", func(t *testing.T) {
+		expectedMode := Mode("")
+		result, err := parseMode("")
+		require.Error(t, err)
+		require.Equal(t, expectedMode, result)
+	})
 }
