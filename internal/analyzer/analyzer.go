@@ -271,7 +271,7 @@ func runTaskGoCoverage(ctx context.Context, tm *task.Manager, coverageFilePath s
 			gotask.Error()
 		}
 	default:
-		if len(p.Blocks) == 0 {
+		if len(p.Profiles) == 0 {
 			gotask.SetMessage("Finished Go test coverage analysis - No lines to test")
 		}
 

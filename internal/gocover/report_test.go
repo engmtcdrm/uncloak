@@ -13,7 +13,7 @@ func Test_NewReport(t *testing.T) {
 		report := NewReport("", []byte{})
 		require.NotNil(t, report)
 		require.Empty(t, report.RawTestOutput)
-		require.Empty(t, report.Blocks)
+		require.Empty(t, report.Profiles)
 		require.Empty(t, report.CoveredLines)
 	})
 
@@ -21,7 +21,7 @@ func Test_NewReport(t *testing.T) {
 		report := NewReport("", nil)
 		require.NotNil(t, report)
 		require.Empty(t, report.RawTestOutput)
-		require.Empty(t, report.Blocks)
+		require.Empty(t, report.Profiles)
 		require.Empty(t, report.CoveredLines)
 	})
 
@@ -30,7 +30,7 @@ func Test_NewReport(t *testing.T) {
 		report := NewReport("", rawTestOutput)
 		require.NotNil(t, report)
 		require.Equal(t, rawTestOutput, report.RawTestOutput)
-		require.Empty(t, report.Blocks)
+		require.Empty(t, report.Profiles)
 		require.Empty(t, report.CoveredLines)
 	})
 }

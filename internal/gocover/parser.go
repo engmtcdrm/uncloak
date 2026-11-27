@@ -92,7 +92,6 @@ func (p *parser) parseProfilesBlocks(profiles []*cover.Profile) (*Report, error)
 		report.Profiles = append(report.Profiles, cProfile)
 
 		for _, b := range profile.Blocks {
-			report.Blocks = append(report.Blocks, b)
 			report.expandCoveredLines(cProfile.NoModuleFileName, b)
 		}
 	}

@@ -11,7 +11,6 @@ import (
 // of code with coverage information, the lines covered by tests, and the raw
 // test output.
 type Report struct {
-	Blocks        []cover.ProfileBlock    // The blocks of code with coverage information.
 	Command       string                  // The command used to run the tests.
 	CoveredLines  map[string]map[int]bool // The lines covered by tests, keyed by file path and line number.
 	Profiles      []*Profile              // The coverage profiles for the source files.
@@ -33,7 +32,6 @@ func NewReport(command string, rawTestOutput []byte) *Report {
 	}
 
 	return &Report{
-		Blocks:        []cover.ProfileBlock{},
 		Command:       command,
 		CoveredLines:  make(map[string]map[int]bool),
 		Profiles:      []*Profile{},

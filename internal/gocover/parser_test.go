@@ -76,8 +76,13 @@ func Test_parser_parseProfiles(t *testing.T) {
 
 		file1           = "file1.go"
 		file2           = "file2.go"
+		file1ModulePath = modulePath + "/" + file1
+		file2ModulePath = modulePath + "/" + file2
+
 		coverageFile    = "coverage.out"
 		badCoverageFile = "non_existent_coverage.out"
+
+		validMode = "set"
 	)
 
 	p := &parser{
@@ -87,9 +92,9 @@ func Test_parser_parseProfiles(t *testing.T) {
 	}
 
 	t.Run("should return error if file does not exist", func(t *testing.T) {
-		results, err := p.parseProfiles(badCoverageFile)
+		report, err := p.parseProfiles(badCoverageFile)
 		require.Error(t, err)
-		require.Nil(t, results)
+		require.Nil(t, report)
 	})
 
 	t.Run("should return error if file cannot be read", func(t *testing.T) {
@@ -98,9 +103,9 @@ func Test_parser_parseProfiles(t *testing.T) {
 		}
 
 		// Opening a directory succeeds, but reading from it fails with EISDIR.
-		results, err := p.parseProfiles(t.TempDir())
+		report, err := p.parseProfiles(t.TempDir())
 		require.Error(t, err)
-		require.Nil(t, results)
+		require.Nil(t, report)
 		assert.ErrorIs(t, err, ErrFailedToReadFile)
 	})
 
@@ -112,9 +117,9 @@ func Test_parser_parseProfiles(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, tmpFile.Close())
 
-		results, err := p.parseProfiles(tempFile)
+		report, err := p.parseProfiles(tempFile)
 		require.Error(t, err)
-		require.Nil(t, results)
+		require.Nil(t, report)
 		assert.ErrorIs(t, err, ErrEmptyCoverageFile)
 	})
 
@@ -125,11 +130,11 @@ func Test_parser_parseProfiles(t *testing.T) {
 
 		testfiles.CreateFile(t, tempFile, coverageData)
 
-		results, err := p.parseProfiles(tempFile)
+		report, err := p.parseProfiles(tempFile)
 		require.NoError(t, err)
-		require.NotNil(t, results)
-		require.Empty(t, results.CoveredLines, 0)
-		require.Empty(t, results.Blocks, 0)
+		require.NotNil(t, report)
+		require.Empty(t, report.CoveredLines, 0)
+		require.Empty(t, report.Profiles, 0)
 	})
 
 	t.Run("should return valid report for valid file", func(t *testing.T) {
@@ -143,33 +148,54 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 		testfiles.CreateFile(t, tempFile, coverageData)
 
 		expectedReport := NewReport("", []byte{})
-		expectedReport.Blocks = []cover.ProfileBlock{
+		expectedReport.Profiles = []*Profile{
 			{
-				StartLine: 10,
-				StartCol:  1,
-				EndLine:   20,
-				EndCol:    2,
-				NumStmt:   1,
-				Count:     1,
+				Profile: cover.Profile{
+					FileName: file1ModulePath,
+					Mode:     validMode,
+					Blocks: []cover.ProfileBlock{
+						{
+							StartLine: 10,
+							StartCol:  1,
+							EndLine:   20,
+							EndCol:    2,
+							NumStmt:   1,
+							Count:     1,
+						},
+					},
+				},
+				NoModuleFileName: file1,
 			},
 			{
-				StartLine: 30,
-				StartCol:  3,
-				EndLine:   40,
-				EndCol:    4,
-				NumStmt:   2,
-				Count:     0,
+				Profile: cover.Profile{
+					FileName: file2ModulePath,
+					Mode:     validMode,
+					Blocks: []cover.ProfileBlock{
+						{
+							StartLine: 30,
+							StartCol:  3,
+							EndLine:   40,
+							EndCol:    4,
+							NumStmt:   2,
+							Count:     0,
+						},
+					},
+				},
+				NoModuleFileName: file2,
 			},
 		}
 
-		expectedReport.expandCoveredLines("file1.go", expectedReport.Blocks[0])
-		expectedReport.expandCoveredLines("file2.go", expectedReport.Blocks[1])
+		for _, profile := range expectedReport.Profiles {
+			for _, block := range profile.Blocks {
+				expectedReport.expandCoveredLines(profile.NoModuleFileName, block)
+			}
+		}
 
 		report, err := p.parseProfiles(tempFile)
 		require.NoError(t, err)
 		require.NotNil(t, report)
 		assert.Len(t, report.CoveredLines, 2)
-		// assert.Equal(t, expectedReport, report)
+		assert.Equal(t, expectedReport, report)
 	})
 
 	t.Run("should return error if block format is invalid", func(t *testing.T) {
@@ -264,7 +290,7 @@ func Test_parser_parseProfilesBlocks(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, report)
 		assert.Len(t, report.CoveredLines, 2)
-		assert.Len(t, report.Blocks, 2)
+		assert.Len(t, report.Profiles, 2)
 	})
 
 	t.Run("should return no error if no lines to test", func(t *testing.T) {
@@ -274,7 +300,7 @@ func Test_parser_parseProfilesBlocks(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, report)
 		assert.Empty(t, report.CoveredLines, 0)
-		assert.Empty(t, report.Blocks, 0)
+		assert.Empty(t, report.Profiles, 0)
 	})
 
 	t.Run("should treat line as covered if any block touching it was hit", func(t *testing.T) {
