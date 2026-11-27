@@ -248,7 +248,7 @@ var handler = func() {
 
 		testutils.SetStdout(t)
 
-		report := NewReport(80, &gocover.Profile{
+		report := NewReport(80, &gocover.Report{
 			CoveredLines: map[string]map[int]bool{
 				fileName: {1: false, 4: false},
 			},
@@ -304,7 +304,7 @@ func Test_printCommands(t *testing.T) {
 	t.Run("should print coverageProfile command if diffResults is nil", func(t *testing.T) {
 		stdoutFile := testutils.SetStdout(t)
 
-		coverageProfile := gocover.NewProfile("go test -coverprofile=coverage.out", []byte{})
+		coverageProfile := gocover.NewReport("go test -coverprofile=coverage.out", []byte{})
 		printCommands(coverageProfile, nil)
 
 		output, err := os.ReadFile(stdoutFile.Name())
@@ -328,7 +328,7 @@ func Test_printCommands(t *testing.T) {
 	t.Run("should print both coverageProfile and diffResults commands if both are provided", func(t *testing.T) {
 		stdoutFile := testutils.SetStdout(t)
 
-		coverageProfile := gocover.NewProfile("go test -coverprofile=coverage.out", []byte{})
+		coverageProfile := gocover.NewReport("go test -coverprofile=coverage.out", []byte{})
 		diffResults, err := gitdiff.NewResults(t.Context(), "git diff --name-only")
 		require.NoError(t, err)
 
@@ -508,7 +508,7 @@ func Test_runTaskGitDiff(t *testing.T) {
 //
 //nolint:dupl
 func Test_runTaskGoCoverage(t *testing.T) {
-	runTask := func(ctx context.Context, t *testing.T, stdoutFile *os.File, cfg *config.Config) (*gocover.Profile, error) {
+	runTask := func(ctx context.Context, t *testing.T, stdoutFile *os.File, cfg *config.Config) (*gocover.Report, error) {
 		t.Helper()
 
 		var defaultConfig config.Config

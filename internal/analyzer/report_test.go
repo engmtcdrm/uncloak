@@ -13,7 +13,7 @@ import (
 // Tests for [NewReport] function.
 func Test_NewReport(t *testing.T) {
 	t.Run("should create a new Report instance with the provided coverage threshold, coverage profile, and git diff", func(t *testing.T) {
-		coverageProfile := &gocover.Profile{}
+		coverageProfile := &gocover.Report{}
 		gitDiff := &gitdiff.Results{}
 		report := NewReport(80.0, coverageProfile, gitDiff)
 		require.InDelta(t, 80.0, report.CoverageThreshold, 0.1)

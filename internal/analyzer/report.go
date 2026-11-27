@@ -10,14 +10,14 @@ import (
 // reports.
 type Report struct {
 	CoverageThreshold float64
-	CoverageProfile   *gocover.Profile
+	CoverageProfile   *gocover.Report
 	GitDiffResults    *gitdiff.Results
 	Files             []*FileReport
 }
 
 // NewReport creates a new [Report] instance with the provided coverage
 // threshold, coverage profile, and git diff.
-func NewReport(coverageThreshold float64, coverageProfile *gocover.Profile, gitDiff *gitdiff.Results) *Report {
+func NewReport(coverageThreshold float64, coverageProfile *gocover.Report, gitDiff *gitdiff.Results) *Report {
 	switch {
 	case coverageThreshold < 0.0:
 		coverageThreshold = 0.0
@@ -26,7 +26,7 @@ func NewReport(coverageThreshold float64, coverageProfile *gocover.Profile, gitD
 	}
 
 	if coverageProfile == nil {
-		coverageProfile = &gocover.Profile{}
+		coverageProfile = &gocover.Report{}
 	}
 
 	if gitDiff == nil {

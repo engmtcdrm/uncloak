@@ -23,8 +23,8 @@ type parser struct {
 
 // Run executes the 'go test' command to generate a coverage profile at the
 // specified filePath. If filePath is empty, a temporary file will be created.
-// Finally, it parses the coverage profile and returns it as a [Profile] struct.
-func Run(ctx context.Context, filePath string, opts *Options) (*Profile, error) {
+// Finally, it parses the coverage profile and returns it as a [Report].
+func Run(ctx context.Context, filePath string, opts *Options) (*Report, error) {
 	if opts == nil {
 		opts = &DefaultOptions
 	}
@@ -42,7 +42,7 @@ func Run(ctx context.Context, filePath string, opts *Options) (*Profile, error) 
 	if filePath == "" {
 		filePath, err = p.runTestCoverage(ctx)
 		if err != nil {
-			return NewProfile(p.Command, p.RawGoTestOutput), err
+			return NewReport(p.Command, p.RawGoTestOutput), err
 		}
 		defer os.Remove(filePath) //nolint:errcheck
 	}
@@ -51,8 +51,8 @@ func Run(ctx context.Context, filePath string, opts *Options) (*Profile, error) 
 }
 
 // parseProfiles reads the coverage profiles from the specified file path,
-// parses it, and returns it as a [Profile] struct.
-func (p *parser) parseProfiles(fileName string) (*Profile, error) {
+// parses it, and returns it as a [Report] struct.
+func (p *parser) parseProfiles(fileName string) (*Report, error) {
 	var err error
 	p.RawCoverData, err = os.ReadFile(fileName)
 	if err != nil {
@@ -64,22 +64,22 @@ func (p *parser) parseProfiles(fileName string) (*Profile, error) {
 	}
 
 	r := bytes.NewReader(p.RawCoverData)
-	coverProfiles, err := cover.ParseProfilesFromReader(r)
+	profiles, err := cover.ParseProfilesFromReader(r)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, err)
 	}
 
-	return p.parseProfilesBlocks(coverProfiles)
+	return p.parseProfilesBlocks(profiles)
 }
 
 // parseProfilesBlocks parses the coverage profiles from the provided slice of
-// [cover.Profile] and returns it as a [Profile] struct.
-func (p *parser) parseProfilesBlocks(profiles []*cover.Profile) (*Profile, error) {
+// [cover.Profile] and returns it as a [Report].
+func (p *parser) parseProfilesBlocks(profiles []*cover.Profile) (*Report, error) {
 	if profiles == nil {
 		return nil, fmt.Errorf("%w: %w", ErrEmptyCoverageFile, io.EOF)
 	}
 
-	profile := NewProfile(p.Command, p.RawGoTestOutput)
+	profile := NewReport(p.Command, p.RawGoTestOutput)
 
 	for _, cp := range profiles {
 		path := strings.TrimPrefix(cp.FileName, p.GoList.Module+"/")

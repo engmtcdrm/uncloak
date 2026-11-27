@@ -149,7 +149,7 @@ func filterFiles(cfg *config.Config, files []string) []string {
 }
 
 // printCommands prints the commands used for Git diff and Go coverage analysis.
-func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Results) {
+func printCommands(coverageProfile *gocover.Report, diffResults *gitdiff.Results) {
 	var buf bytes.Buffer
 
 	if diffResults != nil && diffResults.Command != "" {
@@ -170,7 +170,7 @@ func printCommands(coverageProfile *gocover.Profile, diffResults *gitdiff.Result
 // processFiles reads and parses the Go coverage profile and the git diff file
 // concurrently. It returns the parsed coverage profile and git diff, or an
 // error if any occurs during parsing.
-func processFiles(cfg *config.Config) (*gocover.Profile, *gitdiff.Results, error) {
+func processFiles(cfg *config.Config) (*gocover.Report, *gitdiff.Results, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -252,7 +252,7 @@ func runTaskGitDiff(ctx context.Context, tm *task.Manager, opts gitdiff.Options)
 
 // runTaskGoCoverage executes the Go test coverage analysis task and returns the
 // resulting coverage profile and any error encountered.
-func runTaskGoCoverage(ctx context.Context, tm *task.Manager, coverageFilePath string, opts *gocover.Options) (*gocover.Profile, error) {
+func runTaskGoCoverage(ctx context.Context, tm *task.Manager, coverageFilePath string, opts *gocover.Options) (*gocover.Report, error) {
 	gotask := task.NewTask("go", "Running Go test coverage analysis")
 	tm.AddTask(gotask)
 

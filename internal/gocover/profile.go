@@ -2,10 +2,10 @@ package gocover
 
 import "sort"
 
-// Profile represents the coverage profile for a Go project, including the
-// coverage mode, the blocks of code with coverage information, and the raw test
-// output.
-type Profile struct {
+// Report represents the coverage report for a Go project, including the lines
+// of code with coverage information, the lines covered by tests, and the raw
+// test output.
+type Report struct {
 	Lines         []Line                  // The blocks of code with coverage information.
 	CoveredLines  map[string]map[int]bool // The lines covered by tests, keyed by file path and line number.
 	RawTestOutput []byte                  // The raw output from running tests.
@@ -25,13 +25,14 @@ type Line struct {
 	Count       int    // The number of times the code block was executed during testing.
 }
 
-// NewProfile creates a new Profile instance with the provided raw test output.
-func NewProfile(command string, rawTestOutput []byte) *Profile {
+// NewReport creates a new [Report] instance with the provide command and raw
+// test output.
+func NewReport(command string, rawTestOutput []byte) *Report {
 	if rawTestOutput == nil {
 		rawTestOutput = []byte{}
 	}
 
-	return &Profile{
+	return &Report{
 		Lines:         []Line{},
 		CoveredLines:  make(map[string]map[int]bool),
 		Command:       command,
@@ -40,10 +41,10 @@ func NewProfile(command string, rawTestOutput []byte) *Profile {
 }
 
 // Files returns a sorted list of unique file paths that have coverage data in
-// the profile.
-func (cp *Profile) Files() []string {
-	files := make([]string, 0, len(cp.CoveredLines))
-	for file := range cp.CoveredLines {
+// the report.
+func (r *Report) Files() []string {
+	files := make([]string, 0, len(r.CoveredLines))
+	for file := range r.CoveredLines {
 		files = append(files, file)
 	}
 
@@ -53,17 +54,17 @@ func (cp *Profile) Files() []string {
 }
 
 // IsInTestCoverage checks if a specific line in a file is covered by tests
-// according to the profile's coverage data.
-func (cp *Profile) IsInTestCoverage(file string, line int) bool {
-	_, ok := cp.CoveredLines[file][line]
+// according to the report's coverage data.
+func (r *Report) IsInTestCoverage(file string, line int) bool {
+	_, ok := r.CoveredLines[file][line]
 	return ok
 }
 
-func (cp *Profile) expandCoveredLines(cl Line) {
-	coverageMap, ok := cp.CoveredLines[cl.Path]
+func (r *Report) expandCoveredLines(cl Line) {
+	coverageMap, ok := r.CoveredLines[cl.Path]
 	if !ok {
 		coverageMap = make(map[int]bool, cl.EndLine-cl.StartLine+1)
-		cp.CoveredLines[cl.Path] = coverageMap
+		r.CoveredLines[cl.Path] = coverageMap
 	}
 
 	for line := cl.StartLine; line <= cl.EndLine; line++ {
