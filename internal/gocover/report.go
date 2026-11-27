@@ -1,6 +1,7 @@
 package gocover
 
 import (
+	"slices"
 	"sort"
 
 	"golang.org/x/tools/cover"
@@ -15,7 +16,6 @@ type Report struct {
 	CoveredLines  map[string]map[int]bool // The lines covered by tests, keyed by file path and line number.
 	Profiles      []*Profile              // The coverage profiles for the source files.
 	RawTestOutput []byte                  // The raw output from running tests.
-
 }
 
 // Profile represents the profiling data for a specific file.
@@ -44,9 +44,13 @@ func NewReport(command string, rawTestOutput []byte) *Report {
 // Files returns a sorted list of unique file paths that have coverage data in
 // the report.
 func (r *Report) Files() []string {
-	files := make([]string, 0, len(r.CoveredLines))
-	for file := range r.CoveredLines {
-		files = append(files, file)
+	files := make([]string, 0, len(r.Profiles))
+	for _, profile := range r.Profiles {
+		if slices.Contains(files, profile.NoModuleFileName) {
+			continue
+		}
+
+		files = append(files, profile.NoModuleFileName)
 	}
 
 	sort.Strings(files)

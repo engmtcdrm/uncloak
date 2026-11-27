@@ -37,19 +37,35 @@ func Test_NewReport(t *testing.T) {
 
 // Tests for [Report.Files] function.
 func Test_Report_Files(t *testing.T) {
-	t.Run("return empty slice when no covered lines", func(t *testing.T) {
+	t.Run("should return empty slice when no covered lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
 		files := report.Files()
 		require.Empty(t, files)
 	})
 
-	t.Run("return sorted list of file paths", func(t *testing.T) {
+	t.Run("should return sorted list of file paths", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		report.CoveredLines["b.go"] = map[int]bool{1: true}
-		report.CoveredLines["a.go"] = map[int]bool{1: true}
+		report.Profiles = []*Profile{
+			{NoModuleFileName: "b.go"},
+			{NoModuleFileName: "a.go"},
+		}
+		expectedFiles := []string{"a.go", "b.go"}
 
 		files := report.Files()
-		require.Equal(t, []string{"a.go", "b.go"}, files)
+		require.Equal(t, expectedFiles, files)
+	})
+
+	t.Run("should return unique file paths", func(t *testing.T) {
+		report := NewReport("", []byte{})
+		report.Profiles = []*Profile{
+			{NoModuleFileName: "a.go"},
+			{NoModuleFileName: "a.go"},
+			{NoModuleFileName: "b.go"},
+		}
+		expectedFiles := []string{"a.go", "b.go"}
+
+		files := report.Files()
+		require.Equal(t, expectedFiles, files)
 	})
 }
 

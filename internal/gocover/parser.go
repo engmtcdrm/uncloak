@@ -95,7 +95,6 @@ func (p *parser) parseProfilesBlocks(profiles []*cover.Profile) (*Report, error)
 			report.Blocks = append(report.Blocks, b)
 			report.expandCoveredLines(cProfile.NoModuleFileName, b)
 		}
-
 	}
 
 	return report, nil
