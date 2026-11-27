@@ -10,14 +10,15 @@ import (
 // of code with coverage information, the lines covered by tests, and the raw
 // test output.
 type Report struct {
-	Lines         []Line                  // The blocks of code with coverage information.
+	Blocks        []ProfileBlock          // The blocks of code with coverage information.
 	CoveredLines  map[string]map[int]bool // The lines covered by tests, keyed by file path and line number.
 	RawTestOutput []byte                  // The raw output from running tests.
 	Command       string                  // The command used to run the tests.
 }
 
-// Line represents a block of code in a source file with coverage information.
-type Line struct {
+// ProfileBlock represents a block of code in a source file with coverage
+// information.
+type ProfileBlock struct {
 	cover.ProfileBlock
 
 	FilePath string // The absolute file path of the source file.
@@ -33,7 +34,7 @@ func NewReport(command string, rawTestOutput []byte) *Report {
 	}
 
 	return &Report{
-		Lines:         []Line{},
+		Blocks:        []ProfileBlock{},
 		CoveredLines:  make(map[string]map[int]bool),
 		Command:       command,
 		RawTestOutput: rawTestOutput,
@@ -60,7 +61,7 @@ func (r *Report) IsInTestCoverage(file string, line int) bool {
 	return ok
 }
 
-func (r *Report) expandCoveredLines(cl Line) {
+func (r *Report) expandCoveredLines(cl ProfileBlock) {
 	coverageMap, ok := r.CoveredLines[cl.Path]
 	if !ok {
 		coverageMap = make(map[int]bool, cl.EndLine-cl.StartLine+1)

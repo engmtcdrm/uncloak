@@ -13,7 +13,7 @@ func Test_NewReport(t *testing.T) {
 		report := NewReport("", []byte{})
 		require.NotNil(t, report)
 		require.Empty(t, report.RawTestOutput)
-		require.Empty(t, report.Lines)
+		require.Empty(t, report.Blocks)
 		require.Empty(t, report.CoveredLines)
 	})
 
@@ -21,7 +21,7 @@ func Test_NewReport(t *testing.T) {
 		report := NewReport("", nil)
 		require.NotNil(t, report)
 		require.Empty(t, report.RawTestOutput)
-		require.Empty(t, report.Lines)
+		require.Empty(t, report.Blocks)
 		require.Empty(t, report.CoveredLines)
 	})
 
@@ -30,7 +30,7 @@ func Test_NewReport(t *testing.T) {
 		report := NewReport("", rawTestOutput)
 		require.NotNil(t, report)
 		require.Equal(t, rawTestOutput, report.RawTestOutput)
-		require.Empty(t, report.Lines)
+		require.Empty(t, report.Blocks)
 		require.Empty(t, report.CoveredLines)
 	})
 }
@@ -71,7 +71,7 @@ func Test_Report_IsInTestCoverage(t *testing.T) {
 func Test_Report_expandCoveredLines(t *testing.T) {
 	t.Run("single line", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line := Line{
+		line := ProfileBlock{
 			Path: "file.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 1,
@@ -86,7 +86,7 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 
 	t.Run("multiple lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line := Line{
+		line := ProfileBlock{
 			Path: "file.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 1,
@@ -103,7 +103,7 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 
 	t.Run("uncovered lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line := Line{
+		line := ProfileBlock{
 			Path: "file.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 1,
@@ -120,7 +120,7 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 
 	t.Run("covered and uncovered lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line1 := Line{
+		line1 := ProfileBlock{
 			Path: "file1.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 1,
@@ -128,7 +128,7 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 				Count:     1,
 			},
 		}
-		line2 := Line{
+		line2 := ProfileBlock{
 			Path: "file1.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 3,
@@ -147,7 +147,7 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 
 	t.Run("covered and uncovered lines in different files", func(t *testing.T) {
 		report := NewReport("", []byte{})
-		line1 := Line{
+		line1 := ProfileBlock{
 			Path: "file1.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 1,
@@ -155,7 +155,7 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 				Count:     1,
 			},
 		}
-		line2 := Line{
+		line2 := ProfileBlock{
 			Path: "file1.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 3,
@@ -163,7 +163,7 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 				Count:     0,
 			},
 		}
-		line3 := Line{
+		line3 := ProfileBlock{
 			Path: "file2.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 1,
@@ -171,7 +171,7 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 				Count:     1,
 			},
 		}
-		line4 := Line{
+		line4 := ProfileBlock{
 			Path: "file2.go",
 			ProfileBlock: cover.ProfileBlock{
 				StartLine: 3,

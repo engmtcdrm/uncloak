@@ -129,7 +129,7 @@ func Test_parser_parseProfiles(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, results)
 		require.Empty(t, results.CoveredLines, 0)
-		require.Empty(t, results.Lines, 0)
+		require.Empty(t, results.Blocks, 0)
 	})
 
 	t.Run("should return valid report for valid file", func(t *testing.T) {
@@ -143,7 +143,7 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 		testfiles.CreateFile(t, tempFile, coverageData)
 
 		expectedReport := NewReport("", []byte{})
-		expectedReport.Lines = []Line{
+		expectedReport.Blocks = []ProfileBlock{
 			{
 				FilePath: file1,
 				Path:     file1,
@@ -172,7 +172,7 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 			},
 		}
 
-		for _, block := range expectedReport.Lines {
+		for _, block := range expectedReport.Blocks {
 			expectedReport.expandCoveredLines(block)
 		}
 
@@ -275,7 +275,7 @@ func Test_parser_parseProfilesBlocks(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, report)
 		assert.Len(t, report.CoveredLines, 2)
-		assert.Len(t, report.Lines, 2)
+		assert.Len(t, report.Blocks, 2)
 	})
 
 	t.Run("should return no error if no lines to test", func(t *testing.T) {
@@ -285,7 +285,7 @@ func Test_parser_parseProfilesBlocks(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, report)
 		assert.Empty(t, report.CoveredLines, 0)
-		assert.Empty(t, report.Lines, 0)
+		assert.Empty(t, report.Blocks, 0)
 	})
 
 	t.Run("should treat line as covered if any block touching it was hit", func(t *testing.T) {

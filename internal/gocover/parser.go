@@ -90,14 +90,14 @@ func (p *parser) parseProfilesBlocks(profiles []*cover.Profile) (*Report, error)
 		}
 
 		for _, b := range cp.Blocks {
-			block := Line{
+			block := ProfileBlock{
 				FilePath:     filepath.Join(p.GoList.Dir, path),
 				Path:         path,
 				Mode:         mode,
 				ProfileBlock: b,
 			}
 
-			profile.Lines = append(profile.Lines, block)
+			profile.Blocks = append(profile.Blocks, block)
 			profile.expandCoveredLines(block)
 		}
 	}
