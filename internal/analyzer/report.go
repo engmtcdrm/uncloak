@@ -10,8 +10,8 @@ import (
 // reports.
 type Report struct {
 	CoverageThreshold float64
-	GoCoverageReport  *gocover.Report
 	GitDiffResults    *gitdiff.Results
+	GoCoverageReport  *gocover.Report
 	Files             []*FileReport
 }
 
