@@ -52,3 +52,9 @@ tasks:
     cmds:
       - go test ./... -v
     silent: true
+  upgrade-packages:
+    desc: Upgrade Go module dependencies to their latest versions
+    cmds:
+      - go get -u ./...
+      - go mod tidy
+    silent: true
