@@ -145,26 +145,30 @@ test.com/testmodule/file2.go:30.3,40.4 2 0
 		expectedReport := NewReport("", []byte{})
 		expectedReport.Lines = []Line{
 			{
-				FilePath:    file1,
-				Path:        file1,
-				Mode:        ModeSet,
-				StartLine:   10,
-				StartColumn: 1,
-				EndLine:     20,
-				EndColumn:   2,
-				Statements:  1,
-				Count:       1,
+				FilePath: file1,
+				Path:     file1,
+				Mode:     ModeSet,
+				ProfileBlock: cover.ProfileBlock{
+					StartLine: 10,
+					StartCol:  1,
+					EndLine:   20,
+					EndCol:    2,
+					NumStmt:   1,
+					Count:     1,
+				},
 			},
 			{
-				FilePath:    file2,
-				Path:        file2,
-				Mode:        ModeSet,
-				StartLine:   30,
-				StartColumn: 3,
-				EndLine:     40,
-				EndColumn:   4,
-				Statements:  2,
-				Count:       0,
+				FilePath: file2,
+				Path:     file2,
+				Mode:     ModeSet,
+				ProfileBlock: cover.ProfileBlock{
+					StartLine: 30,
+					StartCol:  3,
+					EndLine:   40,
+					EndCol:    4,
+					NumStmt:   2,
+					Count:     0,
+				},
 			},
 		}
 

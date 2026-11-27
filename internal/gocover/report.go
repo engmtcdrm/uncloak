@@ -1,6 +1,10 @@
 package gocover
 
-import "sort"
+import (
+	"sort"
+
+	"golang.org/x/tools/cover"
+)
 
 // Report represents the coverage report for a Go project, including the lines
 // of code with coverage information, the lines covered by tests, and the raw
@@ -14,15 +18,11 @@ type Report struct {
 
 // Line represents a block of code in a source file with coverage information.
 type Line struct {
-	FilePath    string // The absolute file path of the source file.
-	Path        string // The relative file path of the source file, relative to the module root.
-	Mode        Mode   // The coverage mode for this block.
-	StartLine   int    // The starting line number of the code block.
-	StartColumn int    // The starting column number of the code block.
-	EndLine     int    // The ending line number of the code block.
-	EndColumn   int    // The ending column number of the code block.
-	Statements  int    // The number of statements in the code block.
-	Count       int    // The number of times the code block was executed during testing.
+	cover.ProfileBlock
+
+	FilePath string // The absolute file path of the source file.
+	Path     string // The relative file path of the source file, relative to the module root.
+	Mode     Mode   // The coverage mode for this block.
 }
 
 // NewReport creates a new [Report] instance with the provide command and raw

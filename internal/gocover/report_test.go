@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/tools/cover"
 )
 
 // Tests for [NewReport] function.
@@ -71,10 +72,12 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 	t.Run("single line", func(t *testing.T) {
 		report := NewReport("", []byte{})
 		line := Line{
-			Path:      "file.go",
-			StartLine: 1,
-			EndLine:   1,
-			Count:     1,
+			Path: "file.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 1,
+				EndLine:   1,
+				Count:     1,
+			},
 		}
 		report.expandCoveredLines(line)
 
@@ -84,10 +87,12 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 	t.Run("multiple lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
 		line := Line{
-			Path:      "file.go",
-			StartLine: 1,
-			EndLine:   3,
-			Count:     1,
+			Path: "file.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 1,
+				EndLine:   3,
+				Count:     1,
+			},
 		}
 		report.expandCoveredLines(line)
 
@@ -99,10 +104,12 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 	t.Run("uncovered lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
 		line := Line{
-			Path:      "file.go",
-			StartLine: 1,
-			EndLine:   3,
-			Count:     0,
+			Path: "file.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 1,
+				EndLine:   3,
+				Count:     0,
+			},
 		}
 		report.expandCoveredLines(line)
 
@@ -114,16 +121,20 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 	t.Run("covered and uncovered lines", func(t *testing.T) {
 		report := NewReport("", []byte{})
 		line1 := Line{
-			Path:      "file1.go",
-			StartLine: 1,
-			EndLine:   2,
-			Count:     1,
+			Path: "file1.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 1,
+				EndLine:   2,
+				Count:     1,
+			},
 		}
 		line2 := Line{
-			Path:      "file1.go",
-			StartLine: 3,
-			EndLine:   4,
-			Count:     0,
+			Path: "file1.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 3,
+				EndLine:   4,
+				Count:     0,
+			},
 		}
 		report.expandCoveredLines(line1)
 		report.expandCoveredLines(line2)
@@ -137,28 +148,36 @@ func Test_Report_expandCoveredLines(t *testing.T) {
 	t.Run("covered and uncovered lines in different files", func(t *testing.T) {
 		report := NewReport("", []byte{})
 		line1 := Line{
-			Path:      "file1.go",
-			StartLine: 1,
-			EndLine:   2,
-			Count:     1,
+			Path: "file1.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 1,
+				EndLine:   2,
+				Count:     1,
+			},
 		}
 		line2 := Line{
-			Path:      "file1.go",
-			StartLine: 3,
-			EndLine:   4,
-			Count:     0,
+			Path: "file1.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 3,
+				EndLine:   4,
+				Count:     0,
+			},
 		}
 		line3 := Line{
-			Path:      "file2.go",
-			StartLine: 1,
-			EndLine:   2,
-			Count:     1,
+			Path: "file2.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 1,
+				EndLine:   2,
+				Count:     1,
+			},
 		}
 		line4 := Line{
-			Path:      "file2.go",
-			StartLine: 3,
-			EndLine:   4,
-			Count:     0,
+			Path: "file2.go",
+			ProfileBlock: cover.ProfileBlock{
+				StartLine: 3,
+				EndLine:   4,
+				Count:     0,
+			},
 		}
 		report.expandCoveredLines(line1)
 		report.expandCoveredLines(line2)
