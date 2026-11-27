@@ -68,9 +68,8 @@ func Test_Profile_IsInTestCoverage(t *testing.T) {
 
 // Tests for [Profile.expandCoveredLines] function.
 func Test_Profile_expandCoveredLines(t *testing.T) {
-	profile := NewProfile("", []byte{})
-
 	t.Run("single line", func(t *testing.T) {
+		profile := NewProfile("", []byte{})
 		line := Line{
 			Path:      "file.go",
 			StartLine: 1,
@@ -83,6 +82,7 @@ func Test_Profile_expandCoveredLines(t *testing.T) {
 	})
 
 	t.Run("multiple lines", func(t *testing.T) {
+		profile := NewProfile("", []byte{})
 		line := Line{
 			Path:      "file.go",
 			StartLine: 1,
@@ -97,6 +97,7 @@ func Test_Profile_expandCoveredLines(t *testing.T) {
 	})
 
 	t.Run("uncovered lines", func(t *testing.T) {
+		profile := NewProfile("", []byte{})
 		line := Line{
 			Path:      "file.go",
 			StartLine: 1,
@@ -111,6 +112,7 @@ func Test_Profile_expandCoveredLines(t *testing.T) {
 	})
 
 	t.Run("covered and uncovered lines", func(t *testing.T) {
+		profile := NewProfile("", []byte{})
 		line1 := Line{
 			Path:      "file1.go",
 			StartLine: 1,
@@ -133,6 +135,7 @@ func Test_Profile_expandCoveredLines(t *testing.T) {
 	})
 
 	t.Run("covered and uncovered lines in different files", func(t *testing.T) {
+		profile := NewProfile("", []byte{})
 		line1 := Line{
 			Path:      "file1.go",
 			StartLine: 1,

@@ -1,7 +1,6 @@
 package gocover
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/tools/cover"
 )
 
 type parser struct {
@@ -46,84 +47,64 @@ func Run(ctx context.Context, filePath string, opts *Options) (*Profile, error) 
 		defer os.Remove(filePath) //nolint:errcheck
 	}
 
-	return p.parseCoverageProfile(filePath)
+	return p.parseProfiles(filePath)
 }
 
-// parseCoverageData reads the coverage profile from the provided reader and
-// returns it as a [Profile] struct.
-func (p *parser) parseCoverageData(r io.Reader) (*Profile, error) {
-	s := bufio.NewScanner(r)
-	var lines []string
-	for s.Scan() {
-		lines = append(lines, s.Text())
-	}
-
-	if err := s.Err(); err != nil {
-		return nil, err
-	}
-
-	return p.parseLines(lines)
-}
-
-// parseCoverageProfile reads the coverage profile from the specified file path,
+// parseProfiles reads the coverage profiles from the specified file path,
 // parses it, and returns it as a [Profile] struct.
-func (p *parser) parseCoverageProfile(filePath string) (*Profile, error) {
+func (p *parser) parseProfiles(fileName string) (*Profile, error) {
 	var err error
-	p.RawCoverData, err = os.ReadFile(filePath)
+	p.RawCoverData, err = os.ReadFile(fileName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrFailedToReadFile, err)
 	}
 
-	return p.parseCoverageData(bytes.NewReader(p.RawCoverData))
+	if len(p.RawCoverData) == 0 {
+		return nil, fmt.Errorf("%w: %w", ErrEmptyCoverageFile, io.EOF)
+	}
+
+	r := bytes.NewReader(p.RawCoverData)
+	coverProfiles, err := cover.ParseProfilesFromReader(r)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, err)
+	}
+
+	return p.parseProfilesBlocks(coverProfiles)
 }
 
-// parseLines processes the lines of a Go coverage profile and returns them in a
-// [Profile] struct.
-func (p *parser) parseLines(lines []string) (*Profile, error) {
-	if len(lines) == 0 {
-		return nil, ErrEmptyCoverageFile
+// parseProfilesBlocks parses the coverage profiles from the provided slice of
+// [cover.Profile] and returns it as a [Profile] struct.
+func (p *parser) parseProfilesBlocks(profiles []*cover.Profile) (*Profile, error) {
+	if profiles == nil {
+		return nil, fmt.Errorf("%w: %w", ErrEmptyCoverageFile, io.EOF)
 	}
 
 	profile := NewProfile(p.Command, p.RawGoTestOutput)
 
-	if after, ok := strings.CutPrefix(lines[0], "mode: "); ok {
-		var err error
-		profile.Mode, err = parseMode(after)
+	for _, cp := range profiles {
+		path := strings.TrimPrefix(cp.FileName, p.GoList.Module+"/")
+
+		mode, err := parseMode(cp.Mode)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, err)
 		}
-	}
 
-	if profile.Mode == "" {
-		return nil, fmt.Errorf("%w: %w", ErrInvalidCoverageFile, ErrMissingMode)
-	}
+		for _, b := range cp.Blocks {
+			block := Line{
+				FilePath:    filepath.Join(p.GoList.Dir, path),
+				Path:        path,
+				Mode:        mode,
+				StartLine:   b.StartLine,
+				StartColumn: b.StartCol,
+				EndLine:     b.EndLine,
+				EndColumn:   b.EndCol,
+				Statements:  b.NumStmt,
+				Count:       b.Count,
+			}
 
-	for _, line := range lines[1:] {
-		var coverageLine Line
-
-		// split at last ':' so paths that contain ':' (Windows drive letters) still work
-		i := strings.LastIndex(line, ":")
-		if i == -1 {
-			return nil, fmt.Errorf("%w: %w: %q", ErrInvalidCoverageFile, ErrInvalidCoverageLine, line)
+			profile.Lines = append(profile.Lines, block)
+			profile.expandCoveredLines(block)
 		}
-
-		path := strings.TrimPrefix(line[:i], p.GoList.Module+"/")
-		ranges := line[i+1:]
-
-		_, err := fmt.Sscanf(ranges, "%d.%d,%d.%d %d %d",
-			&coverageLine.StartLine, &coverageLine.StartColumn,
-			&coverageLine.EndLine, &coverageLine.EndColumn,
-			&coverageLine.Statements, &coverageLine.Count,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %w: %w", ErrInvalidCoverageFile, ErrInvalidCoverageLine, err)
-		}
-
-		coverageLine.Path = path
-		coverageLine.FilePath = filepath.Join(p.GoList.Dir, path)
-		profile.Lines = append(profile.Lines, coverageLine)
-
-		profile.expandCoveredLines(coverageLine)
 	}
 
 	return profile, nil

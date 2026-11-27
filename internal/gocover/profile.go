@@ -3,20 +3,20 @@ package gocover
 import "sort"
 
 // Profile represents the coverage profile for a Go project, including the
-// coverage mode, the lines of code with coverage information, and the raw test
+// coverage mode, the blocks of code with coverage information, and the raw test
 // output.
 type Profile struct {
-	Mode          Mode
-	Lines         []Line
-	CoveredLines  map[string]map[int]bool
-	RawTestOutput []byte
-	Command       string
+	Lines         []Line                  // The blocks of code with coverage information.
+	CoveredLines  map[string]map[int]bool // The lines covered by tests, keyed by file path and line number.
+	RawTestOutput []byte                  // The raw output from running tests.
+	Command       string                  // The command used to run the tests.
 }
 
 // Line represents a block of code in a source file with coverage information.
 type Line struct {
 	FilePath    string // The absolute file path of the source file.
 	Path        string // The relative file path of the source file, relative to the module root.
+	Mode        Mode   // The coverage mode for this block.
 	StartLine   int    // The starting line number of the code block.
 	StartColumn int    // The starting column number of the code block.
 	EndLine     int    // The ending line number of the code block.
@@ -67,6 +67,6 @@ func (cp *Profile) expandCoveredLines(cl Line) {
 	}
 
 	for line := cl.StartLine; line <= cl.EndLine; line++ {
-		coverageMap[line] = cl.Count > 0
+		coverageMap[line] = coverageMap[line] || cl.Count > 0
 	}
 }

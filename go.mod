@@ -13,6 +13,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/mod v0.43.0
 	golang.org/x/term v0.48.0
+	golang.org/x/tools v0.53.0
 )
 
 require (

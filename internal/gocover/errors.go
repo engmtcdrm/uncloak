@@ -14,6 +14,9 @@ var (
 	// ErrEmptyCoverageFile indicates that the coverage file is empty.
 	ErrEmptyCoverageFile = errors.New("empty coverage file")
 
+	// ErrFailedToReadFile indicates that reading the coverage file failed.
+	ErrFailedToReadFile = errors.New("failed to read coverage file")
+
 	// ErrInvalidCoverageFile indicates that the coverage file has an invalid
 	// format.
 	ErrInvalidCoverageFile = errors.New("invalid coverage file format")
